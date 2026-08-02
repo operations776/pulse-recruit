@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Design tokens: the single source of truth is DESIGN.md. No raw hex in components. */
+@theme {
+  --color-canvas: #f7f7f8;
+  --color-surface: #ffffff;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-ink-900: #16181d;
+  --color-ink-600: #5a6070;
+  --color-ink-400: #9aa0ae;
+
+  --color-line: #e4e6eb;
+  --color-line-soft: #eef0f3;
+
+  --color-pulse-50: #eaf7f2;
+  --color-pulse-600: #0c8a66;
+  --color-pulse-700: #0a6f53;
+
+  --color-warn-500: #b45309;
+  --color-danger-500: #d92d20;
+  --color-info-500: #3b6fe0;
+  --color-stage-violet: #6d5bd0;
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --shadow-pop: 0 4px 16px rgb(22 24 29 / 0.08), 0 0 0 1px rgb(22 24 29 / 0.04);
+
+  --radius-control: 6px;
+  --radius-card: 8px;
+  --radius-layer: 10px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 450;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  /* Uppercase micro label: column headers, stage names, field labels */
+  .micro-label {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 550;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-600);
+  }
+
+  /* Data literal: counts, dates, salaries, IDs, emails */
+  .data-literal {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 18px;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink-600);
+  }
+}
+
+/* Pulse dot: the one ambient animation in the product */
+@keyframes pulse-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.35);
+  }
+}
+
+.pulse-dot-live {
+  animation: pulse-breathe 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot-live {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--color-pulse-50);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-pulse-600);
+  outline-offset: 2px;
 }
