@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/overlay";
 import { useToast } from "@/components/ui/toast";
-import { useStore } from "@/lib/store";
-import type { Stage } from "@/lib/types";
+import { createCandidate } from "@/lib/actions";
+import type { StageRow } from "@/lib/supabase/types";
 
 export function AddCandidateDialog({
   open,
@@ -17,16 +17,16 @@ export function AddCandidateDialog({
   open: boolean;
   onClose: () => void;
   jobId: string;
-  stages: Stage[];
+  stages: StageRow[];
 }) {
-  const { addCandidate, state } = useStore();
   const { notify } = useToast();
+  const [busy, startTransition] = useTransition();
   const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
     title: "",
-    companyName: "",
+    company: "",
     stageId: stages[0]?.id ?? "",
   });
   const [error, setError] = useState("");
@@ -35,53 +35,61 @@ export function AddCandidateDialog({
     setForm((f) => ({ ...f, [key]: value }));
 
   const reset = () => {
-    setForm({ name: "", email: "", phone: "", title: "", companyName: "", stageId: stages[0]?.id ?? "" });
+    setForm({
+      name: "",
+      email: "",
+      phone: "",
+      title: "",
+      company: "",
+      stageId: stages[0]?.id ?? "",
+    });
     setError("");
   };
 
-  const submit = () => {
-    const name = form.name.trim();
-    const email = form.email.trim().toLowerCase();
-
-    if (!name) return setError("Enter the candidate's name.");
-    if (!email) return setError("Enter an email address.");
-
-    // The real table has a unique index on (org_id, lower(email)) and the insert
-    // handles the conflict. This mirrors that check so the UI copy is already
-    // correct when the database becomes the enforcer.
-    const clash = state.candidates.find(
-      (c) => c.email.toLowerCase() === email && c.jobId === jobId,
-    );
-    if (clash) {
-      return setError(`${clash.name} is already on this role with that email.`);
-    }
-
-    addCandidate({ ...form, name, email, jobId });
-    notify(`${name} added`);
+  const close = () => {
     reset();
     onClose();
+  };
+
+  // The duplicate-email rule is a unique index, and the action already turns
+  // that violation into a sentence a recruiter can act on. Repeating the check
+  // here would be a second source of truth that drifts, so the returned string
+  // is shown as it comes back.
+  const submit = () => {
+    setError("");
+    startTransition(async () => {
+      const result = await createCandidate({
+        jobId,
+        stageId: form.stageId,
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        title: form.title,
+        company: form.company,
+      });
+
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+
+      notify(`${form.name.trim()} added to this role.`);
+      close();
+    });
   };
 
   return (
     <Dialog
       open={open}
-      onClose={() => {
-        reset();
-        onClose();
-      }}
+      onClose={close}
       title="Add candidate"
       description="They land on the stage you pick and appear on the board immediately."
       footer={
         <>
-          <Button
-            onClick={() => {
-              reset();
-              onClose();
-            }}
-          >
+          <Button onClick={close} disabled={busy}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={submit}>
+          <Button variant="primary" onClick={submit} disabled={busy}>
             Add candidate
           </Button>
         </>
@@ -135,8 +143,8 @@ export function AddCandidateDialog({
           </Field>
           <Field label="Current company">
             <Input
-              value={form.companyName}
-              onChange={(e) => set("companyName")(e.target.value)}
+              value={form.company}
+              onChange={(e) => set("company")(e.target.value)}
               placeholder="Corewave"
             />
           </Field>

@@ -95,10 +95,35 @@ app/
 
 Rule 7 above: every new env var is added to this table AND the Vercel project config in the same commit that introduces the code reading it. No exceptions, no "will add after deploy".
 
-| Name | Purpose | Client-exposed | Added in |
+Two kinds of secret exist and they are stored in different places. Keep the distinction.
+
+**Platform env vars** live in Vercel and in `.env.local`. They are needed to boot the app.
+
+| Name | Purpose | Client-exposed | Required | Added in |
+| --- | --- | --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project API URL | Yes | Yes | PLS-6 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key, RLS-constrained | Yes | Yes | PLS-6 |
+| `NEXT_PUBLIC_SITE_URL` | Absolute origin, used for auth redirects | Yes | Deploy only | PLS-35 |
+
+**Per-org integration keys** are NOT env vars. A recruiter pastes their own key into Settings, and `set_integration_key` writes it into Supabase Vault, storing only a pointer plus the last four characters. This is deliberate: keys differ per customer, they must be rotatable without a deploy, and an env var shared across tenants would be a cross-tenant leak waiting to happen.
+
+| Provider | Used for | Pillar | Status |
 | --- | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project API URL | Yes | PLS-6 |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key, RLS-constrained | Yes | PLS-6 |
+| `exa` | Web and market research behind the BD engine | 1 | Not connected |
+| `apollo` | Contact and company data | 1, 3 | Not connected |
+| `prospeo` | Email finding and verification | 3 | Not connected |
+| `clay` | Waterfall enrichment | 3 | Not connected |
+| `instantly` | Email sending at scale | 3 | Not connected |
+| `heyreach` | LinkedIn outreach | 3 | Not connected |
+| `unipile` | LinkedIn posting | 5 | Not connected |
+| `beehiiv` | Newsletter | 4 | Not connected |
+| `openai` | Model calls | 1, 2, 5 | Not connected |
+| `anthropic` | Claude, the ops manager | 2 | Not connected |
+| `smtp` | Custom mail transport | 3 | Not connected |
+
+The service-role key is deliberately absent. Nothing in the app needs it: every read is RLS-constrained and every privileged write is a SECURITY DEFINER RPC with EXECUTE revoked from `anon`. Adding it would create a bypass with no caller.
+
+Supabase project: `pulse`, ref `zlnctqlabowdaahnvheo`, region eu-west-2. Never the retainer dashboard (`hjwbguuqrwtmpkmgaxhc`) or the rejected Pulse Recruit project (`oyilzgfpaiusvqvmepny`).
 
 Supabase project: `pulse`, ref `zlnctqlabowdaahnvheo`, region eu-west-2. Dedicated to this product. The retainer dashboard (`hjwbguuqrwtmpkmgaxhc`) and the rejected Pulse Recruit project (`oyilzgfpaiusvqvmepny`) are never touched by this codebase.
 

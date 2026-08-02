@@ -1,9 +1,7 @@
-"use client";
-
 import Link from "next/link";
 import { SKILLS } from "@/config/content-skills";
-import { useStore } from "@/lib/store";
-import type { ContentSkill } from "@/lib/types";
+import { getPosts } from "@/lib/data";
+import type { ContentSkill } from "@/lib/supabase/types";
 
 // The Button primitive renders a real button element, and this control has to
 // navigate, so it carries the secondary variant's classes on a Link instead.
@@ -13,11 +11,16 @@ const LINK_BUTTON =
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-export default function ContentSkillsPage() {
-  const { state } = useStore();
+export default async function ContentSkillsPage() {
+  const posts = await getPosts();
 
-  const writtenFor = (key: ContentSkill) =>
-    state.posts.filter((p) => p.skill === key).length;
+  // Count once, read many. A per skill filter inside the map would walk the
+  // whole list five times for no reason.
+  const written = new Map<ContentSkill, number>();
+  for (const post of posts) {
+    written.set(post.skill, (written.get(post.skill) ?? 0) + 1);
+  }
+  const writtenFor = (key: ContentSkill) => written.get(key) ?? 0;
 
   return (
     <main className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-paper">
@@ -74,7 +77,7 @@ export default function ContentSkillsPage() {
         <section className="overflow-hidden rounded-shell border border-rule bg-sheet">
           <div className="flex items-center gap-3 border-b border-rule px-4 py-3">
             <span className="legend flex-1 text-ink-2">Posts per skill</span>
-            <span className="meta text-ink-2">{pad2(state.posts.length)}</span>
+            <span className="meta text-ink-2">{pad2(posts.length)}</span>
           </div>
 
           {SKILLS.map((skill) => (

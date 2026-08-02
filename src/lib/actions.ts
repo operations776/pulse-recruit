@@ -209,19 +209,12 @@ export async function createTask(
   const session = await requireSession();
   const supabase = await createClient();
 
-  const { data: ref, error: refError } = await supabase.rpc("next_ref", {
+  // next_ref has EXECUTE revoked from client roles on purpose, so ref
+  // allocation happens inside the RPC rather than as a separate call.
+  const { error } = await supabase.rpc("create_task", {
     target_org: session.org.id,
-    target_prefix: "TASK",
-  });
-  if (refError) return fail(readable(refError.message));
-
-  const { error } = await supabase.from("tasks").insert({
-    org_id: session.org.id,
-    ref: ref as string,
-    title: title.trim(),
-    detail: detail.trim(),
-    due: new Date().toISOString(),
-    origin: "manual",
+    task_title: title.trim(),
+    task_detail: detail.trim(),
   });
   if (error) return fail(readable(error.message));
 
@@ -292,19 +285,10 @@ export async function createPost(
   const session = await requireSession();
   const supabase = await createClient();
 
-  const { data: ref, error: refError } = await supabase.rpc("next_ref", {
+  const { error } = await supabase.rpc("create_post", {
     target_org: session.org.id,
-    target_prefix: "POST",
-  });
-  if (refError) return fail(readable(refError.message));
-
-  const { error } = await supabase.from("content_posts").insert({
-    org_id: session.org.id,
-    ref: ref as string,
-    skill,
-    hook: hook.trim(),
-    status: "idea",
-    author_id: session.userId,
+    post_skill: skill,
+    post_hook: hook.trim(),
   });
   if (error) return fail(readable(error.message));
 
@@ -349,7 +333,9 @@ export async function saveIntegrationKey(
   });
   if (error) return fail(readable(error.message));
 
-  revalidatePath("/settings");
+  // "layout" so the nested /settings/integrations screen refreshes too, not
+  // just the /settings index.
+  revalidatePath("/settings", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -363,6 +349,6 @@ export async function removeIntegrationKey(provider: string): Promise<Result> {
   });
   if (error) return fail(readable(error.message));
 
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
   return { ok: true, data: undefined };
 }

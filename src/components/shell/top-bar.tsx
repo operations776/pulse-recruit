@@ -1,13 +1,13 @@
 "use client";
 
 import { Bell, ChevronDown, CircleHelp } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { UserMenu } from "@/components/shell/user-menu";
 import { brand } from "@/config/brand";
-import { useStore } from "@/lib/store";
 
-export function TopBar() {
-  const { org, currentUser } = useStore();
-
+// The org and the signed in email come from requireSession in the layout, not
+// from client state, so the bar can never show a workspace the session does not
+// actually have.
+export function TopBar({ orgName, email }: { orgName: string; email: string }) {
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b border-rule bg-ink px-0 text-sheet">
       <div className="flex h-full items-center">
@@ -18,7 +18,7 @@ export function TopBar() {
           <span className="display text-[12px] leading-none">{brand.name}</span>
         </span>
         <button className="flex h-full items-center gap-2 border-r border-sheet/15 px-4 text-[12px] hover:bg-sheet/10">
-          {org.name}
+          {orgName}
           <ChevronDown size={13} strokeWidth={2} className="opacity-60" />
         </button>
       </div>
@@ -35,9 +35,7 @@ export function TopBar() {
           <Bell size={14} strokeWidth={1.75} />
           <span className="absolute right-2.5 top-3 size-1.5 rounded-full bg-vermilion" />
         </button>
-        <span className="flex h-full items-center border-l border-sheet/15 px-3">
-          <Avatar name={currentUser.name} size="sm" />
-        </span>
+        <UserMenu email={email} />
       </div>
     </header>
   );

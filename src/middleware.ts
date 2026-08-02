@@ -42,7 +42,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && (pathname === "/signin" || pathname === "/signup")) {
+  // /signup?step=workspace is the one signed in state that belongs on an auth
+  // route: requireSession sends a user with no org there, so bouncing them to
+  // /pipeline would put them in a redirect loop.
+  const finishingWorkspace =
+    pathname === "/signup" &&
+    request.nextUrl.searchParams.get("step") === "workspace";
+
+  if (
+    user &&
+    !finishingWorkspace &&
+    (pathname === "/signin" || pathname === "/signup")
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/pipeline";
     url.search = "";

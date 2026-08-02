@@ -1,8 +1,7 @@
-import { NOW } from "@/lib/mock/seed";
-
-// Relative labels are measured against the fixed NOW from the seed so server and
-// client agree. When the Supabase layer lands this takes the real current time.
-export function relativeTime(iso: string, now: Date = NOW): string {
+// Relative labels are measured against the real current time now that the rows
+// come from Supabase. A caller can still pass an explicit `now` when it needs a
+// fixed reference, for example a test.
+export function relativeTime(iso: string, now: Date = new Date()): string {
   const minutes = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60_000));
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.round(minutes / 60);

@@ -1,7 +1,5 @@
-"use client";
-
 import { ChatPanel } from "@/components/ai/chat-panel";
-import { useStore } from "@/lib/store";
+import { getChat } from "@/lib/data";
 import { formatDate } from "@/lib/time";
 
 // Pillar 1. The BD engine. The answer is only worth as much as the sources
@@ -12,12 +10,17 @@ const SUGGESTIONS = [
   "Which of my Dream 100 are hiring right now?",
 ];
 
-export default function MarketPage() {
-  const { state, creditsLeft } = useStore();
+export default async function MarketPage() {
+  const { messages, credits } = await getChat("market");
 
-  const left = creditsLeft();
-  const allowance = state.credits.weeklyAllowance;
-  const usedPct = allowance > 0 ? Math.min(100, Math.round((state.credits.usedThisWeek / allowance) * 100)) : 0;
+  // A workspace with no ledger row yet has no allowance to spend. Reading it as
+  // zero is the honest answer, and the meter reads empty rather than full.
+  const allowance = credits?.weekly_allowance ?? 0;
+  const used = credits?.used_this_week ?? 0;
+  const left = Math.max(0, allowance - used);
+  const usedPct =
+    allowance > 0 ? Math.min(100, Math.round((used / allowance) * 100)) : 0;
+  const resetsAt = credits?.resets_at ?? null;
 
   return (
     <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-paper">
@@ -33,6 +36,10 @@ export default function MarketPage() {
       <div className="flex min-h-0 flex-1 flex-col p-6">
         <ChatPanel
           surface="market"
+          messages={messages}
+          creditsLeft={left}
+          weeklyAllowance={allowance}
+          resetsAt={resetsAt ?? new Date().toISOString()}
           placeholder="Ask about the companies you want to win"
           emptyTitle="Nothing asked yet"
           emptyBody="Ask about hiring, funding, or leadership moves at the companies you want to win. Every answer arrives with the sources it was built from."
@@ -48,7 +55,7 @@ export default function MarketPage() {
               */}
               <div
                 aria-hidden
-                className="well mt-1.5 h-1.5 overflow-hidden rounded-chip bg-well"
+                className="well mt-1.5 h-1.5 overflow-hidden rounded-chip"
               >
                 <div
                   className="h-full rounded-chip bg-ink"
@@ -56,7 +63,7 @@ export default function MarketPage() {
                 />
               </div>
               <p className="mt-1.5 text-[12px] text-ink-3">
-                Resets {formatDate(state.credits.resetsAt)}
+                {resetsAt ? `Resets ${formatDate(resetsAt)}` : "No allowance set"}
               </p>
             </div>
           }
