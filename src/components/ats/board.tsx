@@ -73,7 +73,7 @@ export function Board({ job }: { job: Job }) {
       <div className="border-b border-rule px-6 py-5">
         <Breadcrumb trail={["Recruitment", "Roles", job.code]} />
 
-        <h1 className="display mt-2 text-[28px]">{job.title}</h1>
+        <h1 className="display mt-2 text-[22px]">{job.title}</h1>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-8 gap-y-2">
           <span className="text-[15px] text-ink-2">

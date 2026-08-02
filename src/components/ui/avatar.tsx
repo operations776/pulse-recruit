@@ -3,9 +3,9 @@ import { AVATAR_TILE, initials } from "@/lib/hue";
 
 // DESIGN.md section 5: rounded squares at --r-card, never circles.
 const sizes = {
-  sm: { box: "size-8", text: "text-[13px]", px: 32 },
-  md: { box: "size-10", text: "text-[13px]", px: 40 },
-  lg: { box: "size-11", text: "text-[15px]", px: 44 },
+  sm: { box: "size-6", text: "text-[10px]", px: 24 },
+  md: { box: "size-8", text: "text-[11px]", px: 32 },
+  lg: { box: "size-9", text: "text-[12px]", px: 36 },
 } as const;
 
 export function Avatar({
@@ -50,7 +50,7 @@ export function AvatarStack({ names, max = 3 }: { names: string[]; max?: number 
         </span>
       ))}
       {names.length > max ? (
-        <span className="meta flex size-8 items-center justify-center rounded-card bg-well text-ink-2">
+        <span className="meta flex size-6 items-center justify-center rounded-card bg-well text-ink-2">
           +{names.length - max}
         </span>
       ) : null}

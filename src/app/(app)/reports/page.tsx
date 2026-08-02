@@ -84,7 +84,7 @@ export default function ReportsPage() {
       <div className="px-6 pt-4">
         <Breadcrumb trail={["Recruitment", "Reports"]} />
 
-        <h1 className="display mt-2 text-[28px] tracking-[-0.01em]">
+        <h1 className="display mt-2 text-[22px] tracking-[-0.01em]">
           Reports
         </h1>
       </div>
@@ -124,7 +124,7 @@ export default function ReportsPage() {
           </div>
 
           <div className="flex flex-col gap-3 px-4 py-4">
-            {stageCounts.map((stage, i) => (
+            {stageCounts.map((stage) => (
               <div key={stage.name} className="flex items-center gap-3">
                 <span className="w-24 shrink-0 text-[15px] leading-[18px]">
                   {stage.name}

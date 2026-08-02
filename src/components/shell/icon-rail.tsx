@@ -37,7 +37,7 @@ export function IconRail() {
           key={name}
           title={name}
           aria-label={name}
-          className={`flex size-11 items-center justify-center rounded-card font-mono text-[15px] ${
+          className={`flex size-8 items-center justify-center rounded-card font-mono text-[12px] ${
             i === 0 ? "bg-ink text-sheet" : "bg-well text-ink-2 hover:text-ink"
           }`}
         >

@@ -21,22 +21,22 @@ Everything below is downstream of those two sentences.
 
 ## 2. Audience constraints
 
-Primary users are recruiters aged roughly 40 to 60, working in the product for long sessions. These are not preferences, they are the floor.
+Primary users are recruiters aged roughly 20 to 40, working in the product all day. They are comfortable with dense software and do not need it zoomed in. Density is the point: more pipeline on screen beats larger text.
 
 | Constraint | Value |
 |---|---|
-| Base body size | 17px, never below 16px |
-| Line height | 1.6 body, 1.3 display |
-| Body text contrast | 7:1 minimum, not 4.5:1 |
+| Base body size | 15px, never below 13px |
+| Line height | 1.5 body, 1.2 display |
+| Body text contrast | 4.5:1 minimum |
 | Minimum font weight | 400, no light or thin weights anywhere |
-| Hit target | 44px minimum, 48px for primary actions |
-| Mono minimum size | 13px, and only for legends, IDs, counts, metadata |
+| Hit target | 32px minimum, 36px for primary actions |
+| Mono minimum size | 11px, and only for legends, IDs, counts, metadata |
 
 Additional rules:
 
-- **Status is never encoded by colour alone.** Always colour plus icon plus word. Lens yellowing after 50 compresses blue and violet discrimination in particular.
+- **Status is never encoded by colour alone.** Always colour plus icon plus word. This survives colour blindness and bad monitors, and it stays legible when a chip is small.
 - **Nothing lives behind hover.** Row actions are visible or one deliberate click away. Hover-to-reveal is the pattern that fails this audience hardest.
-- **Toasts persist until dismissed.** No 4-second auto-dismiss. A state change nobody finished reading is an invisible state change.
+- **Toasts persist until dismissed.** A state change nobody finished reading is an invisible state change.
 - **Nothing moves between screens.** Memorability comes from spatial consistency, not clever navigation.
 - **Uppercase is rationed.** Uppercase destroys word-shape recognition. It is allowed on the display face and on mono legends only. Buttons, body copy, and anything over three words are sentence case.
 
@@ -102,16 +102,16 @@ Modules are **not** colour-coded. Colour roles are fully spoken for. Module iden
 
 | Role | Face | Size | Weight | Treatment |
 |---|---|---|---|---|
-| Page title | Archivo Black | 28px | 400 | Uppercase, tracking -0.01em |
-| Section head | Archivo Black | 18px | 400 | Uppercase, tracking 0 |
-| Metric number | Archivo Black | 34px | 400 | Tabular figures |
-| Record name | IBM Plex Sans | 17px | 500 | Sentence case |
-| Body | IBM Plex Sans | 17px | 400 | Line height 1.6 |
-| Secondary | IBM Plex Sans | 15px | 400 | `--ink-2` |
-| Button | IBM Plex Sans | 15px | 500 | Sentence case, never uppercase |
-| Legend / eyebrow | IBM Plex Mono | 13px | 400 | Uppercase, tracking 0.12em |
-| Record ID | IBM Plex Mono | 13px | 400 | Uppercase, tracking 0.08em |
-| Count / metadata | IBM Plex Mono | 13px | 400 | Tabular figures |
+| Page title | Archivo Black | 22px | 400 | Uppercase, tracking -0.01em |
+| Section head | Archivo Black | 15px | 400 | Uppercase, tracking 0 |
+| Metric number | Archivo Black | 26px | 400 | Tabular figures |
+| Record name | IBM Plex Sans | 15px | 500 | Sentence case |
+| Body | IBM Plex Sans | 15px | 400 | Line height 1.5 |
+| Secondary | IBM Plex Sans | 13px | 400 | `--ink-2` |
+| Button | IBM Plex Sans | 13px | 500 | Sentence case, never uppercase |
+| Legend / eyebrow | IBM Plex Mono | 11px | 400 | Uppercase, tracking 0.12em |
+| Record ID | IBM Plex Mono | 11px | 400 | Uppercase, tracking 0.08em |
+| Count / metadata | IBM Plex Mono | 11px | 400 | Tabular figures |
 
 Archivo Black is the personality and it works by being rare. It appears on page titles, section heads, metric numbers, and the masthead. Nowhere else.
 
@@ -286,4 +286,4 @@ Enforceable rules. If a component violates one of these, it is wrong regardless 
 7. Archivo Black appears on titles, section heads, metric numbers, and the masthead. Nowhere else.
 8. Uppercase appears on the display face and mono legends only.
 9. Status is colour plus icon plus word, always all three.
-10. No body text below 16px, no font weight below 400, no hit target below 44px.
+10. No body text below 13px, no font weight below 400, no hit target below 32px.

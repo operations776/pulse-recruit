@@ -50,7 +50,7 @@ export function CandidateCard({
           }}
           aria-label={selected ? `Deselect ${candidate.name}` : `Select ${candidate.name}`}
           aria-pressed={selected}
-          className="-m-1.5 flex size-11 shrink-0 items-center justify-center rounded-control hover:bg-well"
+          className="-m-1 flex size-8 shrink-0 items-center justify-center rounded-control hover:bg-well"
         >
           <span
             className={`flex size-5 items-center justify-center rounded-chip border ${
@@ -84,7 +84,9 @@ export function CandidateCard({
             freshness={freshnessFor(new Date(candidate.lastActivityAt), NOW)}
             label={relativeTime(candidate.lastActivityAt)}
           />
-          {candidate.match > 0 ? <MatchScore value={candidate.match} /> : null}
+          {candidate.match > 0 ? (
+            <MatchScore value={candidate.match} withLabel />
+          ) : null}
         </span>
       </div>
     </div>

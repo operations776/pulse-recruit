@@ -7,7 +7,7 @@ import { CandidateDrawer } from "@/components/ats/candidate-drawer";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SearchInput, Select } from "@/components/ui/input";
-import { MatchScore } from "@/components/ui/match-score";
+
 import { Badge, Breadcrumb, StatusChip, CopyField, EmptyState } from "@/components/ui/misc";
 import { Activity, freshnessFor } from "@/components/ui/pulse-dot";
 
@@ -23,12 +23,12 @@ const COLUMNS = [
   "Stage",
   "Email",
   "Owner",
-  "Match",
+  "Role",
   "Last activity",
 ] as const;
 
 export default function CandidatesPage() {
-  const { state, members, stages, memberById, stagesForJob } = useStore();
+  const { state, members, stages, jobs, memberById, stagesForJob } = useStore();
 
   const [query, setQuery] = useState("");
   const [owner, setOwner] = useState(ALL);
@@ -51,6 +51,8 @@ export default function CandidatesPage() {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, []);
+
+  const jobById = useMemo(() => new Map(jobs.map((j) => [j.id, j])), [jobs]);
 
   const live = useMemo(
     () => state.candidates.filter((c) => !state.archivedIds.includes(c.id)),
@@ -115,7 +117,7 @@ export default function CandidatesPage() {
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-baseline gap-3">
-            <h1 className="display text-[28px] tracking-[-0.01em]">
+            <h1 className="display text-[22px] tracking-[-0.01em]">
               Candidates
             </h1>
             <span className="flex items-baseline gap-1.5">
@@ -130,7 +132,7 @@ export default function CandidatesPage() {
               button style. One tab stop, one focus ring, real navigation. */}
           <Link
             href="/pipeline"
-            className="cap inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-control bg-vermilion px-5 text-[15px] font-medium text-on-vermilion hover:bg-vermilion-hover [--edge:var(--color-vermilion-edge)]"
+            className="cap inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-control bg-vermilion px-4 text-[13px] font-medium text-on-vermilion hover:bg-vermilion-hover [--edge:var(--color-vermilion-edge)]"
           >
             <Plus size={15} strokeWidth={2.25} />
             Add candidate
@@ -280,12 +282,15 @@ export default function CandidatesPage() {
                           <span className="truncate text-[15px]">{ownerName}</span>
                         </span>
                       </td>
+                      {/* This list spans every role, so a single "match" number
+                          had nothing to be matched against. The role a candidate
+                          is actually on is the fact that belongs here. Fit is
+                          scored per role and shown on the board and in the
+                          drawer, where the role is unambiguous. */}
                       <td className="px-3">
-                        {c.match > 0 ? (
-                          <MatchScore value={c.match} />
-                        ) : (
-                          <span className="meta text-ink-3">--</span>
-                        )}
+                        <span className="truncate text-[13px] text-ink-2">
+                          {jobById.get(c.jobId)?.title ?? "No role"}
+                        </span>
                       </td>
                       <td className="px-3">
                         <Activity

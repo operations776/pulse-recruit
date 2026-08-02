@@ -121,7 +121,7 @@ export function CopyField({
       <button
         onClick={copy}
         aria-label={`Copy ${label ?? value}`}
-        className="-m-2 flex size-11 shrink-0 items-center justify-center rounded-control text-ink-2 hover:bg-well hover:text-ink"
+        className="-m-1 flex size-8 shrink-0 items-center justify-center rounded-control text-ink-2 hover:bg-well hover:text-ink"
       >
         {copied ? (
           <Check size={16} strokeWidth={2.5} className="text-teal" />

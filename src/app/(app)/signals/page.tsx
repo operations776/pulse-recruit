@@ -59,7 +59,7 @@ export default function SignalsPage() {
       <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <header className="border-b border-rule px-6 py-5">
           <p className="legend text-vermilion">Dream 100 watchlist</p>
-          <h1 className="display mt-2 text-[28px]">Signals</h1>
+          <h1 className="display mt-2 text-[22px]">Signals</h1>
           <p className="mt-2 max-w-[62ch] text-[15px] text-ink-2">
             What the companies you are chasing did this week. Every signal is a
             reason to call someone today.

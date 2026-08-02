@@ -39,7 +39,7 @@ export default function SettingsPage() {
     <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-paper">
       <div className="px-6 pt-4">
         <Breadcrumb trail={["Settings"]} />
-        <h1 className="display mt-2 text-[28px] tracking-[-0.01em]">
+        <h1 className="display mt-2 text-[22px] tracking-[-0.01em]">
           Settings
         </h1>
       </div>

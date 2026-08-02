@@ -177,7 +177,7 @@ export default function MarketingHome() {
           </div>
 
           <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map(({ icon: Icon, title, body }, i) => {
+            {features.map(({ icon: Icon, title, body }) => {
               
               return (
                 <div

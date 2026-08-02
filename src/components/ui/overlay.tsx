@@ -41,14 +41,14 @@ export function Dialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         aria-label="Close dialog"
-        className="glass-scrim absolute inset-0"
+        className="scrim absolute inset-0"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="glass relative w-full max-w-[440px] rounded-control"
+        className="floating relative w-full max-w-[460px] rounded-shell"
       >
         <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-5">
           <div>
@@ -96,12 +96,12 @@ export function Drawer({
     <div className="fixed inset-0 z-40">
       <button
         aria-label="Close panel"
-        className="glass-scrim absolute inset-0"
+        className="scrim absolute inset-0"
         onClick={onClose}
       />
       <aside
         aria-label={label}
-        className="glass absolute right-0 top-0 flex h-full w-[480px] flex-col border-y-0 border-r-0"
+        className="floating absolute right-0 top-0 flex h-full w-[480px] flex-col rounded-none"
       >
         {children}
       </aside>
