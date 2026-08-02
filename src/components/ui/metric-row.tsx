@@ -17,13 +17,13 @@ const items = [
 
 export function MetricRow({ metrics }: { metrics: Metrics }) {
   return (
-    <span className="flex items-center gap-2.5 text-ink-mute">
+    <span className="flex items-center gap-2.5 text-ink-3">
       {items.map(({ key, icon: Icon, label }) => {
         const value = metrics[key];
         return (
           <span key={key} className="flex items-center gap-1" title={label}>
             <Icon size={12} strokeWidth={1.75} />
-            <span className="data-literal text-inherit text-[12px]">
+            <span className="meta text-inherit text-[15px]">
               {value > 0 ? value : "--"}
             </span>
           </span>

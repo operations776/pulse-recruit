@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Badge, Breadcrumb } from "@/components/ui/misc";
-import { hueBg, hueByIndex } from "@/lib/hue";
+
 import { useStore } from "@/lib/store";
 import type { Job } from "@/lib/types";
 
@@ -19,12 +19,12 @@ function StatTile({
   sub: ReactNode;
 }) {
   return (
-    <div className="rounded-sharp border border-rule bg-paper-white p-4">
-      <p className="micro-label text-ink-soft">{label}</p>
+    <div className="rounded-control border border-rule bg-sheet p-4">
+      <p className="legend text-ink-2">{label}</p>
       <p className="mt-2 font-mono text-[24px] font-semibold leading-[30px] tabular-nums">
         {value}
       </p>
-      <p className="mt-1 text-[12px] leading-4 text-ink-mute">{sub}</p>
+      <p className="mt-1 text-[15px] leading-4 text-ink-3">{sub}</p>
     </div>
   );
 }
@@ -41,7 +41,7 @@ const STATUS_LABEL: Record<Job["state"], string> = {
 
 function StatusBadge({ state }: { state: Job["state"] }) {
   if (state === "open") return <Badge hue="accent">{STATUS_LABEL.open}</Badge>;
-  if (state === "risk") return <Badge hue="mustard">{STATUS_LABEL.risk}</Badge>;
+  if (state === "risk") return <Badge hue="neutral">{STATUS_LABEL.risk}</Badge>;
   return <Badge hue="neutral">{STATUS_LABEL.closed}</Badge>;
 }
 
@@ -84,7 +84,7 @@ export default function ReportsPage() {
       <div className="px-6 pt-4">
         <Breadcrumb trail={["Recruitment", "Reports"]} />
 
-        <h1 className="mt-2 font-display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
+        <h1 className="display mt-2 text-[28px] tracking-[-0.01em]">
           Reports
         </h1>
       </div>
@@ -113,12 +113,12 @@ export default function ReportsPage() {
           />
         </div>
 
-        <section className="rounded-sharp border border-rule bg-paper-white">
+        <section className="rounded-control border border-rule bg-sheet">
           <div className="border-b border-rule px-4 py-3">
-            <h2 className="text-[16px] font-semibold leading-[22px]">
+            <h2 className="text-[18px] font-semibold leading-[22px]">
               Pipeline by stage
             </h2>
-            <p className="mt-0.5 text-[12px] leading-4 text-ink-soft">
+            <p className="mt-0.5 text-[15px] leading-4 text-ink-2">
               Candidates at each stage, counted across every role.
             </p>
           </div>
@@ -126,16 +126,16 @@ export default function ReportsPage() {
           <div className="flex flex-col gap-3 px-4 py-4">
             {stageCounts.map((stage, i) => (
               <div key={stage.name} className="flex items-center gap-3">
-                <span className="w-24 shrink-0 text-[13px] leading-[18px]">
+                <span className="w-24 shrink-0 text-[15px] leading-[18px]">
                   {stage.name}
                 </span>
                 <span className="h-2 min-w-0 flex-1 rounded-full bg-rule">
                   <span
-                    className={`block h-2 rounded-full ${hueBg[hueByIndex(i)]}`}
+                    className={`block h-2 rounded-full bg-ink`}
                     style={{ width: `${(stage.count / peak) * 100}%` }}
                   />
                 </span>
-                <span className="data-literal w-8 shrink-0 text-right text-ink-soft">
+                <span className="meta w-8 shrink-0 text-right text-ink-2">
                   {stage.count}
                 </span>
               </div>
@@ -143,10 +143,10 @@ export default function ReportsPage() {
           </div>
         </section>
 
-        <section className="rounded-sharp border border-rule bg-paper-white">
+        <section className="rounded-control border border-rule bg-sheet">
           <div className="border-b border-rule px-4 py-3">
-            <h2 className="text-[16px] font-semibold leading-[22px]">Roles</h2>
-            <p className="mt-0.5 text-[12px] leading-4 text-ink-soft">
+            <h2 className="text-[18px] font-semibold leading-[22px]">Roles</h2>
+            <p className="mt-0.5 text-[15px] leading-4 text-ink-2">
               Every role on the board with its live headcount.
             </p>
           </div>
@@ -154,16 +154,16 @@ export default function ReportsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-rule">
-                <th className="micro-label h-11 px-4 text-left text-ink-soft">
+                <th className="legend h-11 px-4 text-left text-ink-2">
                   Role
                 </th>
-                <th className="micro-label h-11 px-4 text-left text-ink-soft">
+                <th className="legend h-11 px-4 text-left text-ink-2">
                   Status
                 </th>
-                <th className="micro-label h-11 px-4 text-right text-ink-soft">
+                <th className="legend h-11 px-4 text-right text-ink-2">
                   Candidates
                 </th>
-                <th className="micro-label h-11 px-4 text-right text-ink-soft">
+                <th className="legend h-11 px-4 text-right text-ink-2">
                   Hired
                 </th>
               </tr>
@@ -173,10 +173,10 @@ export default function ReportsPage() {
                 <tr key={job.id} className="border-b border-rule last:border-0">
                   <td className="h-11 px-4">
                     <span className="flex items-center gap-2">
-                      <span className="text-[13px] leading-[18px] font-medium">
+                      <span className="text-[15px] leading-[18px] font-medium">
                         {job.title}
                       </span>
-                      <span className="data-literal text-ink-mute">
+                      <span className="meta text-ink-3">
                         {job.code}
                       </span>
                     </span>
@@ -184,10 +184,10 @@ export default function ReportsPage() {
                   <td className="h-11 px-4">
                     <StatusBadge state={job.state} />
                   </td>
-                  <td className="data-literal h-11 px-4 text-right text-ink">
+                  <td className="meta h-11 px-4 text-right text-ink">
                     {candidatesForJob(job.id).length}
                   </td>
-                  <td className="data-literal h-11 px-4 text-right text-ink">
+                  <td className="meta h-11 px-4 text-right text-ink">
                     {job.hired}/{job.target}
                   </td>
                 </tr>

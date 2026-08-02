@@ -40,21 +40,21 @@ function SignUpCard() {
   };
 
   return (
-    <div className="w-full max-w-[400px] rounded-sharp border border-rule bg-paper-white p-6 ">
+    <div className="w-full max-w-[400px] rounded-control border border-rule bg-sheet p-6 ">
       <span className="flex items-center gap-2">
         <span
           aria-hidden
-          className="flex size-8 items-center justify-center rounded-sharp bg-ink"
+          className="flex size-8 items-center justify-center rounded-control bg-ink"
         >
           <span className="size-2 rounded-full bg-sage" />
         </span>
-        <span className="font-display text-[17px] font-bold">{brand.name}</span>
+        <span className="display text-[17px] font-bold">{brand.name}</span>
       </span>
 
-      <h1 className="mt-6 font-display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
+      <h1 className="mt-6 display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
         Create your workspace
       </h1>
-      <p className="mt-1.5 text-[13px] text-ink-soft">
+      <p className="mt-1.5 text-[15px] text-ink-2">
         One workspace per agency. Invite the rest of the desk once you are in.
       </p>
 
@@ -102,7 +102,7 @@ function SignUpCard() {
         </Field>
 
         {error ? (
-          <p role="alert" className="text-[12px] font-medium text-brick">
+          <p role="alert" className="text-[15px] font-medium text-brick">
             {error}
           </p>
         ) : null}
@@ -112,16 +112,16 @@ function SignUpCard() {
         </Button>
       </form>
 
-      <p className="mt-5 text-center text-[13px] text-ink-soft">
+      <p className="mt-5 text-center text-[15px] text-ink-2">
         <Link
           href="/signin"
-          className="font-semibold text-vermilion-deep hover:underline"
+          className="font-semibold text-vermilion-hover hover:underline"
         >
           Already have an account? Sign in
         </Link>
       </p>
 
-      <p className="mt-3 text-center text-[12px] text-ink-mute">
+      <p className="mt-3 text-center text-[15px] text-ink-3">
         Questions before you start? {brand.supportEmail}
       </p>
     </div>

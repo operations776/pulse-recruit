@@ -8,9 +8,9 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SearchInput, Select } from "@/components/ui/input";
 import { MatchScore } from "@/components/ui/match-score";
-import { Badge, Breadcrumb, CopyField, EmptyState } from "@/components/ui/misc";
+import { Badge, Breadcrumb, StatusChip, CopyField, EmptyState } from "@/components/ui/misc";
 import { Activity, freshnessFor } from "@/components/ui/pulse-dot";
-import { hueByIndex } from "@/lib/hue";
+
 import { NOW } from "@/lib/mock/seed";
 import { useStore } from "@/lib/store";
 import { relativeTime } from "@/lib/time";
@@ -115,12 +115,12 @@ export default function CandidatesPage() {
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-baseline gap-3">
-            <h1 className="font-display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
+            <h1 className="display text-[28px] tracking-[-0.01em]">
               Candidates
             </h1>
             <span className="flex items-baseline gap-1.5">
-              <span className="data-literal text-ink">{rows.length}</span>
-              <span className="micro-label text-ink-mute">
+              <span className="meta text-ink">{rows.length}</span>
+              <span className="legend text-ink-3">
                 {rows.length === 1 ? "result" : "results"}
               </span>
             </span>
@@ -130,7 +130,7 @@ export default function CandidatesPage() {
               button style. One tab stop, one focus ring, real navigation. */}
           <Link
             href="/pipeline"
-            className="inline-flex h-[34px] shrink-0 items-center justify-center gap-1.5 rounded-full bg-vermilion px-3.5 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-vermilion-deep"
+            className="cap inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-control bg-vermilion px-5 text-[15px] font-medium text-on-vermilion hover:bg-vermilion-hover [--edge:var(--color-vermilion-edge)]"
           >
             <Plus size={15} strokeWidth={2.25} />
             Add candidate
@@ -199,7 +199,7 @@ export default function CandidatesPage() {
             action={<Button onClick={clearFilters}>Clear filters</Button>}
           />
         ) : (
-          <div className="overflow-hidden rounded-sharp border border-rule bg-paper-white ">
+          <div className="overflow-hidden rounded-control border border-rule bg-sheet ">
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr>
@@ -207,7 +207,7 @@ export default function CandidatesPage() {
                     <th
                       key={label}
                       scope="col"
-                      className="micro-label sticky top-0 z-10 h-9 border-b border-rule bg-paper-white px-3 text-ink-mute"
+                      className="legend sticky top-0 z-10 h-9 border-b border-rule bg-sheet px-3 text-ink-3"
                     >
                       {label}
                     </th>
@@ -235,22 +235,30 @@ export default function CandidatesPage() {
                           <span className="flex min-w-0 flex-col">
                             <button
                               onClick={() => setOpenId(c.id)}
-                              className="truncate rounded text-left text-[13px] font-semibold leading-[18px] hover:text-vermilion-deep"
+                              className="truncate rounded text-left text-[15px] font-semibold leading-[18px] hover:text-vermilion-hover"
                             >
                               {c.name}
                             </button>
-                            <span className="truncate text-[12px] leading-4 text-ink-soft">
+                            <span className="truncate text-[15px] leading-4 text-ink-2">
                               {c.title}
                             </span>
                           </span>
                         </span>
                       </td>
-                      <td className="px-3 text-[13px]">{c.companyName}</td>
+                      <td className="px-3 text-[15px]">{c.companyName}</td>
                       <td className="px-3">
                         {stage ? (
-                          <Badge hue={hueByIndex(stage.position)}>
+                          <StatusChip
+                            tone={
+                              stage.position >= 3
+                                ? "on"
+                                : stage.position === 0
+                                  ? "off"
+                                  : "attention"
+                            }
+                          >
                             {stage.name}
-                          </Badge>
+                          </StatusChip>
                         ) : (
                           <Badge hue="neutral">No stage</Badge>
                         )}
@@ -269,14 +277,14 @@ export default function CandidatesPage() {
                             src={memberById(c.ownerId)?.avatarUrl}
                             size="sm"
                           />
-                          <span className="truncate text-[13px]">{ownerName}</span>
+                          <span className="truncate text-[15px]">{ownerName}</span>
                         </span>
                       </td>
                       <td className="px-3">
                         {c.match > 0 ? (
                           <MatchScore value={c.match} />
                         ) : (
-                          <span className="data-literal text-ink-mute">--</span>
+                          <span className="meta text-ink-3">--</span>
                         )}
                       </td>
                       <td className="px-3">

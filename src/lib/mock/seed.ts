@@ -122,6 +122,8 @@ const J5: Row[] = [
   ["Nadia Rahman", "nadia.rahman@corewave.com", "+44 7700 900118", "UX Writer", "Corewave", "London, UK", "£62,000", "Referral", 87, 0, 9, "u_4"],
 ];
 
+let refSeed = 401;
+
 function buildCandidates(): Candidate[] {
   const groups: [string, Row[]][] = [
     ["j_1", J1],
@@ -136,6 +138,7 @@ function buildCandidates(): Candidate[] {
       const [name, email, phone, title, companyName, location, salary, source, match, stage, hours, ownerId] = r;
       return {
         id: `cand_${jobId}_${i}`,
+        ref: `CAND-${String(refSeed++).padStart(4, "0")}`,
         orgId: ORG.id,
         jobId,
         stageId: `s_${jobId}_${stage}`,

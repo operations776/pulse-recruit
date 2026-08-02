@@ -48,21 +48,21 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="glass relative w-full max-w-[440px] rounded-sharp"
+        className="glass relative w-full max-w-[440px] rounded-control"
       >
         <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-5">
           <div>
-            <h2 className="font-display text-[18px] font-semibold leading-6">
+            <h2 className="display text-[18px] font-semibold leading-6">
               {title}
             </h2>
             {description ? (
-              <p className="mt-1 text-[13px] text-ink-soft">{description}</p>
+              <p className="mt-1 text-[15px] text-ink-2">{description}</p>
             ) : null}
           </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="rounded-sharp p-1 text-ink-mute hover:bg-paper hover:text-ink"
+            className="rounded-control p-1 text-ink-3 hover:bg-paper hover:text-ink"
           >
             <X size={16} strokeWidth={1.75} />
           </button>

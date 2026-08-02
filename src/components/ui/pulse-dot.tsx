@@ -21,7 +21,7 @@ export function PulseDot({ freshness }: { freshness: Freshness }) {
       className={`inline-block size-1.5 shrink-0 rounded-full ${
         freshness === "live"
           ? "bg-sage pulse-dot-live"
-          : "bg-ink-mute"
+          : "bg-ink-3"
       }`}
     />
   );
@@ -37,7 +37,7 @@ export function Activity({
   return (
     <span className="flex items-center gap-1.5">
       <PulseDot freshness={freshness} />
-      <span className="data-literal text-ink-mute">{label}</span>
+      <span className="meta text-ink-3">{label}</span>
     </span>
   );
 }

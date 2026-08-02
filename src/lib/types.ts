@@ -59,6 +59,10 @@ export type Stage = {
 export type Candidate = {
   id: string;
   orgId: string;
+  // DESIGN.md section 8: the human-facing record ID, e.g. CAND-0417. It does
+  // the wayfinding colour tabs would have done, and it survives being
+  // exported, printed and pasted into an email.
+  ref: string;
   jobId: string;
   stageId: string;
   name: string;

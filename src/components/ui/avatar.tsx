@@ -1,12 +1,11 @@
 import Image from "next/image";
-import { hueFor, hueText, hueTint, initials } from "@/lib/hue";
+import { AVATAR_TILE, initials } from "@/lib/hue";
 
-// DESIGN.md: a SQUARE tinted tile with wide-tracked mono initials. The square
-// avatar is part of the print language, a circle is not.
+// DESIGN.md section 5: rounded squares at --r-card, never circles.
 const sizes = {
-  sm: { box: "size-6", text: "text-[9px]", px: 24 },
-  md: { box: "size-8", text: "text-[10px]", px: 32 },
-  lg: { box: "size-10", text: "text-[11px]", px: 40 },
+  sm: { box: "size-8", text: "text-[13px]", px: 32 },
+  md: { box: "size-10", text: "text-[13px]", px: 40 },
+  lg: { box: "size-11", text: "text-[15px]", px: 44 },
 } as const;
 
 export function Avatar({
@@ -19,7 +18,6 @@ export function Avatar({
   size?: keyof typeof sizes;
 }) {
   const s = sizes[size];
-  const hue = hueFor(name);
 
   if (src) {
     return (
@@ -28,7 +26,7 @@ export function Avatar({
         alt={name}
         width={s.px}
         height={s.px}
-        className={`${s.box} shrink-0 rounded-sharp object-cover`}
+        className={`${s.box} shrink-0 rounded-card object-cover`}
       />
     );
   }
@@ -36,7 +34,7 @@ export function Avatar({
   return (
     <span
       aria-hidden
-      className={`${s.box} ${s.text} ${hueTint[hue]} ${hueText[hue]} flex shrink-0 items-center justify-center rounded-sharp font-mono font-medium tracking-[0.08em]`}
+      className={`${s.box} ${s.text} ${AVATAR_TILE} flex shrink-0 items-center justify-center rounded-card font-mono tracking-[0.08em]`}
     >
       {initials(name)}
     </span>
@@ -52,7 +50,7 @@ export function AvatarStack({ names, max = 3 }: { names: string[]; max?: number 
         </span>
       ))}
       {names.length > max ? (
-        <span className="data-literal flex size-6 items-center justify-center rounded-sharp bg-paper-deep text-[10px] text-ink-soft">
+        <span className="meta flex size-8 items-center justify-center rounded-card bg-well text-ink-2">
           +{names.length - max}
         </span>
       ) : null}

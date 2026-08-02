@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { hueBg, hueByIndex } from "@/lib/hue";
+
 import { useStore } from "@/lib/store";
 
 const nav = [
@@ -30,15 +30,15 @@ export function IconRail() {
   return (
     <nav
       aria-label="Primary"
-      className="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-rule bg-paper-white py-3"
+      className="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-rule bg-sheet py-3"
     >
       {workspaces.map((name, i) => (
         <button
           key={name}
           title={name}
           aria-label={name}
-          className={`flex size-8 items-center justify-center rounded-sharp text-[12px] font-bold text-white ${hueBg[hueByIndex(i)]} ${
-            i === 0 ? "ring-2 ring-ink ring-offset-2" : ""
+          className={`flex size-11 items-center justify-center rounded-card font-mono text-[15px] ${
+            i === 0 ? "bg-ink text-sheet" : "bg-well text-ink-2 hover:text-ink"
           }`}
         >
           {name[0]}
@@ -47,7 +47,7 @@ export function IconRail() {
       <button
         title="Add workspace"
         aria-label="Add workspace"
-        className="flex size-8 items-center justify-center rounded-sharp border border-dashed border-rule text-ink-mute hover:border-ink-mute hover:text-ink-soft"
+        className="flex size-8 items-center justify-center rounded-control border border-dashed border-rule text-ink-3 hover:border-ink-3 hover:text-ink-2"
       >
         <Plus size={15} strokeWidth={2} />
       </button>
@@ -63,10 +63,10 @@ export function IconRail() {
             title={label}
             aria-label={label}
             aria-current={active ? "page" : undefined}
-            className={`flex size-8 items-center justify-center rounded-sharp ${
+            className={`flex size-8 items-center justify-center rounded-control ${
               active
-                ? "bg-vermilion-wash text-vermilion-deep"
-                : "text-ink-mute hover:bg-paper hover:text-ink-soft"
+                ? "bg-well text-vermilion-hover"
+                : "text-ink-3 hover:bg-paper hover:text-ink-2"
             }`}
           >
             <Icon size={17} strokeWidth={1.75} />
@@ -78,10 +78,10 @@ export function IconRail() {
         href="/settings"
         title="Settings"
         aria-label="Settings"
-        className={`mt-auto flex size-8 items-center justify-center rounded-sharp ${
+        className={`mt-auto flex size-8 items-center justify-center rounded-control ${
           pathname.startsWith("/settings")
-            ? "bg-vermilion-wash text-vermilion-deep"
-            : "text-ink-mute hover:bg-paper hover:text-ink-soft"
+            ? "bg-well text-vermilion-hover"
+            : "text-ink-3 hover:bg-paper hover:text-ink-2"
         }`}
       >
         <Settings size={17} strokeWidth={1.75} />

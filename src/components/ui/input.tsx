@@ -3,21 +3,20 @@
 import { Search } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 
-// Width is deliberately NOT in the base. Baking w-full in here forced every
-// inline filter select to full width and stacked the filter bar vertically.
-// Callers own their width; the default suits form fields.
+// DESIGN.md 6b and 9: inputs are inset wells, no outer border, 48px tall,
+// 17px text, focus ring inset.
 const base =
-  "rounded-sharp border border-rule bg-paper-white text-[13px] text-ink placeholder:text-ink-mute focus:border-vermilion focus:outline-none";
+  "well rounded-control text-[17px] text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-vermilion";
 
 export function Input({ className = "w-full", ...props }: ComponentProps<"input">) {
-  return <input className={`${base} h-[34px] px-3 ${className}`} {...props} />;
+  return <input className={`${base} h-12 px-4 ${className}`} {...props} />;
 }
 
 export function Textarea({
   className = "w-full",
   ...props
 }: ComponentProps<"textarea">) {
-  return <textarea className={`${base} px-3 py-2 leading-5 ${className}`} {...props} />;
+  return <textarea className={`${base} px-4 py-3 leading-[1.6] ${className}`} {...props} />;
 }
 
 export function Select({
@@ -26,26 +25,23 @@ export function Select({
   ...props
 }: ComponentProps<"select"> & { children: ReactNode }) {
   return (
-    <select className={`${base} h-[34px] px-2.5 ${className}`} {...props}>
+    <select className={`${base} h-12 px-3 ${className}`} {...props}>
       {children}
     </select>
   );
 }
 
-export function SearchInput({
-  className = "",
-  ...props
-}: ComponentProps<"input">) {
+export function SearchInput({ className = "", ...props }: ComponentProps<"input">) {
   return (
     <span className={`relative inline-flex items-center ${className}`}>
       <Search
-        size={14}
-        strokeWidth={1.75}
-        className="pointer-events-none absolute left-3 text-ink-mute"
+        size={18}
+        strokeWidth={2}
+        className="pointer-events-none absolute left-3.5 text-ink-3"
       />
       <input
         type="search"
-        className={`${base} h-[34px] w-full rounded-full pl-8 pr-3`}
+        className={`${base} h-12 w-full pl-11 pr-4`}
         {...props}
       />
     </span>
@@ -62,10 +58,10 @@ export function Field({
   hint?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="micro-label text-ink-soft">{label}</span>
+    <label className="flex flex-col gap-2">
+      <span className="legend text-ink-2">{label}</span>
       {children}
-      {hint ? <span className="text-[12px] text-ink-mute">{hint}</span> : null}
+      {hint ? <span className="text-[15px] text-ink-2">{hint}</span> : null}
     </label>
   );
 }

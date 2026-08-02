@@ -8,7 +8,7 @@ import { Field, Input, SearchInput, Select } from "@/components/ui/input";
 import { Badge, Breadcrumb, EmptyState } from "@/components/ui/misc";
 import { Dialog } from "@/components/ui/overlay";
 import { useToast } from "@/components/ui/toast";
-import { hueFor, hueText, hueTint } from "@/lib/hue";
+
 import { useStore } from "@/lib/store";
 import type { CompanyType } from "@/lib/types";
 
@@ -92,12 +92,12 @@ export default function CompaniesPage() {
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-baseline gap-3">
-            <h1 className="font-display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
+            <h1 className="display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
               Companies
             </h1>
             <span className="flex items-baseline gap-1.5">
-              <span className="data-literal text-ink">{rows.length}</span>
-              <span className="micro-label text-ink-mute">
+              <span className="meta text-ink">{rows.length}</span>
+              <span className="legend text-ink-3">
                 {rows.length === 1 ? "result" : "results"}
               </span>
             </span>
@@ -116,14 +116,14 @@ export default function CompaniesPage() {
                 key={t}
                 onClick={() => setTab(t)}
                 aria-pressed={tab === t}
-                className={`border-b-2 px-3 pb-2.5 text-[13px] ${
+                className={`border-b-2 px-3 pb-2.5 text-[15px] ${
                   tab === t
-                    ? "border-vermilion font-semibold text-vermilion-deep"
-                    : "border-transparent text-ink-soft hover:text-ink"
+                    ? "border-vermilion font-semibold text-vermilion-hover"
+                    : "border-transparent text-ink-2 hover:text-ink"
                 }`}
               >
                 {t}
-                <span className="data-literal ml-1.5 text-[11px] text-ink-mute">
+                <span className="meta ml-1.5 text-[15px] text-ink-3">
                   {counts[t]}
                 </span>
               </button>
@@ -153,19 +153,19 @@ export default function CompaniesPage() {
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {rows.map((company) => {
-              const hue = hueFor(company.id);
+              
               const owner = memberById(company.ownerId);
               const ownerName = owner?.name ?? "Unassigned";
 
               return (
                 <article
                   key={company.id}
-                  className="rounded-sharp border border-rule bg-paper-white p-4 "
+                  className="rounded-control border border-rule bg-sheet p-4 "
                 >
                   <div className="flex items-start gap-3">
                     <span
                       aria-hidden
-                      className={`flex size-9 shrink-0 items-center justify-center rounded-sharp text-[13px] font-semibold ${hueTint[hue]} ${hueText[hue]}`}
+                      className={`flex size-9 shrink-0 items-center justify-center rounded-control text-[15px] font-semibold bg-well text-ink-2`}
                     >
                       {company.name.slice(0, 1).toUpperCase()}
                     </span>
@@ -177,7 +177,7 @@ export default function CompaniesPage() {
                         href={`https://${normalizeDomain(company.domain)}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="data-literal block truncate text-ink-soft hover:text-vermilion-deep hover:underline"
+                        className="meta block truncate text-ink-2 hover:text-vermilion-hover hover:underline"
                       >
                         {company.domain}
                       </a>
@@ -186,18 +186,18 @@ export default function CompaniesPage() {
 
                   <dl className="mt-3.5 flex items-start gap-6">
                     <div className="min-w-0">
-                      <dt className="micro-label text-ink-mute">Location</dt>
-                      <dd className="mt-0.5 truncate text-[13px]">
+                      <dt className="legend text-ink-3">Location</dt>
+                      <dd className="mt-0.5 truncate text-[15px]">
                         {company.location || "Not recorded"}
                       </dd>
                     </div>
                     <div className="min-w-0">
-                      <dt className="micro-label text-ink-mute">Headcount</dt>
+                      <dt className="legend text-ink-3">Headcount</dt>
                       <dd className="mt-0.5 truncate">
                         {company.headcount ? (
-                          <span className="data-literal">{company.headcount}</span>
+                          <span className="meta">{company.headcount}</span>
                         ) : (
-                          <span className="text-[13px] text-ink-mute">
+                          <span className="text-[15px] text-ink-3">
                             Not recorded
                           </span>
                         )}
@@ -208,7 +208,7 @@ export default function CompaniesPage() {
                   <div className="mt-3.5 flex items-center justify-between gap-3 border-t border-rule pt-3">
                     <span className="flex min-w-0 items-center gap-2">
                       <Avatar name={ownerName} src={owner?.avatarUrl} size="sm" />
-                      <span className="truncate text-[13px] text-ink-soft">
+                      <span className="truncate text-[15px] text-ink-2">
                         {ownerName}
                       </span>
                     </span>
@@ -356,7 +356,7 @@ function AddCompanyDialog({
         </div>
 
         {error ? (
-          <p role="alert" className="text-[12px] font-medium text-brick">
+          <p role="alert" className="text-[15px] font-medium text-brick">
             {error}
           </p>
         ) : null}

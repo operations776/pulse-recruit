@@ -307,6 +307,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           type: "add_candidate",
           candidate: {
             id: nextId("cand"),
+            ref: `CAND-${String(900 + sequence).padStart(4, "0")}`,
             orgId: ORG.id,
             jobId: input.jobId,
             stageId: input.stageId,

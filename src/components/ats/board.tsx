@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/input";
 import { Breadcrumb } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
-import { hueBg, hueByIndex } from "@/lib/hue";
+
 import { useStore } from "@/lib/store";
 import { formatShortDate } from "@/lib/time";
 import type { Job } from "@/lib/types";
@@ -70,36 +70,36 @@ export function Board({ job }: { job: Job }) {
 
   return (
     <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-paper">
-      <div className="border-b border-rule-strong px-6 py-5">
+      <div className="border-b border-rule px-6 py-5">
         <Breadcrumb trail={["Recruitment", "Roles", job.code]} />
 
-        <h1 className="display mt-2 text-[26px] leading-7">{job.title}</h1>
+        <h1 className="display mt-2 text-[28px]">{job.title}</h1>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-8 gap-y-2">
-          <span className="text-[12px] text-ink-soft">
+          <span className="text-[15px] text-ink-2">
             Talent pool:{" "}
             <span className="font-medium text-ink">{job.talentPool}</span>
           </span>
-          <span className="text-[12px] text-ink-soft">
+          <span className="text-[15px] text-ink-2">
             Hired:{" "}
-            <span className="data-literal text-ink">
+            <span className="meta text-ink">
               {job.hired}/{job.target}
             </span>
           </span>
-          <span className="text-[12px] text-ink-soft">
+          <span className="text-[15px] text-ink-2">
             Open:{" "}
-            <span className="data-literal text-ink">
+            <span className="meta text-ink">
               {formatShortDate(job.opensAt)} - {formatShortDate(job.closesAt)}
             </span>
           </span>
-          <span className="flex items-center gap-2 text-[12px] text-ink-soft">
+          <span className="flex items-center gap-2 text-[15px] text-ink-2">
             Assigned to:
             <AvatarStack
               names={job.assigneeIds.map((id) => memberById(id)?.name ?? "Unknown")}
             />
             <button
               aria-label="Assign someone"
-              className="flex size-6 items-center justify-center rounded-sharp border border-dashed border-rule text-ink-mute hover:border-ink-mute hover:text-ink-soft"
+              className="flex size-6 items-center justify-center rounded-control border border-dashed border-rule text-ink-3 hover:border-ink-3 hover:text-ink-2"
             >
               <Plus size={12} strokeWidth={2} />
             </button>
@@ -108,16 +108,16 @@ export function Board({ job }: { job: Job }) {
 
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rule-strong pr-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rule pr-6">
         <div className="flex items-center">
           {TABS.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`btn-label -ml-px border border-y-0 border-rule-strong px-3.5 py-2.5 first:ml-0 ${
+              className={`text-[15px] font-medium -ml-px border border-y-0 border-rule px-3.5 py-2.5 first:ml-0 ${
                 tab === t
-                  ? "bg-ink text-paper-white"
-                  : "text-ink-soft hover:bg-paper-deep hover:text-ink"
+                  ? "bg-ink text-sheet"
+                  : "text-ink-2 hover:bg-well hover:text-ink"
               }`}
             >
               {t}
@@ -141,9 +141,10 @@ export function Board({ job }: { job: Job }) {
       </div>
 
       {tab === "Candidates" ? (
-        <div className="flex flex-1 pb-4">
-          {stages.map((stage, i) => {
-            const hue = hueByIndex(i);
+        <div className="p-5">
+          <div className="overflow-hidden rounded-shell border border-rule bg-sheet">
+          <div className="flex">
+          {stages.map((stage) => {
             const inStage = filtered.filter((c) => c.stageId === stage.id);
             const isOver = overStage === stage.id;
 
@@ -156,19 +157,18 @@ export function Board({ job }: { job: Job }) {
                 }}
                 onDragLeave={() => setOverStage((s) => (s === stage.id ? null : s))}
                 onDrop={() => drop(stage.id, stage.name)}
-                className={`-ml-px flex w-72 shrink-0 flex-col border-x border-rule-strong transition-colors first:ml-0 ${
-                  isOver ? "bg-vermilion-wash" : ""
+                className={`-ml-px flex w-[300px] shrink-0 flex-col border-l border-rule first:ml-0 first:border-l-0 ${
+                  isOver ? "bg-well" : ""
                 }`}
               >
-                <div className="flex items-center gap-2 border-b border-rule-strong bg-paper-deep px-3 py-2.5">
-                  <span className={`size-2 rounded-sharp ${hueBg[hue]}`} />
-                  <span className="micro-label flex-1">{stage.name}</span>
-                  <span className="data-literal text-ink-soft">
+                <div className="flex items-center gap-3 border-b border-rule px-4 py-3">
+                  <span className="legend flex-1 text-ink-2">{stage.name}</span>
+                  <span className="meta text-ink-2">
                     {String(inStage.length).padStart(2, "0")}
                   </span>
                 </div>
 
-                <div className="flex flex-col gap-2 p-2">
+                <div className="flex flex-col gap-3 p-4">
                   {inStage.map((c) => (
                     <CandidateCard
                       key={c.id}
@@ -179,7 +179,7 @@ export function Board({ job }: { job: Job }) {
                   ))}
 
                   {inStage.length === 0 ? (
-                    <p className="rounded-sharp border border-dashed border-rule px-3 py-6 text-center text-[12px] text-ink-mute">
+                    <p className="rounded-control border border-dashed border-rule px-3 py-6 text-center text-[15px] text-ink-3">
                       {query ? "No matches here" : "Drop a candidate here"}
                     </p>
                   ) : null}
@@ -188,9 +188,11 @@ export function Board({ job }: { job: Job }) {
             );
           })}
         </div>
+        </div>
+        </div>
       ) : (
         <div className="px-6 py-10">
-          <p className="text-[13px] text-ink-soft">
+          <p className="text-[15px] text-ink-2">
             {tab} is not built yet. The candidate pipeline is the focus of week
             one.
           </p>

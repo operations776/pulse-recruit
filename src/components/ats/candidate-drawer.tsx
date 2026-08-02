@@ -54,10 +54,10 @@ export function CandidateDrawer({
         <div className="flex min-w-0 gap-3">
           <Avatar name={candidate.name} src={candidate.avatarUrl} size="lg" />
           <div className="min-w-0">
-            <h2 className="truncate font-display text-[18px] font-semibold leading-6">
+            <h2 className="truncate display text-[18px] font-semibold leading-6">
               {candidate.name}
             </h2>
-            <p className="truncate text-[13px] text-ink-soft">
+            <p className="truncate text-[15px] text-ink-2">
               {candidate.title}
               {candidate.companyName ? ` at ${candidate.companyName}` : ""}
             </p>
@@ -74,7 +74,7 @@ export function CandidateDrawer({
         <button
           onClick={onClose}
           aria-label="Close"
-          className="rounded-sharp p-1 text-ink-mute hover:bg-paper hover:text-ink"
+          className="rounded-control p-1 text-ink-3 hover:bg-paper hover:text-ink"
         >
           <X size={16} strokeWidth={1.75} />
         </button>
@@ -85,15 +85,15 @@ export function CandidateDrawer({
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`border-b-2 px-3 pb-2.5 pt-2 text-[13px] capitalize ${
+            className={`border-b-2 px-3 pb-2.5 pt-2 text-[15px] capitalize ${
               tab === t
-                ? "border-vermilion font-semibold text-vermilion-deep"
-                : "border-transparent text-ink-soft hover:text-ink"
+                ? "border-vermilion font-semibold text-vermilion-hover"
+                : "border-transparent text-ink-2 hover:text-ink"
             }`}
           >
             {t}
             {t === "notes" && notes.length > 0 ? (
-              <span className="data-literal ml-1.5 text-[11px] text-ink-mute">
+              <span className="meta ml-1.5 text-[15px] text-ink-3">
                 {notes.length}
               </span>
             ) : null}
@@ -105,10 +105,10 @@ export function CandidateDrawer({
         {tab === "profile" ? (
           <div className="flex flex-col gap-5">
             <section>
-              <h3 className="micro-label mb-2.5 text-ink-soft">Contact</h3>
+              <h3 className="legend mb-2.5 text-ink-2">Contact</h3>
               <dl className="flex flex-col gap-2.5">
                 <div className="flex items-baseline gap-3">
-                  <dt className="w-20 shrink-0 text-[12px] text-ink-mute">Email</dt>
+                  <dt className="w-20 shrink-0 text-[15px] text-ink-3">Email</dt>
                   <dd className="min-w-0">
                     <CopyField
                       value={candidate.email}
@@ -118,26 +118,26 @@ export function CandidateDrawer({
                   </dd>
                 </div>
                 <div className="flex items-baseline gap-3">
-                  <dt className="w-20 shrink-0 text-[12px] text-ink-mute">Phone</dt>
+                  <dt className="w-20 shrink-0 text-[15px] text-ink-3">Phone</dt>
                   <dd className="min-w-0">
                     <CopyField value={candidate.phone} label="phone" />
                   </dd>
                 </div>
                 <div className="flex items-baseline gap-3">
-                  <dt className="w-20 shrink-0 text-[12px] text-ink-mute">LinkedIn</dt>
+                  <dt className="w-20 shrink-0 text-[15px] text-ink-3">LinkedIn</dt>
                   <dd className="min-w-0">
                     {candidate.linkedinUrl ? (
                       <a
                         href={candidate.linkedinUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-1.5 text-[13px] text-vermilion-deep hover:underline"
+                        className="flex items-center gap-1.5 text-[15px] text-vermilion-hover hover:underline"
                       >
                         <ExternalLink size={13} strokeWidth={1.75} />
                         Open profile
                       </a>
                     ) : (
-                      <span className="text-[13px] text-ink-mute">Not provided</span>
+                      <span className="text-[15px] text-ink-3">Not provided</span>
                     )}
                   </dd>
                 </div>
@@ -145,8 +145,8 @@ export function CandidateDrawer({
             </section>
 
             <section>
-              <h3 className="micro-label mb-2.5 text-ink-soft">Details</h3>
-              <dl className="flex flex-col gap-2.5 text-[13px]">
+              <h3 className="legend mb-2.5 text-ink-2">Details</h3>
+              <dl className="flex flex-col gap-2.5 text-[15px]">
                 {[
                   ["Location", candidate.location, MapPin],
                   ["Salary", candidate.salary, null],
@@ -155,7 +155,7 @@ export function CandidateDrawer({
                   ["Added", formatDate(candidate.createdAt), null],
                 ].map(([label, value]) => (
                   <div key={label as string} className="flex items-baseline gap-3">
-                    <dt className="w-20 shrink-0 text-[12px] text-ink-mute">
+                    <dt className="w-20 shrink-0 text-[15px] text-ink-3">
                       {label as string}
                     </dt>
                     <dd className="text-ink">
@@ -167,7 +167,7 @@ export function CandidateDrawer({
             </section>
 
             <section>
-              <h3 className="micro-label mb-2.5 text-ink-soft">Move to stage</h3>
+              <h3 className="legend mb-2.5 text-ink-2">Move to stage</h3>
               <div className="flex flex-wrap gap-1.5">
                 {stages.map((s) => (
                   <button
@@ -177,10 +177,10 @@ export function CandidateDrawer({
                       moveCandidate(candidate.id, s.id);
                       notify(`${candidate.name} moved to ${s.name}`);
                     }}
-                    className={`h-8 rounded-full border px-3 text-[12px] font-medium ${
+                    className={`h-8 rounded-full border px-3 text-[15px] font-medium ${
                       s.id === candidate.stageId
-                        ? "border-vermilion bg-vermilion-wash text-vermilion-deep"
-                        : "border-rule hover:border-vermilion hover:bg-vermilion-wash"
+                        ? "border-vermilion bg-well text-vermilion-hover"
+                        : "border-rule hover:border-vermilion hover:bg-well"
                     }`}
                   >
                     {s.name}
@@ -194,7 +194,7 @@ export function CandidateDrawer({
         {tab === "notes" ? (
           <div className="flex flex-col gap-4">
             {notes.length === 0 ? (
-              <p className="text-[13px] text-ink-soft">
+              <p className="text-[15px] text-ink-2">
                 No notes yet. Add the first one below.
               </p>
             ) : (
@@ -203,14 +203,14 @@ export function CandidateDrawer({
                   <Avatar name={memberById(n.authorId)?.name ?? "Unknown"} size="sm" />
                   <div className="min-w-0 flex-1">
                     <p className="flex items-baseline gap-2">
-                      <span className="text-[13px] font-semibold">
+                      <span className="text-[15px] font-semibold">
                         {memberById(n.authorId)?.name}
                       </span>
-                      <span className="data-literal text-[11px] text-ink-mute">
+                      <span className="meta text-[15px] text-ink-3">
                         {relativeTime(n.createdAt)}
                       </span>
                     </p>
-                    <p className="mt-1 text-[13px] leading-5 text-ink-soft">
+                    <p className="mt-1 text-[15px] leading-5 text-ink-2">
                       {n.body}
                     </p>
                   </div>
@@ -226,15 +226,15 @@ export function CandidateDrawer({
               <li key={e.id} className="flex gap-2.5">
                 <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-rule" />
                 <div className="min-w-0">
-                  <p className="text-[13px]">{e.summary}</p>
-                  <p className="data-literal text-[11px] text-ink-mute">
+                  <p className="text-[15px]">{e.summary}</p>
+                  <p className="meta text-[15px] text-ink-3">
                     {memberById(e.actorId)?.name} · {relativeTime(e.createdAt)}
                   </p>
                 </div>
               </li>
             ))}
             {events.length === 0 ? (
-              <p className="text-[13px] text-ink-soft">Nothing recorded yet.</p>
+              <p className="text-[15px] text-ink-2">Nothing recorded yet.</p>
             ) : null}
           </ol>
         ) : null}

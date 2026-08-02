@@ -1,14 +1,16 @@
 import { ThumbsUp } from "lucide-react";
 
-// DESIGN.md: a score, never a progress bar, never shown without a value.
+// Vermilion is a verb: a score is not clickable, so it is never vermilion.
+// Strong matches read teal ("on"), the rest are plain ink.
 export function MatchScore({ value }: { value: number }) {
-  const tone =
-    value >= 85 ? "text-vermilion" : value >= 60 ? "text-ink-soft" : "text-ink-mute";
-
+  const strong = value >= 85;
   return (
-    <span className={`flex items-center gap-1 ${tone}`} title="Match score">
-      <ThumbsUp size={12} strokeWidth={2} />
-      <span className="data-literal text-inherit">{value}%</span>
+    <span
+      className={`flex items-center gap-1.5 ${strong ? "text-teal-text" : "text-ink-2"}`}
+      title={`Match score ${value} percent`}
+    >
+      <ThumbsUp size={15} strokeWidth={2} />
+      <span className="meta text-inherit">{value}%</span>
     </span>
   );
 }

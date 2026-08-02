@@ -1,32 +1,36 @@
 import type { ComponentProps } from "react";
 
-// DESIGN.md: square (2px), uppercase mono label. No pills.
+// DESIGN.md section 9. Keycap edge, sentence case never uppercase, 48px for
+// primary and 44px minimum for everything else.
 const variants = {
   primary:
-    "bg-vermilion text-paper-white border border-vermilion hover:bg-vermilion-deep hover:border-vermilion-deep",
+    "cap bg-vermilion text-on-vermilion hover:bg-vermilion-hover [--edge:var(--color-vermilion-edge)]",
   secondary:
-    "border border-rule-strong bg-transparent text-ink hover:bg-ink hover:text-paper-white",
-  ghost: "border border-transparent text-ink-soft hover:text-ink hover:border-rule",
-  danger: "border border-brick text-brick hover:bg-brick hover:text-paper-white",
+    "cap border border-ink bg-transparent text-ink hover:bg-well [--edge:var(--color-ink)]",
+  ghost: "text-ink-2 hover:bg-well hover:text-ink",
+  danger:
+    "cap border border-red bg-transparent text-red hover:bg-red-bg [--edge:var(--color-red)]",
 } as const;
 
 const sizes = {
-  md: "h-8 px-3.5",
-  sm: "h-[26px] px-2.5",
+  // 48px for primary actions, 44px is the floor for everything else.
+  lg: "h-12 px-5",
+  md: "h-11 px-4",
 } as const;
 
 export function Button({
   variant = "secondary",
-  size = "md",
+  size,
   className = "",
   ...props
 }: ComponentProps<"button"> & {
   variant?: keyof typeof variants;
   size?: keyof typeof sizes;
 }) {
+  const resolved = size ?? (variant === "primary" ? "lg" : "md");
   return (
     <button
-      className={`btn-label inline-flex shrink-0 items-center justify-center gap-1.5 rounded-sharp transition-colors duration-150 disabled:opacity-40 ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-control text-[15px] font-medium disabled:opacity-40 ${variants[variant]} ${sizes[resolved]} ${className}`}
       {...props}
     />
   );

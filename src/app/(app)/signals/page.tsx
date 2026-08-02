@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/misc";
 import { PulseDot, freshnessFor } from "@/components/ui/pulse-dot";
 import { useToast } from "@/components/ui/toast";
-import { hueText, hueTint, type Hue } from "@/lib/hue";
+
 import { NOW } from "@/lib/mock/seed";
 import { useStore } from "@/lib/store";
 import { relativeTime } from "@/lib/time";
@@ -25,13 +25,13 @@ import type { SignalKind } from "@/lib/types";
 // hashed, so two kinds can never collide.
 const KIND: Record<
   SignalKind,
-  { label: string; hue: Hue; icon: typeof Briefcase }
+  { label: string; icon: typeof Briefcase }
 > = {
-  funding: { label: "Funding", hue: "vermilion", icon: Banknote },
-  promotion: { label: "Promotion", hue: "mustard", icon: TrendingUp },
-  open_role: { label: "Open role", hue: "teal", icon: Briefcase },
-  leadership: { label: "Leadership", hue: "plum", icon: UserRoundCog },
-  expansion: { label: "Expansion", hue: "sage", icon: Globe2 },
+  funding: { label: "Funding", icon: Banknote },
+  promotion: { label: "Promotion", icon: TrendingUp },
+  open_role: { label: "Open role", icon: Briefcase },
+  leadership: { label: "Leadership", icon: UserRoundCog },
+  expansion: { label: "Expansion", icon: Globe2 },
 };
 
 const FILTERS = [
@@ -57,10 +57,10 @@ export default function SignalsPage() {
   return (
     <main className="flex min-w-0 flex-1 overflow-hidden bg-paper">
       <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
-        <header className="border-b border-rule-strong px-6 py-5">
-          <p className="micro-label text-vermilion">Dream 100 watchlist</p>
-          <h1 className="display mt-2 text-[26px] leading-7">Signals</h1>
-          <p className="mt-2 max-w-[62ch] text-[13px] text-ink-soft">
+        <header className="border-b border-rule px-6 py-5">
+          <p className="legend text-vermilion">Dream 100 watchlist</p>
+          <h1 className="display mt-2 text-[28px]">Signals</h1>
+          <p className="mt-2 max-w-[62ch] text-[15px] text-ink-2">
             What the companies you are chasing did this week. Every signal is a
             reason to call someone today.
           </p>
@@ -72,22 +72,22 @@ export default function SignalsPage() {
               ["Companies moving", `${moving}/${watched.length}`],
             ].map(([label, value]) => (
               <div key={label} className="flex items-baseline gap-2">
-                <dt className="micro-label text-ink-mute">{label}</dt>
+                <dt className="legend text-ink-3">{label}</dt>
                 <dd className="display text-[15px] leading-5">{value}</dd>
               </div>
             ))}
           </dl>
         </header>
 
-        <nav className="flex flex-wrap items-center border-b border-rule-strong">
+        <nav className="flex flex-wrap items-center border-b border-rule">
           {FILTERS.map((f) => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`btn-label -ml-px border border-rule-strong px-3.5 py-2.5 first:ml-0 ${
+              className={`text-[15px] font-medium -ml-px border border-rule px-3.5 py-2.5 first:ml-0 ${
                 filter === f.key
-                  ? "bg-ink text-paper-white"
-                  : "bg-transparent text-ink-soft hover:bg-paper-deep hover:text-ink"
+                  ? "bg-ink text-sheet"
+                  : "bg-transparent text-ink-2 hover:bg-well hover:text-ink"
               }`}
             >
               {f.label}
@@ -102,23 +102,23 @@ export default function SignalsPage() {
             return (
               <article
                 key={signal.id}
-                className="flex gap-4 border-b border-rule px-6 py-5 hover:bg-paper-deep/60"
+                className="flex gap-4 border-b border-rule px-6 py-5 hover:bg-well/60"
               >
                 <span
-                  className={`flex size-9 shrink-0 items-center justify-center rounded-sharp ${hueTint[kind.hue]}`}
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-control bg-well`}
                 >
-                  <Icon size={17} strokeWidth={1.75} className={hueText[kind.hue]} />
+                  <Icon size={17} strokeWidth={1.75} className="text-ink-2" />
                 </span>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                    <span className={`micro-label ${hueText[kind.hue]}`}>
+                    <span className={`legend text-ink-2`}>
                       {kind.label}
                     </span>
-                    <span className="text-[13px] font-semibold">
+                    <span className="text-[15px] font-semibold">
                       {signal.companyName}
                     </span>
-                    <span className="data-literal text-ink-mute">
+                    <span className="meta text-ink-3">
                       {signal.domain}
                     </span>
                   </div>
@@ -126,10 +126,10 @@ export default function SignalsPage() {
                   <h2 className="mt-1.5 text-[15px] font-semibold leading-5">
                     {signal.headline}
                   </h2>
-                  <p className="mt-1 max-w-[70ch] text-[13px] leading-5 text-ink-soft">
+                  <p className="mt-1 max-w-[70ch] text-[15px] leading-5 text-ink-2">
                     {signal.detail}
                   </p>
-                  <p className="data-literal mt-2 text-ink-mute">
+                  <p className="meta mt-2 text-ink-3">
                     Detected {relativeTime(signal.detectedAt)} ago
                   </p>
                 </div>
@@ -137,7 +137,7 @@ export default function SignalsPage() {
                 <div className="flex shrink-0 flex-col items-end gap-2">
                   <Button
                     variant="primary"
-                    size="sm"
+
                     onClick={() =>
                       notify(`Outreach draft queued for ${signal.companyName}`)
                     }
@@ -147,7 +147,7 @@ export default function SignalsPage() {
                   </Button>
                   <Button
                     variant="ghost"
-                    size="sm"
+
                     onClick={() => {
                       dismissSignal(signal.id);
                       notify(`Dismissed the ${signal.companyName} signal`);
@@ -184,15 +184,15 @@ export default function SignalsPage() {
 
       <aside
         aria-label="Dream 100"
-        className="flex w-80 shrink-0 flex-col border-l border-rule-strong bg-paper-white"
+        className="flex w-80 shrink-0 flex-col border-l border-rule bg-sheet"
       >
-        <div className="flex items-center justify-between border-b border-rule-strong px-4 py-3.5">
+        <div className="flex items-center justify-between border-b border-rule px-4 py-3.5">
           <div>
-            <p className="micro-label text-ink-mute">The list</p>
+            <p className="legend text-ink-3">The list</p>
             <p className="display mt-1 text-[15px] leading-5">Dream 100</p>
           </div>
           <Button
-            size="sm"
+
             onClick={() => notify("Company import is not wired up yet")}
           >
             <Plus size={13} strokeWidth={2.25} />
@@ -209,20 +209,20 @@ export default function SignalsPage() {
             return (
               <button
                 key={company.id}
-                className="flex items-center gap-3 border-b border-rule px-4 py-3 text-left hover:bg-paper-deep"
+                className="flex items-center gap-3 border-b border-rule px-4 py-3 text-left hover:bg-well"
               >
                 <Avatar name={company.name} size="md" />
 
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    <span className="truncate text-[13px] font-semibold">
+                    <span className="truncate text-[15px] font-semibold">
                       {company.name}
                     </span>
-                    <span className="micro-label text-ink-mute">
+                    <span className="legend text-ink-3">
                       T{company.tier}
                     </span>
                   </span>
-                  <span className="data-literal block truncate text-ink-mute">
+                  <span className="meta block truncate text-ink-3">
                     {company.industry}
                   </span>
                 </span>
@@ -234,11 +234,11 @@ export default function SignalsPage() {
                     />
                   ) : null}
                   {count > 0 ? (
-                    <span className="data-literal bg-vermilion px-1.5 text-paper-white">
+                    <span className="meta bg-vermilion px-1.5 text-sheet">
                       {count}
                     </span>
                   ) : (
-                    <span className="data-literal text-ink-mute">--</span>
+                    <span className="meta text-ink-3">--</span>
                   )}
                 </span>
               </button>
