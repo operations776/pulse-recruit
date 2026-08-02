@@ -233,12 +233,18 @@ Since colour is reserved for roles, identity runs through two channels:
 1. **Masthead lockup.** Each module has its own Archivo Black uppercase wordmark, fixed in the same position, always visible.
 2. **Record ID prefix.** Every object in the system carries a mono ID in the top-right of its card.
 
-| Module | Wordmark | Prefix |
-|---|---|---|
-| Applicant tracking | TALENT | `CAND-0417` |
-| Outbound | OUTBOUND | `SEQ-0092` |
-| Operations | OPS | `TASK-1180` |
-| Content engine | CONTENT | `POST-0031` |
+One module per RecruiterGTM pillar, so the shell and the offer tell the same story.
+
+| Pillar | Module | Wordmark | Prefix |
+|---|---|---|---|
+| 1. Offer productization | BD engine, market intelligence | MARKET | `BD-0044` |
+| 2. AI operations manager | Morning brief and tasks | OPS | `TASK-1180` |
+| 3. Multichannel outbound | Signals, sequences, mailboxes | OUTBOUND | `SEQ-0092` |
+| 4. ATS | Pipeline, candidates, companies | TALENT | `CAND-0417` |
+| 5. Content | Planner and skills | CONTENT | `POST-0031` |
+
+The masthead names the pillar as well as the module, so an unbuilt area is
+visibly unbuilt rather than hidden.
 
 The prefix does the wayfinding that colour tabs would have done, and it survives being exported, printed, and pasted into an email. That is why it beats colour here.
 
