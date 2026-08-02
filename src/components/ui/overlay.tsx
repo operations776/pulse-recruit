@@ -56,7 +56,7 @@ export function Dialog({
               {title}
             </h2>
             {description ? (
-              <p className="mt-1 text-[15px] text-ink-2">{description}</p>
+              <p className="mt-1 text-[12px] text-ink-2">{description}</p>
             ) : null}
           </div>
           <button

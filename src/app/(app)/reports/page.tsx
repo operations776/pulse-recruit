@@ -21,10 +21,10 @@ function StatTile({
   return (
     <div className="rounded-control border border-rule bg-sheet p-4">
       <p className="legend text-ink-2">{label}</p>
-      <p className="mt-2 font-mono text-[24px] font-semibold leading-[30px] tabular-nums">
+      <p className="mt-2 font-mono text-[21px] font-semibold leading-[30px] tabular-nums">
         {value}
       </p>
-      <p className="mt-1 text-[15px] leading-4 text-ink-3">{sub}</p>
+      <p className="mt-1 text-[12px] leading-4 text-ink-3">{sub}</p>
     </div>
   );
 }
@@ -84,7 +84,7 @@ export default function ReportsPage() {
       <div className="px-6 pt-4">
         <Breadcrumb trail={["Recruitment", "Reports"]} />
 
-        <h1 className="display mt-2 text-[22px] tracking-[-0.01em]">
+        <h1 className="display mt-2 text-[18px] tracking-[-0.01em]">
           Reports
         </h1>
       </div>
@@ -118,7 +118,7 @@ export default function ReportsPage() {
             <h2 className="text-[18px] font-semibold leading-[22px]">
               Pipeline by stage
             </h2>
-            <p className="mt-0.5 text-[15px] leading-4 text-ink-2">
+            <p className="mt-0.5 text-[12px] leading-4 text-ink-2">
               Candidates at each stage, counted across every role.
             </p>
           </div>
@@ -126,7 +126,7 @@ export default function ReportsPage() {
           <div className="flex flex-col gap-3 px-4 py-4">
             {stageCounts.map((stage) => (
               <div key={stage.name} className="flex items-center gap-3">
-                <span className="w-24 shrink-0 text-[15px] leading-[18px]">
+                <span className="w-24 shrink-0 text-[12px] leading-[18px]">
                   {stage.name}
                 </span>
                 <span className="h-2 min-w-0 flex-1 rounded-full bg-rule">
@@ -146,7 +146,7 @@ export default function ReportsPage() {
         <section className="rounded-control border border-rule bg-sheet">
           <div className="border-b border-rule px-4 py-3">
             <h2 className="text-[18px] font-semibold leading-[22px]">Roles</h2>
-            <p className="mt-0.5 text-[15px] leading-4 text-ink-2">
+            <p className="mt-0.5 text-[12px] leading-4 text-ink-2">
               Every role on the board with its live headcount.
             </p>
           </div>
@@ -173,7 +173,7 @@ export default function ReportsPage() {
                 <tr key={job.id} className="border-b border-rule last:border-0">
                   <td className="h-11 px-4">
                     <span className="flex items-center gap-2">
-                      <span className="text-[15px] leading-[18px] font-medium">
+                      <span className="text-[12px] leading-[18px] font-medium">
                         {job.title}
                       </span>
                       <span className="meta text-ink-3">

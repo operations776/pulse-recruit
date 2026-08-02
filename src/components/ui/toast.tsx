@@ -59,7 +59,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 strokeWidth={2}
                 className={`mt-0.5 shrink-0 ${danger ? "text-red" : "text-teal"}`}
               />
-              <span className="flex-1 text-[15px] leading-[1.5] text-ink">
+              <span className="flex-1 text-[12px] leading-[1.5] text-ink">
                 <span className="legend mr-2 text-ink-2">
                   {danger ? "Warning" : "Done"}
                 </span>
@@ -68,7 +68,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <button
                 onClick={() => dismiss(t.id)}
                 aria-label="Dismiss notification"
-                className="-m-1 flex size-8 shrink-0 items-center justify-center rounded-control text-ink-2 hover:bg-well hover:text-ink"
+                className="-m-1 flex size-7 shrink-0 items-center justify-center rounded-control text-ink-2 hover:bg-well hover:text-ink"
               >
                 <X size={18} strokeWidth={2} />
               </button>

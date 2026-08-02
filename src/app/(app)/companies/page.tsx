@@ -92,7 +92,7 @@ export default function CompaniesPage() {
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-baseline gap-3">
-            <h1 className="display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
+            <h1 className="display text-[18px] font-semibold leading-7 tracking-[-0.01em]">
               Companies
             </h1>
             <span className="flex items-baseline gap-1.5">
@@ -116,14 +116,14 @@ export default function CompaniesPage() {
                 key={t}
                 onClick={() => setTab(t)}
                 aria-pressed={tab === t}
-                className={`border-b-2 px-3 pb-2.5 text-[15px] ${
+                className={`border-b-2 px-3 pb-2.5 text-[12px] ${
                   tab === t
                     ? "border-vermilion font-semibold text-vermilion-hover"
                     : "border-transparent text-ink-2 hover:text-ink"
                 }`}
               >
                 {t}
-                <span className="meta ml-1.5 text-[15px] text-ink-3">
+                <span className="meta ml-1.5 text-[12px] text-ink-3">
                   {counts[t]}
                 </span>
               </button>
@@ -165,12 +165,12 @@ export default function CompaniesPage() {
                   <div className="flex items-start gap-3">
                     <span
                       aria-hidden
-                      className={`flex size-9 shrink-0 items-center justify-center rounded-control text-[15px] font-semibold bg-well text-ink-2`}
+                      className={`flex size-9 shrink-0 items-center justify-center rounded-control text-[12px] font-semibold bg-well text-ink-2`}
                     >
                       {company.name.slice(0, 1).toUpperCase()}
                     </span>
                     <div className="min-w-0">
-                      <h2 className="truncate text-[15px] font-semibold leading-5">
+                      <h2 className="truncate text-[12px] font-semibold leading-5">
                         {company.name}
                       </h2>
                       <a
@@ -187,7 +187,7 @@ export default function CompaniesPage() {
                   <dl className="mt-3.5 flex items-start gap-6">
                     <div className="min-w-0">
                       <dt className="legend text-ink-3">Location</dt>
-                      <dd className="mt-0.5 truncate text-[15px]">
+                      <dd className="mt-0.5 truncate text-[12px]">
                         {company.location || "Not recorded"}
                       </dd>
                     </div>
@@ -197,7 +197,7 @@ export default function CompaniesPage() {
                         {company.headcount ? (
                           <span className="meta">{company.headcount}</span>
                         ) : (
-                          <span className="text-[15px] text-ink-3">
+                          <span className="text-[12px] text-ink-3">
                             Not recorded
                           </span>
                         )}
@@ -208,7 +208,7 @@ export default function CompaniesPage() {
                   <div className="mt-3.5 flex items-center justify-between gap-3 border-t border-rule pt-3">
                     <span className="flex min-w-0 items-center gap-2">
                       <Avatar name={ownerName} src={owner?.avatarUrl} size="sm" />
-                      <span className="truncate text-[15px] text-ink-2">
+                      <span className="truncate text-[12px] text-ink-2">
                         {ownerName}
                       </span>
                     </span>
@@ -356,7 +356,7 @@ function AddCompanyDialog({
         </div>
 
         {error ? (
-          <p role="alert" className="text-[15px] font-medium text-brick">
+          <p role="alert" className="text-[12px] font-medium text-brick">
             {error}
           </p>
         ) : null}

@@ -117,7 +117,7 @@ export default function CandidatesPage() {
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-baseline gap-3">
-            <h1 className="display text-[22px] tracking-[-0.01em]">
+            <h1 className="display text-[18px] tracking-[-0.01em]">
               Candidates
             </h1>
             <span className="flex items-baseline gap-1.5">
@@ -132,7 +132,7 @@ export default function CandidatesPage() {
               button style. One tab stop, one focus ring, real navigation. */}
           <Link
             href="/pipeline"
-            className="cap inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-control bg-vermilion px-4 text-[13px] font-medium text-on-vermilion hover:bg-vermilion-hover [--edge:var(--color-vermilion-edge)]"
+            className="cap inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-control bg-vermilion px-4 text-[12px] font-medium text-on-vermilion hover:bg-vermilion-hover [--edge:var(--color-vermilion-edge)]"
           >
             <Plus size={15} strokeWidth={2.25} />
             Add candidate
@@ -237,17 +237,17 @@ export default function CandidatesPage() {
                           <span className="flex min-w-0 flex-col">
                             <button
                               onClick={() => setOpenId(c.id)}
-                              className="truncate rounded text-left text-[15px] font-semibold leading-[18px] hover:text-vermilion-hover"
+                              className="truncate rounded text-left text-[12px] font-semibold leading-[18px] hover:text-vermilion-hover"
                             >
                               {c.name}
                             </button>
-                            <span className="truncate text-[15px] leading-4 text-ink-2">
+                            <span className="truncate text-[12px] leading-4 text-ink-2">
                               {c.title}
                             </span>
                           </span>
                         </span>
                       </td>
-                      <td className="px-3 text-[15px]">{c.companyName}</td>
+                      <td className="px-3 text-[12px]">{c.companyName}</td>
                       <td className="px-3">
                         {stage ? (
                           <StatusChip
@@ -279,7 +279,7 @@ export default function CandidatesPage() {
                             src={memberById(c.ownerId)?.avatarUrl}
                             size="sm"
                           />
-                          <span className="truncate text-[15px]">{ownerName}</span>
+                          <span className="truncate text-[12px]">{ownerName}</span>
                         </span>
                       </td>
                       {/* This list spans every role, so a single "match" number
@@ -288,7 +288,7 @@ export default function CandidatesPage() {
                           scored per role and shown on the board and in the
                           drawer, where the role is unambiguous. */}
                       <td className="px-3">
-                        <span className="truncate text-[13px] text-ink-2">
+                        <span className="truncate text-[12px] text-ink-2">
                           {jobById.get(c.jobId)?.title ?? "No role"}
                         </span>
                       </td>

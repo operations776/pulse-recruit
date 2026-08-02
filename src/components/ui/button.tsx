@@ -14,8 +14,8 @@ const variants = {
 
 const sizes = {
   // 48px for primary actions, 44px is the floor for everything else.
-  lg: "h-9 px-4",
-  md: "h-8 px-3",
+  lg: "h-7 px-2.5.5",
+  md: "h-7 px-2.5",
 } as const;
 
 export function Button({
@@ -30,7 +30,7 @@ export function Button({
   const resolved = size ?? (variant === "primary" ? "lg" : "md");
   return (
     <button
-      className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-control text-[13px] font-medium disabled:opacity-40 ${variants[variant]} ${sizes[resolved]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-control text-[12px] font-medium disabled:opacity-40 ${variants[variant]} ${sizes[resolved]} ${className}`}
       {...props}
     />
   );

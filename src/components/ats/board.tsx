@@ -73,26 +73,26 @@ export function Board({ job }: { job: Job }) {
       <div className="border-b border-rule px-6 py-5">
         <Breadcrumb trail={["Recruitment", "Roles", job.code]} />
 
-        <h1 className="display mt-2 text-[22px]">{job.title}</h1>
+        <h1 className="display mt-2 text-[18px]">{job.title}</h1>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-8 gap-y-2">
-          <span className="text-[15px] text-ink-2">
+          <span className="text-[12px] text-ink-2">
             Talent pool:{" "}
             <span className="font-medium text-ink">{job.talentPool}</span>
           </span>
-          <span className="text-[15px] text-ink-2">
+          <span className="text-[12px] text-ink-2">
             Hired:{" "}
             <span className="meta text-ink">
               {job.hired}/{job.target}
             </span>
           </span>
-          <span className="text-[15px] text-ink-2">
+          <span className="text-[12px] text-ink-2">
             Open:{" "}
             <span className="meta text-ink">
               {formatShortDate(job.opensAt)} - {formatShortDate(job.closesAt)}
             </span>
           </span>
-          <span className="flex items-center gap-2 text-[15px] text-ink-2">
+          <span className="flex items-center gap-2 text-[12px] text-ink-2">
             Assigned to:
             <AvatarStack
               names={job.assigneeIds.map((id) => memberById(id)?.name ?? "Unknown")}
@@ -114,7 +114,7 @@ export function Board({ job }: { job: Job }) {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`text-[15px] font-medium -ml-px border border-y-0 border-rule px-3.5 py-2.5 first:ml-0 ${
+              className={`text-[12px] font-medium -ml-px border border-y-0 border-rule px-3.5 py-2.5 first:ml-0 ${
                 tab === t
                   ? "bg-ink text-sheet"
                   : "text-ink-2 hover:bg-well hover:text-ink"
@@ -179,7 +179,7 @@ export function Board({ job }: { job: Job }) {
                   ))}
 
                   {inStage.length === 0 ? (
-                    <p className="rounded-control border border-dashed border-rule px-3 py-6 text-center text-[15px] text-ink-3">
+                    <p className="rounded-control border border-dashed border-rule px-3 py-6 text-center text-[12px] text-ink-3">
                       {query ? "No matches here" : "Drop a candidate here"}
                     </p>
                   ) : null}
@@ -192,7 +192,7 @@ export function Board({ job }: { job: Job }) {
         </div>
       ) : (
         <div className="px-6 py-10">
-          <p className="text-[15px] text-ink-2">
+          <p className="text-[12px] text-ink-2">
             {tab} is not built yet. The candidate pipeline is the focus of week
             one.
           </p>

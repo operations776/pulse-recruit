@@ -67,18 +67,18 @@ export default function MarketingHome() {
             <span className="flex size-7 items-center justify-center rounded-control bg-ink">
               <span className="size-2 rounded-full bg-sage" />
             </span>
-            <span className="display text-[17px] font-bold">
+            <span className="display text-[13px] font-bold">
               {brand.name}
             </span>
           </span>
-          <nav className="hidden items-center gap-7 text-[15px] font-medium text-ink-2 md:flex">
+          <nav className="hidden items-center gap-7 text-[12px] font-medium text-ink-2 md:flex">
             <a href="#" className="hover:text-ink">Product</a>
             <a href="#" className="hover:text-ink">Pricing</a>
             <a href="#" className="hover:text-ink">Customers</a>
             <a href="#" className="hover:text-ink">Resources</a>
           </nav>
           <span className="flex items-center gap-2">
-            <a href="#" className="px-2 text-[15px] font-medium text-ink-2 hover:text-ink">
+            <a href="#" className="px-2 text-[12px] font-medium text-ink-2 hover:text-ink">
               Log in
             </a>
             <Button variant="primary">Book a demo</Button>
@@ -101,13 +101,13 @@ export default function MarketingHome() {
           forget.
         </p>
         <div className="mt-7 flex items-center justify-center gap-3">
-          <Button variant="primary" className="h-11 px-5 text-[14px]">
+          <Button variant="primary" className="h-11 px-5 text-[13px]">
             Book a demo
             <ArrowRight size={16} strokeWidth={2} />
           </Button>
-          <Button className="h-11 px-5 text-[14px]">See how it works</Button>
+          <Button className="h-11 px-5 text-[13px]">See how it works</Button>
         </div>
-        <p className="mt-4 text-[15px] text-ink-3">
+        <p className="mt-4 text-[12px] text-ink-3">
           Founding price for the first ten agencies. No card required.
         </p>
 
@@ -135,7 +135,7 @@ export default function MarketingHome() {
                   <div key={stage} className="flex-1">
                     <div className="mb-2 flex items-center gap-1.5">
                       <span className={`size-2 rounded-control bg-ink`} />
-                      <span className="text-[15px] font-semibold">{stage}</span>
+                      <span className="text-[12px] font-semibold">{stage}</span>
                     </div>
                     <div className="flex flex-col gap-2">
                       {Array.from({ length: 3 - (i % 2) }).map((_, j) => (
@@ -170,7 +170,7 @@ export default function MarketingHome() {
             <h2 className="mt-5 display text-[40px] font-bold leading-[46px] tracking-[-0.02em]">
               All the tools. <span className="grad-warm">Zero bloat.</span>
             </h2>
-            <p className="mx-auto mt-4 max-w-[46ch] text-[15px] leading-6 text-ink-2">
+            <p className="mx-auto mt-4 max-w-[46ch] text-[12px] leading-6 text-ink-2">
               Built for the way a small agency actually runs a week, not for a
               procurement checklist.
             </p>
@@ -189,8 +189,8 @@ export default function MarketingHome() {
                   >
                     <Icon size={17} strokeWidth={2} className="text-ink-2" />
                   </span>
-                  <h3 className="mt-4 text-[15px] font-semibold">{title}</h3>
-                  <p className="mt-1.5 text-[15px] leading-5 text-ink-2">
+                  <h3 className="mt-4 text-[12px] font-semibold">{title}</h3>
+                  <p className="mt-1.5 text-[12px] leading-5 text-ink-2">
                     {body}
                   </p>
                 </div>
@@ -217,14 +217,14 @@ export default function MarketingHome() {
                 </span>
                 <span className="meta text-sheet/60">/month</span>
               </p>
-              <p className="mt-2 text-[15px] text-sheet/70">
+              <p className="mt-2 text-[12px] text-sheet/70">
                 Locked for the first ten agencies, then $299.
               </p>
             </div>
             <div className="p-6">
               <ul className="flex flex-col gap-2.5">
                 {plan.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-[15px]">
+                  <li key={item} className="flex items-start gap-2.5 text-[12px]">
                     <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-well">
                       <Check size={11} strokeWidth={3} className="text-vermilion" />
                     </span>
@@ -232,7 +232,7 @@ export default function MarketingHome() {
                   </li>
                 ))}
               </ul>
-              <Button variant="primary" className="mt-6 h-11 w-full text-[14px]">
+              <Button variant="primary" className="mt-6 h-11 w-full text-[13px]">
                 Book a demo
               </Button>
             </div>
@@ -249,10 +249,10 @@ export default function MarketingHome() {
             <h2 className="display text-[36px] font-bold leading-[42px] tracking-[-0.02em]">
               Stop losing candidates to the follow up you forgot.
             </h2>
-            <p className="mt-4 text-[15px] leading-6 text-sheet/70">
+            <p className="mt-4 text-[12px] leading-6 text-sheet/70">
               Ten agencies, founding price, ninety day pilot.
             </p>
-            <Button variant="primary" className="mt-7 h-11 px-5 text-[14px]">
+            <Button variant="primary" className="mt-7 h-11 px-5 text-[13px]">
               Book a demo
               <ArrowRight size={16} strokeWidth={2} />
             </Button>
@@ -261,7 +261,7 @@ export default function MarketingHome() {
       </section>
 
       <footer className="border-t border-rule py-8">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 text-[15px] text-ink-3">
+        <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 text-[12px] text-ink-3">
           <span className="flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-sage" />
             All systems operational

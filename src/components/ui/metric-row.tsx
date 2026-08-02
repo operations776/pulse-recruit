@@ -23,7 +23,7 @@ export function MetricRow({ metrics }: { metrics: Metrics }) {
         return (
           <span key={key} className="flex items-center gap-1" title={label}>
             <Icon size={12} strokeWidth={1.75} />
-            <span className="meta text-inherit text-[15px]">
+            <span className="meta text-inherit text-[12px]">
               {value > 0 ? value : "--"}
             </span>
           </span>

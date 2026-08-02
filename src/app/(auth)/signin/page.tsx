@@ -44,13 +44,13 @@ function SignInCard() {
         >
           <span className="size-2 rounded-full bg-sage" />
         </span>
-        <span className="display text-[17px] font-bold">{brand.name}</span>
+        <span className="display text-[13px] font-bold">{brand.name}</span>
       </span>
 
-      <h1 className="mt-6 display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
+      <h1 className="mt-6 display text-[18px] font-semibold leading-7 tracking-[-0.01em]">
         Welcome back
       </h1>
-      <p className="mt-1.5 text-[15px] text-ink-2">
+      <p className="mt-1.5 text-[12px] text-ink-2">
         Sign in to pick your pipeline back up where you left it.
       </p>
 
@@ -78,7 +78,7 @@ function SignInCard() {
         </Field>
 
         {error ? (
-          <p role="alert" className="text-[15px] font-medium text-brick">
+          <p role="alert" className="text-[12px] font-medium text-brick">
             {error}
           </p>
         ) : null}
@@ -90,7 +90,7 @@ function SignInCard() {
 
       <div className="my-5 flex items-center gap-3">
         <span aria-hidden className="h-px flex-1 bg-rule" />
-        <span className="text-[15px] text-ink-3">or</span>
+        <span className="text-[12px] text-ink-3">or</span>
         <span aria-hidden className="h-px flex-1 bg-rule" />
       </div>
 
@@ -102,7 +102,7 @@ function SignInCard() {
         Continue with Google
       </Button>
 
-      <p className="mt-5 text-center text-[15px] text-ink-2">
+      <p className="mt-5 text-center text-[12px] text-ink-2">
         <Link
           href="/signup"
           className="font-semibold text-vermilion-hover hover:underline"

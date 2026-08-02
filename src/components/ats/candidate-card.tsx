@@ -50,7 +50,7 @@ export function CandidateCard({
           }}
           aria-label={selected ? `Deselect ${candidate.name}` : `Select ${candidate.name}`}
           aria-pressed={selected}
-          className="-m-1 flex size-8 shrink-0 items-center justify-center rounded-control hover:bg-well"
+          className="-m-1 flex size-7 shrink-0 items-center justify-center rounded-control hover:bg-well"
         >
           <span
             className={`flex size-5 items-center justify-center rounded-chip border ${
@@ -68,10 +68,10 @@ export function CandidateCard({
         {/* The name gets the full remaining width. The record ID moves to the
             footer rather than competing with it on one 300px line. */}
         <div className="min-w-0 flex-1">
-          <p className="text-[17px] font-medium leading-[1.3]">
+          <p className="text-[13px] font-medium leading-[1.3]">
             {candidate.name}
           </p>
-          <p className="mt-1 truncate text-[15px] text-ink-2">
+          <p className="mt-1 truncate text-[12px] text-ink-2">
             {candidate.title}
           </p>
         </div>

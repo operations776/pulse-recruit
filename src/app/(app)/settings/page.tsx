@@ -39,7 +39,7 @@ export default function SettingsPage() {
     <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-paper">
       <div className="px-6 pt-4">
         <Breadcrumb trail={["Settings"]} />
-        <h1 className="display mt-2 text-[22px] tracking-[-0.01em]">
+        <h1 className="display mt-2 text-[18px] tracking-[-0.01em]">
           Settings
         </h1>
       </div>
@@ -57,7 +57,7 @@ export default function SettingsPage() {
                   <button
                     onClick={() => setSection(item)}
                     aria-current={active ? "page" : undefined}
-                    className={`w-full rounded-control px-3 py-2 text-left text-[15px] transition-colors duration-150 ${
+                    className={`w-full rounded-control px-3 py-2 text-left text-[12px] transition-colors duration-150 ${
                       active
                         ? "bg-well font-semibold text-vermilion-hover"
                         : "text-ink-2 hover:bg-paper hover:text-ink"
@@ -93,7 +93,7 @@ function GeneralPanel() {
     <div className="flex flex-col gap-4">
       <section className={CARD}>
         <h2 className="text-[18px] font-semibold leading-[22px]">Workspace</h2>
-        <p className="mt-1 text-[15px] text-ink-2">
+        <p className="mt-1 text-[12px] text-ink-2">
           The name your team sees in the top bar, and the address candidates and
           clients land on.
         </p>
@@ -112,7 +112,7 @@ function GeneralPanel() {
             hint="Lowercase letters, numbers and hyphens."
           >
             <span className="flex items-center gap-2">
-              <span className="shrink-0 text-[15px] text-ink-3">
+              <span className="shrink-0 text-[12px] text-ink-3">
                 {brand.domain}/
               </span>
               <Input
@@ -136,7 +136,7 @@ function GeneralPanel() {
 
       <section className={CARD}>
         <h2 className="text-[18px] font-semibold leading-[22px]">Danger zone</h2>
-        <p className="mt-1 text-[15px] text-ink-2">
+        <p className="mt-1 text-[12px] text-ink-2">
           Deleting the workspace removes every job, candidate, note and file for
           the whole team. There is no undo and no export afterwards.
         </p>
@@ -243,7 +243,7 @@ function TeamPanel() {
                 <Avatar name={member.name} src={member.avatarUrl} />
 
                 <span className="flex min-w-0 flex-1 items-baseline gap-2">
-                  <span className="truncate text-[15px] font-medium">
+                  <span className="truncate text-[12px] font-medium">
                     {member.name}
                   </span>
                   <span className="meta truncate text-ink-2">
@@ -254,7 +254,7 @@ function TeamPanel() {
                 <Badge hue={ROLE_BADGE[member.role]}>{member.role}</Badge>
 
                 {isYou ? (
-                  <span className="w-[74px] shrink-0 text-right text-[15px] text-ink-3">
+                  <span className="w-[74px] shrink-0 text-right text-[12px] text-ink-3">
                     You
                   </span>
                 ) : (
@@ -355,7 +355,7 @@ function InviteDialog({
         </Field>
 
         {error ? (
-          <p role="alert" className="text-[15px] font-medium text-brick">
+          <p role="alert" className="text-[12px] font-medium text-brick">
             {error}
           </p>
         ) : null}
@@ -375,19 +375,19 @@ function BillingPanel() {
       </h2>
 
       <p className="mt-2 flex items-baseline gap-1.5">
-        <span className="font-mono text-[24px] font-semibold leading-[30px] tabular-nums">
+        <span className="font-mono text-[21px] font-semibold leading-[30px] tabular-nums">
           $50
         </span>
-        <span className="text-[15px] text-ink-3">/month</span>
+        <span className="text-[12px] text-ink-3">/month</span>
       </p>
 
-      <p className="mt-2 text-[15px] text-ink-2">
+      <p className="mt-2 text-[12px] text-ink-2">
         Locked for the first ten agencies, then $299.
       </p>
 
       <ul className="mt-4 flex flex-col gap-2.5 border-t border-rule pt-4">
         {PLAN_FEATURES.map((item) => (
-          <li key={item} className="flex items-start gap-2.5 text-[15px]">
+          <li key={item} className="flex items-start gap-2.5 text-[12px]">
             <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-well">
               <Check size={11} strokeWidth={3} className="text-vermilion" />
             </span>

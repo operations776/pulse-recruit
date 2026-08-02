@@ -3,9 +3,9 @@ import { AVATAR_TILE, initials } from "@/lib/hue";
 
 // DESIGN.md section 5: rounded squares at --r-card, never circles.
 const sizes = {
-  sm: { box: "size-6", text: "text-[10px]", px: 24 },
-  md: { box: "size-8", text: "text-[11px]", px: 32 },
-  lg: { box: "size-9", text: "text-[12px]", px: 36 },
+  sm: { box: "size-5", text: "text-[9px]", px: 20 },
+  md: { box: "size-7", text: "text-[10px]", px: 28 },
+  lg: { box: "size-8", text: "text-[11px]", px: 32 },
 } as const;
 
 export function Avatar({

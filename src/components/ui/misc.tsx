@@ -45,7 +45,7 @@ export function StatusDot({ state }: { state: "open" | "risk" | "closed" }) {
 
 export function Breadcrumb({ trail }: { trail: string[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[15px] text-ink-2">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[12px] text-ink-2">
       {trail.map((item, i) => (
         <span key={item} className="flex items-center gap-2">
           {i > 0 ? <span aria-hidden>/</span> : null}
@@ -58,7 +58,7 @@ export function Breadcrumb({ trail }: { trail: string[] }) {
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="well rounded-chip px-1.5 py-0.5 font-mono text-[13px] text-ink-2">
+    <kbd className="well rounded-chip px-1.5 py-0.5 font-mono text-[12px] text-ink-2">
       {children}
     </kbd>
   );
@@ -76,7 +76,7 @@ export function EmptyState({
   return (
     <div className="flex flex-col items-center justify-center rounded-shell border border-rule bg-sheet px-6 py-12 text-center">
       <p className="display text-[18px]">{title}</p>
-      <p className="mt-2 max-w-[52ch] text-[17px] text-ink-2">{body}</p>
+      <p className="mt-2 max-w-[52ch] text-[13px] text-ink-2">{body}</p>
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );
@@ -95,7 +95,7 @@ export function CopyField({
   const [copied, setCopied] = useState(false);
 
   if (!value) {
-    return <span className="text-[17px] text-ink-3">Not provided</span>;
+    return <span className="text-[13px] text-ink-3">Not provided</span>;
   }
 
   const copy = async () => {
@@ -121,7 +121,7 @@ export function CopyField({
       <button
         onClick={copy}
         aria-label={`Copy ${label ?? value}`}
-        className="-m-1 flex size-8 shrink-0 items-center justify-center rounded-control text-ink-2 hover:bg-well hover:text-ink"
+        className="-m-1 flex size-7 shrink-0 items-center justify-center rounded-control text-ink-2 hover:bg-well hover:text-ink"
       >
         {copied ? (
           <Check size={16} strokeWidth={2.5} className="text-teal" />

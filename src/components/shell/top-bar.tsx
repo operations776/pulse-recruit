@@ -15,16 +15,16 @@ export function TopBar() {
           <span className="flex size-5 items-center justify-center rounded-control bg-vermilion">
             <span className="size-1.5 rounded-full bg-sheet" />
           </span>
-          <span className="display text-[15px] leading-none">{brand.name}</span>
+          <span className="display text-[12px] leading-none">{brand.name}</span>
         </span>
-        <button className="flex h-full items-center gap-2 border-r border-sheet/15 px-4 text-[15px] hover:bg-sheet/10">
+        <button className="flex h-full items-center gap-2 border-r border-sheet/15 px-4 text-[12px] hover:bg-sheet/10">
           {org.name}
           <ChevronDown size={13} strokeWidth={2} className="opacity-60" />
         </button>
       </div>
 
       <div className="flex h-full items-center">
-        <button className="text-[15px] font-medium flex h-full items-center gap-1.5 border-l border-sheet/15 px-4 hover:bg-sheet/10">
+        <button className="text-[12px] font-medium flex h-full items-center gap-1.5 border-l border-sheet/15 px-4 hover:bg-sheet/10">
           <CircleHelp size={14} strokeWidth={1.75} />
           Help
         </button>

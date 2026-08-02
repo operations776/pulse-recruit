@@ -59,8 +59,8 @@ export default function SignalsPage() {
       <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <header className="border-b border-rule px-6 py-5">
           <p className="legend text-vermilion">Dream 100 watchlist</p>
-          <h1 className="display mt-2 text-[22px]">Signals</h1>
-          <p className="mt-2 max-w-[62ch] text-[15px] text-ink-2">
+          <h1 className="display mt-2 text-[18px]">Signals</h1>
+          <p className="mt-2 max-w-[62ch] text-[12px] text-ink-2">
             What the companies you are chasing did this week. Every signal is a
             reason to call someone today.
           </p>
@@ -73,7 +73,7 @@ export default function SignalsPage() {
             ].map(([label, value]) => (
               <div key={label} className="flex items-baseline gap-2">
                 <dt className="legend text-ink-3">{label}</dt>
-                <dd className="display text-[15px] leading-5">{value}</dd>
+                <dd className="display text-[12px] leading-5">{value}</dd>
               </div>
             ))}
           </dl>
@@ -84,7 +84,7 @@ export default function SignalsPage() {
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`text-[15px] font-medium -ml-px border border-rule px-3.5 py-2.5 first:ml-0 ${
+              className={`text-[12px] font-medium -ml-px border border-rule px-3.5 py-2.5 first:ml-0 ${
                 filter === f.key
                   ? "bg-ink text-sheet"
                   : "bg-transparent text-ink-2 hover:bg-well hover:text-ink"
@@ -115,7 +115,7 @@ export default function SignalsPage() {
                     <span className={`legend text-ink-2`}>
                       {kind.label}
                     </span>
-                    <span className="text-[15px] font-semibold">
+                    <span className="text-[12px] font-semibold">
                       {signal.companyName}
                     </span>
                     <span className="meta text-ink-3">
@@ -123,10 +123,10 @@ export default function SignalsPage() {
                     </span>
                   </div>
 
-                  <h2 className="mt-1.5 text-[15px] font-semibold leading-5">
+                  <h2 className="mt-1.5 text-[12px] font-semibold leading-5">
                     {signal.headline}
                   </h2>
-                  <p className="mt-1 max-w-[70ch] text-[15px] leading-5 text-ink-2">
+                  <p className="mt-1 max-w-[70ch] text-[12px] leading-5 text-ink-2">
                     {signal.detail}
                   </p>
                   <p className="meta mt-2 text-ink-3">
@@ -189,7 +189,7 @@ export default function SignalsPage() {
         <div className="flex items-center justify-between border-b border-rule px-4 py-3.5">
           <div>
             <p className="legend text-ink-3">The list</p>
-            <p className="display mt-1 text-[15px] leading-5">Dream 100</p>
+            <p className="display mt-1 text-[12px] leading-5">Dream 100</p>
           </div>
           <Button
 
@@ -215,7 +215,7 @@ export default function SignalsPage() {
 
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    <span className="truncate text-[15px] font-semibold">
+                    <span className="truncate text-[12px] font-semibold">
                       {company.name}
                     </span>
                     <span className="legend text-ink-3">

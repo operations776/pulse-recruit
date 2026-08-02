@@ -6,10 +6,10 @@ import type { ComponentProps, ReactNode } from "react";
 // DESIGN.md 6b and 9: inputs are inset wells, no outer border, 48px tall,
 // 17px text, focus ring inset.
 const base =
-  "well rounded-control text-[14px] text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-vermilion";
+  "well rounded-control text-[13px] text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-vermilion";
 
 export function Input({ className = "w-full", ...props }: ComponentProps<"input">) {
-  return <input className={`${base} h-9 px-3 ${className}`} {...props} />;
+  return <input className={`${base} h-8 px-3 ${className}`} {...props} />;
 }
 
 export function Textarea({
@@ -25,7 +25,7 @@ export function Select({
   ...props
 }: ComponentProps<"select"> & { children: ReactNode }) {
   return (
-    <select className={`${base} h-9 px-3 ${className}`} {...props}>
+    <select className={`${base} h-8 px-3 ${className}`} {...props}>
       {children}
     </select>
   );
@@ -41,7 +41,7 @@ export function SearchInput({ className = "", ...props }: ComponentProps<"input"
       />
       <input
         type="search"
-        className={`${base} h-9 w-full pl-9 pr-3`}
+        className={`${base} h-8 w-full pl-9 pr-3`}
         {...props}
       />
     </span>
@@ -61,7 +61,7 @@ export function Field({
     <label className="flex flex-col gap-2">
       <span className="legend text-ink-2">{label}</span>
       {children}
-      {hint ? <span className="text-[15px] text-ink-2">{hint}</span> : null}
+      {hint ? <span className="text-[12px] text-ink-2">{hint}</span> : null}
     </label>
   );
 }

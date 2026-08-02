@@ -37,7 +37,7 @@ export function JobPanel({ activeJobId }: { activeJobId: string }) {
       <div className="flex h-12 items-center justify-between px-3">
         <span className="flex items-center gap-2">
           <LayoutGrid size={15} strokeWidth={1.75} className="text-hue-teal" />
-          <span className="text-[15px] font-semibold">Open roles</span>
+          <span className="text-[12px] font-semibold">Open roles</span>
         </span>
         <button
           onClick={() => setCollapsed(true)}
@@ -60,7 +60,7 @@ export function JobPanel({ activeJobId }: { activeJobId: string }) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search roles"
             aria-label="Search roles"
-            className="h-8 w-full rounded-control border border-rule bg-paper pl-8 pr-2.5 text-[15px] placeholder:text-ink-3 focus:border-vermilion focus:outline-none"
+            className="h-8 w-full rounded-control border border-rule bg-paper pl-8 pr-2.5 text-[12px] placeholder:text-ink-3 focus:border-vermilion focus:outline-none"
           />
         </span>
       </div>
@@ -79,13 +79,13 @@ export function JobPanel({ activeJobId }: { activeJobId: string }) {
               <StatusDot state={job.state} />
               <span className="min-w-0 flex-1">
                 <span
-                  className={`block truncate text-[15px] ${
+                  className={`block truncate text-[12px] ${
                     active ? "font-semibold text-vermilion-hover" : "text-ink"
                   }`}
                 >
                   {job.title}
                 </span>
-                <span className="meta text-[15px] text-ink-3">
+                <span className="meta text-[12px] text-ink-3">
                   {job.code}
                 </span>
               </span>
@@ -94,7 +94,7 @@ export function JobPanel({ activeJobId }: { activeJobId: string }) {
         })}
 
         {visible.length === 0 ? (
-          <p className="px-2 py-6 text-center text-[15px] text-ink-3">
+          <p className="px-2 py-6 text-center text-[12px] text-ink-3">
             No roles match that search.
           </p>
         ) : null}

@@ -48,13 +48,13 @@ function SignUpCard() {
         >
           <span className="size-2 rounded-full bg-sage" />
         </span>
-        <span className="display text-[17px] font-bold">{brand.name}</span>
+        <span className="display text-[13px] font-bold">{brand.name}</span>
       </span>
 
-      <h1 className="mt-6 display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
+      <h1 className="mt-6 display text-[18px] font-semibold leading-7 tracking-[-0.01em]">
         Create your workspace
       </h1>
-      <p className="mt-1.5 text-[15px] text-ink-2">
+      <p className="mt-1.5 text-[12px] text-ink-2">
         One workspace per agency. Invite the rest of the desk once you are in.
       </p>
 
@@ -102,7 +102,7 @@ function SignUpCard() {
         </Field>
 
         {error ? (
-          <p role="alert" className="text-[15px] font-medium text-brick">
+          <p role="alert" className="text-[12px] font-medium text-brick">
             {error}
           </p>
         ) : null}
@@ -112,7 +112,7 @@ function SignUpCard() {
         </Button>
       </form>
 
-      <p className="mt-5 text-center text-[15px] text-ink-2">
+      <p className="mt-5 text-center text-[12px] text-ink-2">
         <Link
           href="/signin"
           className="font-semibold text-vermilion-hover hover:underline"
@@ -121,7 +121,7 @@ function SignUpCard() {
         </Link>
       </p>
 
-      <p className="mt-3 text-center text-[15px] text-ink-3">
+      <p className="mt-3 text-center text-[12px] text-ink-3">
         Questions before you start? {brand.supportEmail}
       </p>
     </div>
