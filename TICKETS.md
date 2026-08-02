@@ -15,6 +15,25 @@ Status: `todo` · `doing` · `review` (needs design-review APPROVED) · `done`
 | PLS-5 | design-review skill with explicit APPROVED verdict | done |
 | PLS-6 | CLAUDE.md, CI (build, typecheck, lint, Playwright), speed budget spec, Supabase project | done |
 
+## UI-first status, 2026-08-02
+
+Daniyal directed a UI-first build: every screen and interaction first, backend
+second. The whole product UI now runs against the in-memory store in
+`src/lib/store.tsx`, which is deliberately shaped like the Supabase schema, with
+each multi-collection action written as a single reducer case so it maps one to
+one onto a Postgres function.
+
+Built and passing: app shell, pipeline board (drag, multi select, bulk move,
+archive, delete), candidate drawer (profile, click to copy, notes, activity),
+add candidate with duplicate guard, candidates table with composing filters,
+companies with add dialog, signals feed, reports derived from the store,
+settings (general, team, billing), sign in, sign up, marketing page at the root.
+
+Still to do, and now the critical path: PLS-7 through PLS-15, the real Supabase
+layer, auth, RLS, and the migrations behind these screens. The UI tickets below
+stay open until they are wired to the database, because a screen backed by mock
+state is not a shipped screen.
+
 ## Week 1: ATS core
 
 ### Foundation
