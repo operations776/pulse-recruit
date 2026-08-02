@@ -5,16 +5,16 @@ import { hueText, type Hue } from "@/lib/hue";
 export function EyebrowPill({
   icon: Icon,
   label,
-  hue = "coral",
+  hue = "vermilion",
 }: {
   icon: LucideIcon;
   label: string;
   hue?: Hue;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 shadow-card">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-rule bg-paper-white px-2.5 py-1 ">
       <Icon size={12} strokeWidth={2.25} className={hueText[hue]} />
-      <span className="micro-label text-ink-600">{label}</span>
+      <span className="micro-label text-ink-soft">{label}</span>
     </span>
   );
 }

@@ -7,6 +7,7 @@ import type {
   Note,
   Org,
   Signal,
+  DreamCompany,
   Stage,
 } from "@/lib/types";
 
@@ -174,10 +175,34 @@ export const ACTIVITY: ActivityEvent[] = [
   { id: "a_6", orgId: ORG.id, candidateId: "cand_j_1_12", kind: "stage_changed", summary: "Moved to Offer", actorId: "u_1", createdAt: hoursAgo(2) },
 ];
 
+
+// The Dream 100: the recruiter's named target list. Signals are scoped to it.
+export const DREAM_COMPANIES: DreamCompany[] = [
+  { id: "dc_1", orgId: ORG.id, name: "Northstar Systems", domain: "northstar.tech", industry: "Developer tools", headcount: "500+", tier: 1, addedAt: daysAgo(60), lastSignalAt: hoursAgo(4) },
+  { id: "dc_2", orgId: ORG.id, name: "Meridian Labs", domain: "meridian.co", industry: "Fintech", headcount: "120-250", tier: 1, addedAt: daysAgo(55), lastSignalAt: hoursAgo(9) },
+  { id: "dc_3", orgId: ORG.id, name: "Halston Group", domain: "halston.io", industry: "Insurance", headcount: "50-120", tier: 1, addedAt: daysAgo(48), lastSignalAt: hoursAgo(28) },
+  { id: "dc_4", orgId: ORG.id, name: "Cloudline", domain: "cloudline.dev", industry: "Infrastructure", headcount: "20-50", tier: 2, addedAt: daysAgo(40), lastSignalAt: daysAgo(3) },
+  { id: "dc_5", orgId: ORG.id, name: "Vantora", domain: "vantora.co", industry: "Commerce", headcount: "250-500", tier: 1, addedAt: daysAgo(36), lastSignalAt: daysAgo(5) },
+  { id: "dc_6", orgId: ORG.id, name: "Brightpath", domain: "brightpath.dev", industry: "EdTech", headcount: "20-50", tier: 2, addedAt: daysAgo(30), lastSignalAt: daysAgo(11) },
+  { id: "dc_7", orgId: ORG.id, name: "Corewave", domain: "corewave.com", industry: "Data platform", headcount: "120-250", tier: 1, addedAt: daysAgo(28), lastSignalAt: hoursAgo(20) },
+  { id: "dc_8", orgId: ORG.id, name: "Fieldstone", domain: "fieldstone.com", industry: "Logistics", headcount: "50-120", tier: 2, addedAt: daysAgo(22), lastSignalAt: daysAgo(19) },
+  { id: "dc_9", orgId: ORG.id, name: "Orbital Freight", domain: "orbitalfreight.com", industry: "Logistics", headcount: "250-500", tier: 3, addedAt: daysAgo(18), lastSignalAt: null },
+  { id: "dc_10", orgId: ORG.id, name: "Kestrel Bio", domain: "kestrelbio.com", industry: "Life sciences", headcount: "50-120", tier: 2, addedAt: daysAgo(12), lastSignalAt: daysAgo(2) },
+  { id: "dc_11", orgId: ORG.id, name: "Lumen Retail", domain: "lumenretail.com", industry: "Retail tech", headcount: "500+", tier: 3, addedAt: daysAgo(9), lastSignalAt: null },
+  { id: "dc_12", orgId: ORG.id, name: "Arbor Energy", domain: "arborenergy.io", industry: "Climate", headcount: "120-250", tier: 2, addedAt: daysAgo(5), lastSignalAt: hoursAgo(52) },
+];
+
+// Every signal belongs to a Dream 100 company. That link is the product: the
+// recruiter is not reading market news, he is watching a list he chose.
 export const SIGNALS: Signal[] = [
-  { id: "sig_1", orgId: ORG.id, kind: "funding", companyName: "Northstar Systems", domain: "northstar.tech", headline: "Raised a $40M Series B", detail: "Led by Accel. Stated plan to double the product org in twelve months.", detectedAt: hoursAgo(4), dismissed: false },
-  { id: "sig_2", orgId: ORG.id, kind: "open_role", companyName: "Meridian Labs", domain: "meridian.co", headline: "Posted 6 design roles this week", detail: "Three senior, two mid, one lead. No agency listed on any posting.", detectedAt: hoursAgo(9), dismissed: false },
-  { id: "sig_3", orgId: ORG.id, kind: "leadership", companyName: "Halston Group", domain: "halston.io", headline: "New VP of Product started", detail: "Joined from Corewave. New leaders rebuild their teams in the first quarter.", detectedAt: hoursAgo(28), dismissed: false },
-  { id: "sig_4", orgId: ORG.id, kind: "expansion", companyName: "Cloudline", domain: "cloudline.dev", headline: "Opening a London office", detail: "Job postings shifted to UK contracts in the last fourteen days.", detectedAt: daysAgo(3), dismissed: false },
-  { id: "sig_5", orgId: ORG.id, kind: "open_role", companyName: "Vantora", domain: "vantora.co", headline: "Reposted the Design Lead role", detail: "Live for 62 days. A repost usually means the internal search stalled.", detectedAt: daysAgo(5), dismissed: false },
+  { id: "sig_1", orgId: ORG.id, dreamCompanyId: "dc_1", kind: "funding", companyName: "Northstar Systems", domain: "northstar.tech", headline: "Raised a $40M Series B", detail: "Led by Accel. Stated plan to double the product org within twelve months.", detectedAt: hoursAgo(4), dismissed: false },
+  { id: "sig_2", orgId: ORG.id, dreamCompanyId: "dc_2", kind: "open_role", companyName: "Meridian Labs", domain: "meridian.co", headline: "Posted 6 design roles this week", detail: "Three senior, two mid, one lead. No agency named on any of the postings.", detectedAt: hoursAgo(9), dismissed: false },
+  { id: "sig_3", orgId: ORG.id, dreamCompanyId: "dc_7", kind: "promotion", companyName: "Corewave", domain: "corewave.com", headline: "Priya Raman promoted to VP Engineering", detail: "Internal move from Director. Her old seat is open and she will build her own team.", detectedAt: hoursAgo(20), dismissed: false },
+  { id: "sig_4", orgId: ORG.id, dreamCompanyId: "dc_3", kind: "leadership", companyName: "Halston Group", domain: "halston.io", headline: "New VP of Product started", detail: "Joined from Corewave. New leaders rebuild their teams in the first quarter.", detectedAt: hoursAgo(28), dismissed: false },
+  { id: "sig_5", orgId: ORG.id, dreamCompanyId: "dc_12", kind: "promotion", companyName: "Arbor Energy", domain: "arborenergy.io", headline: "Two engineers moved up to Staff", detail: "Both promotions announced the same week, which usually precedes a hiring round.", detectedAt: hoursAgo(52), dismissed: false },
+  { id: "sig_6", orgId: ORG.id, dreamCompanyId: "dc_10", kind: "funding", companyName: "Kestrel Bio", domain: "kestrelbio.com", headline: "Closed a $12M Series A extension", detail: "Extension rather than a new round. Hiring will be targeted, not broad.", detectedAt: daysAgo(2), dismissed: false },
+  { id: "sig_7", orgId: ORG.id, dreamCompanyId: "dc_4", kind: "expansion", companyName: "Cloudline", domain: "cloudline.dev", headline: "Opening a London office", detail: "Job postings switched to UK contracts over the last fourteen days.", detectedAt: daysAgo(3), dismissed: false },
+  { id: "sig_8", orgId: ORG.id, dreamCompanyId: "dc_5", kind: "open_role", companyName: "Vantora", domain: "vantora.co", headline: "Reposted the Design Lead role", detail: "Live for 62 days. A repost usually means the internal search stalled.", detectedAt: daysAgo(5), dismissed: false },
+  { id: "sig_9", orgId: ORG.id, dreamCompanyId: "dc_6", kind: "open_role", companyName: "Brightpath", domain: "brightpath.dev", headline: "First product hire in nine months", detail: "Headcount was flat all year. This is a change of posture worth a call.", detectedAt: daysAgo(11), dismissed: false },
+  { id: "sig_10", orgId: ORG.id, dreamCompanyId: "dc_8", kind: "leadership", companyName: "Fieldstone", domain: "fieldstone.com", headline: "CTO departed", detail: "No named successor yet. Expect a hiring freeze then a rebuild.", detectedAt: daysAgo(19), dismissed: false },
 ];

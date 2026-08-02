@@ -2,201 +2,158 @@
 
 Every screen is judged against this file by the design-review skill. A screen that violates it does not merge, whatever else it does well.
 
-References: the app interior follows the deep-green multi-panel ATS reference Daniyal supplied. The marketing site follows gethirex.com structurally, not in palette. Captures live in `.design-shots/hirex/`.
+## History, so the same mistake is not made a third time
 
-## The problem this file exists to solve
+Version one: grey chrome, grey initials circles, one flat accent, thin cards. Rejected as characterless.
+Version two: green chrome, colored avatars, denser cards. Rejected again, and correctly. It was still the same species, soft rounded cards floating on a neutral background with one accent color. That silhouette is the default a machine reaches for, and no amount of palette tuning fixes it.
 
-Version one of this contract produced a screen that was clean and completely characterless: grey chrome, initials in grey circles, one flat accent, boxes in a row. It read as generated. Density without personality is not the bar. Pulse should feel like a product a specific team built with a specific opinion, warm enough to sit in all day and sharp enough to trust with a placement worth thousands.
+Version three changes the silhouette, not the paint. Two named directions, from Daniyal's reference: **minimal vintage** for the structure and **glassmorphism** for the layers above it.
 
-Personality here comes from four decisions, applied consistently:
+## The direction
 
-1. **Deep green chrome.** The top bar and rail are near-black forest green, not grey. The product has a color identity the moment it loads.
-2. **People look like people.** Photo avatars wherever a person appears, with a colored initials fallback. Never a grey circle.
-3. **Every card earns its space.** A candidate card carries the person, their contact, their activity counts, and their match score. Not a name and a chip.
-4. **A controlled multi-hue palette.** Six identity hues used for categorization (pipelines, stages, sources, chart series). Color carries meaning and makes the product memorable. It is never decoration.
+**Minimal vintage.** The base is a printed page, not a dashboard. Warm cream paper, a visible hairline grid where panels butt against each other and share rules, heavy uppercase display type, monospace for labels and data, vermilion as the single hot accent against deep navy blocks. Corners are effectively square. Nothing floats without reason. The reference is editorial print: a well set magazine spread, not a SaaS template.
 
-## Two surfaces
+**Glassmorphism, for layers only.** Anything that floats above the page (drawer, dialog, dropdown, toast, the bulk action bar) is frosted glass: translucent warm white, a real backdrop blur, a hairline border, and a soft shadow. This is the only place blur and translucency appear. Glass on a flat surface is decoration and is forbidden.
 
-| | Marketing (`(marketing)` routes) | Product (`(app)` routes) |
-| --- | --- | --- |
-| Job | Convince | Operate |
-| Density | Generous, centered, one idea per section | Dense, multi-panel, information first |
-| Display type | Bricolage Grotesque, large, tight | Plus Jakarta Sans, restrained |
-| Gradients | Allowed, on headline accent words and section washes | Forbidden except inside data visualization |
-| Chrome | Light, airy | Deep forest green |
-
-Both surfaces share the same tokens, radii, and component primitives. A user should not feel they changed products when they sign in.
+The tension between the two is the point. A crisp printed grid, with soft glass floating over it.
 
 ## Color tokens
 
 Defined once in `src/app/globals.css` under `@theme`. Components never use raw hex.
 
-### Brand
+### Surface and ink
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| `forest-900` | `#0C3225` | Top bar, deep chrome, dark CTA band |
-| `forest-800` | `#10402F` | Chrome hover, rail active background |
-| `forest-700` | `#14543C` | Chrome borders, muted dark surfaces |
-| `emerald-600` | `#12A150` | Primary action, active tab, brand accent |
-| `emerald-700` | `#0E8543` | Primary hover and pressed |
-| `emerald-500` | `#22C55E` | Live pulse dot, positive match score |
-| `emerald-50` | `#E9F8EF` | Selected row, active chip, tint |
+| `paper` | `#F7EFE8` | Page background, the warm sheet everything sits on |
+| `paper-deep` | `#EFE2D7` | Recessed areas, table header, section wash |
+| `paper-white` | `#FFFBF7` | Raised cells and inputs, a warm white, never pure white |
+| `ink` | `#1C1A2E` | Primary text, dark panels, structural hairlines |
+| `ink-soft` | `#56526E` | Secondary text |
+| `ink-mute` | `#8E8AA3` | Muted text, placeholders, timestamps |
+| `rule` | `#DCCEC2` | Soft dividers inside a panel |
+| `rule-strong` | `#1C1A2E` | The structural grid hairline, used at 1px, full strength |
+
+### Accent and semantic
+
+| Token | Hex | Use |
+| --- | --- | --- |
+| `vermilion` | `#E8481F` | The single hot accent: primary action, active state, live signal |
+| `vermilion-deep` | `#C33A14` | Hover and pressed |
+| `vermilion-wash` | `#FBE3DA` | Selected row, active chip |
+| `sage` | `#4E7C62` | Positive, healthy, live |
+| `mustard` | `#C08A2E` | Warning, at risk, going cold |
+| `brick` | `#A9382A` | Destructive |
 
 ### Identity palette
 
-Six hues for categorization only: pipeline and workspace squares, stage identity, source tags, chart series, avatar fallbacks. Assigned deterministically from a stable key so the same pipeline is always the same color. Never picked for visual variety.
+Six muted vintage hues for categorization only: pipeline stages, workspace tiles, signal kinds, avatar fallbacks, chart series. Assigned by position for ordered collections and by hash for identity. Never chosen for variety.
 
 | Token | Hex |
 | --- | --- |
-| `hue-coral` | `#FF6B5A` |
-| `hue-amber` | `#F5A524` |
-| `hue-indigo` | `#5B5BD6` |
-| `hue-violet` | `#8B5CF6` |
-| `hue-sky` | `#2E90FA` |
-| `hue-pink` | `#EE46BC` |
+| `hue-vermilion` | `#E8481F` |
+| `hue-mustard` | `#D9A441` |
+| `hue-sage` | `#5C8A6E` |
+| `hue-teal` | `#2F6F7E` |
+| `hue-plum` | `#7A4E6E` |
+| `hue-clay` | `#A9603F` |
 
-Each is used at full strength for icons and dots, and at 10 percent on white for tinted backgrounds.
+### Glass
 
-### Neutrals and semantic
+Floating layers only.
 
-| Token | Hex | Use |
-| --- | --- | --- |
-| `canvas` | `#F6F7F8` | Page background |
-| `surface` | `#FFFFFF` | Cards, panels, table |
-| `ink-900` | `#111827` | Primary text |
-| `ink-600` | `#5B6472` | Secondary text |
-| `ink-400` | `#98A1AE` | Muted, placeholder, timestamp |
-| `line` | `#E5E7EB` | Borders |
-| `line-soft` | `#F0F1F3` | Row dividers |
-| `warn-500` | `#B45309` | Warning, cold state |
-| `danger-500` | `#D92D20` | Destructive |
+- `--glass-bg`: `rgb(255 251 247 / 0.72)`
+- `--glass-blur`: `blur(20px) saturate(1.4)`
+- `--glass-border`: `1px solid rgb(28 26 46 / 0.14)`
+- `--shadow-glass`: `0 16px 40px rgb(28 26 46 / 0.18)`
+
+Dark glass, for the bulk bar over content: `rgb(28 26 46 / 0.86)` with the same blur.
 
 ## Typography
 
-Three faces, all self-hosted through `next/font`, zero external requests.
+Three faces, self-hosted through `next/font`, zero external requests.
 
-- **Bricolage Grotesque**: marketing display and product page titles. Characterful by design; this is where the personality lives. Never below 18px, never for body copy.
-- **Plus Jakarta Sans**: all product UI. Friendly geometric, holds up at 12 and 13px.
-- **JetBrains Mono**: data literals only. Counts, dates, salaries, IDs, emails, percentages.
+- **Archivo Black**: display only. Uppercase, tight tracking. Page titles, marketing headlines, metric numbers. This carries the whole personality and must never appear below 18px or in body copy.
+- **IBM Plex Sans**: reading text and dense UI. Warmer and more characterful than a neutral grotesque, still readable at 12px.
+- **IBM Plex Mono**: labels, data literals, buttons, stage names, codes, counts, timestamps. The vintage voice. Mono carries far more of this interface than a normal product would, and that is deliberate.
 
 | Role | Size / line height | Face, weight | Notes |
 | --- | --- | --- | --- |
-| Marketing hero | 60 / 62 | Bricolage 700 | Tracking -0.03em. Two-tone, see below |
-| Marketing section | 40 / 46 | Bricolage 700 | Tracking -0.02em |
-| Page title | 22 / 28 | Bricolage 600 | One per screen |
-| Section title | 16 / 22 | Jakarta 600 | |
-| Card title | 15 / 20 | Jakarta 600 | Card and empty-state headings |
-| Metric | 24 / 30 | JetBrains 600 | Dashboard and stat-tile numbers only |
-| Body | 14 / 20 | Jakarta 450 | Default |
-| Dense body | 13 / 18 | Jakarta 450 | Cards, table cells |
-| Caption | 12 / 16 | Jakarta 500 | Card metadata, helper text |
-| Micro label | 11 / 14 | Jakarta 600 | Uppercase, tracking +0.05em |
-| Data literal | 13 / 18 | JetBrains 450 | Tabular numbers |
+| Marketing hero | 72 / 68 | Archivo Black | Uppercase, tracking -0.02em |
+| Marketing section | 44 / 44 | Archivo Black | Uppercase |
+| Page title | 26 / 28 | Archivo Black | Uppercase, one per screen |
+| Metric | 32 / 34 | Archivo Black | Dashboard numbers |
+| Section title | 15 / 20 | Plex Sans 600 | |
+| Body | 14 / 20 | Plex Sans 400 | |
+| Dense body | 13 / 18 | Plex Sans 400 | Cards, table cells |
+| Caption | 12 / 16 | Plex Sans 400 | |
+| Micro label | 11 / 14 | Plex Mono 500 | Uppercase, tracking +0.12em. The signature label |
+| Data literal | 12 / 16 | Plex Mono 400 | Tabular numbers |
+| Button | 12 / 16 | Plex Mono 600 | Uppercase, tracking +0.08em |
 
-No sizes outside this scale. No italic except the marketing accent word.
+Micro labels are wide-tracked uppercase mono, exactly as in the reference. This is the most recognisable single detail in the system and it appears on every column header, every field label, and every section eyebrow.
 
-### The two-tone headline (marketing signature)
+## Structure, the part that actually changed
 
-Marketing headlines are black except one word or short phrase, which carries a gradient and may be italic. One accent per headline, never two. Two gradients only:
-
-- `grad-fresh`: `linear-gradient(96deg, #12A150, #22C55E 45%, #A3E635)`
-- `grad-warm`: `linear-gradient(96deg, #F5A524, #FF6B5A 55%, #EE46BC)`
-
-Applied with `background-clip: text`. Gradients appear nowhere else on marketing except a soft section wash behind product frames, and nowhere at all in the product.
-
-### Eyebrow pill
-
-Above every marketing section title: a small rounded-full pill, `surface` background, 1px `line` border, containing a 12px identity-hue icon and 11px uppercase micro label. This is the structural device carried from the reference, and it earns its place by naming the section, not decorating it.
-
-## Spacing, radius, elevation
-
-- 4px grid. Allowed: 2, 4, 6, 8, 12, 16, 20, 24, 32, 40, 48, 64, 96.
-- Control height 34px, compact 28px. Table rows 44px. Candidate card padding 12px.
-- Page gutter 24px, marketing gutter 24px with content capped at 1200px.
-- Radius: 8px controls, 12px cards and panels, 16px marketing frames and modals, 999px pills, avatars, and primary buttons.
-- Elevation, two levels only:
-  - `shadow-card`: `0 1px 2px rgb(17 24 39 / 0.06)` on cards.
-  - `shadow-pop`: `0 8px 28px rgb(17 24 39 / 0.14)` on floating layers and the bulk action bar.
-- Flat panels use borders, not shadows.
-
-## App shell anatomy
-
-Three vertical zones, left to right, under one full-width top bar.
-
-1. **Top bar**, 52px, `forest-900`. Logo mark, workspace switcher with chevron, then right-aligned: help link, notifications with count badge, user avatar. All text and icons white or white at 70 percent.
-2. **Icon rail**, 56px, `surface`, right border. Top: workspace squares, 32px rounded-8 tiles in identity hues carrying the workspace initial, active one ringed. Then a 32px add tile. Below a divider: primary navigation as 20px icons, active one on an `emerald-50` tile. Bottom-anchored: settings and help.
-3. **List panel**, 264px, `surface`, right border, collapsible. Panel title with icon and collapse control, search field, then the scoped list. Every list row carries a 6px status dot in its identity hue, a title, and a mono code.
-4. **Main**, `canvas`. Breadcrumb, page title, meta row, tabs, then content.
-
-The meta row sits under the title as label-and-value pairs separated by 24px: label in `ink-600` caption, value in `ink-900`. Assignee avatars overlap at -8px with an add button at the end.
+- **Radius is 2px.** Panels, cards, inputs, buttons. The only exceptions are avatars and status dots, which are circles. No pills, no 12px cards.
+- **Hairline grid.** Panels sit inside a 1px `rule-strong` border and share edges rather than floating apart with gaps. A screen should read as a divided sheet, not as a scatter of cards. Use `-ml-px` style overlap so shared edges stay 1px, never 2px.
+- **No shadows on flat surfaces.** Shadow belongs to glass layers only.
+- **Density.** 4px grid. Control height 32px, compact 26px. Table rows 40px. Page gutter 0: the content grid runs edge to edge and is divided by rules, with 20px padding inside each cell.
+- **Ornament budget: one per screen, maximum.** The reference uses a starburst and a squiggle. Ours is a single small vermilion four-point star used to mark the one thing that needs attention, nothing else. It is never decorative filler.
 
 ## Component inventory
 
-Primitives in `src/components/ui/`, composites in `src/components/`. Build only when a ticket needs them.
+Primitives in `src/components/ui/`, composites in `src/components/`.
 
-**Primitives**: Button (primary, secondary, ghost, danger, all pill radius), IconButton, Input, SearchInput, Select, Checkbox, Textarea, Badge, Chip, Avatar, AvatarStack, Tooltip, DropdownMenu, Dialog, Drawer, Tabs, Toast, Kbd, StatusDot, PulseDot, EyebrowPill, CopyField, EmptyState, Breadcrumb.
+Primitives: Button (primary, secondary, ghost, danger, all square and uppercase mono), IconButton, Input, SearchInput, Select, Textarea, Checkbox, Badge, Chip, Avatar, AvatarStack, Tooltip, DropdownMenu, Dialog, Drawer, Tabs, Toast, Kbd, StatusDot, PulseDot, MicroLabel, CopyField, EmptyState, Breadcrumb, Star.
 
-**Composites**: TopBar, IconRail, ListPanel, PageHeader, MetaRow, DataTable, Board, BoardColumn, CandidateCard, MatchScore, MetricRow, CandidateDrawer, BulkActionBar, FilterBar.
+Composites: TopBar, IconRail, ListPanel, PageHeader, MetaRow, DataTable, Board, BoardColumn, CandidateCard, MatchScore, MetricRow, CandidateDrawer, BulkActionBar, FilterBar, SignalCard, DreamCompanyRow, ImportDialog.
 
 ### Avatar
 
-Photo when the record has one, at 999px radius. No photo means a tinted circle in the identity hue derived from the person's id, carrying two-letter initials in that hue at 600 weight. Never grey. Sizes 24, 32, 40.
-
-### MatchScore
-
-Thumbs-up icon plus a mono percentage. Above 85 is `emerald-600`, 60 to 85 is `ink-600`, below 60 is `ink-400`. It is a score, never a progress bar, and never shown without a value.
-
-### MetricRow
-
-The bottom row of a candidate card: up to four 12px icons each followed by a mono count, for emails, notes, documents, and interviews. A zero count renders as a mono double-dash, never as `0`, so the eye skips it.
+Photo when we have one. Otherwise a square (2px radius, not a circle) tinted in the identity hue with wide-tracked mono initials. The square avatar is part of the print language.
 
 ### PulseDot
 
-The activity signature, retained from version one because it is the one thing that shows a pipeline going cold. 6px, on candidate cards and rows, beside a mono relative time.
+Kept. 6px, on candidates and companies, beside a mono relative time.
+- Live, under 48h: `sage`, breathing 2.4s.
+- Warm, 2 to 7 days: `ink-mute`, static.
+- Cold, over 7 days: hollow 1.5px `mustard` ring.
+Only ambient animation in the product. Reduced motion gets a static ring.
 
-- Live, under 48h: `emerald-500`, breathing 2.4s ease-in-out.
-- Warm, 2 to 7 days: `ink-400`, static.
-- Cold, over 7 days: hollow 1.5px `warn-500` ring.
+### Signal card
 
-With `prefers-reduced-motion`, live renders static with an `emerald-50` ring. This is the only ambient animation in the product.
-
-### BulkActionBar
-
-On selection, a `forest-900` pill floats 24px above the bottom edge, centered on the content area, `shadow-pop`. It shows the selection count, then the actions as icon-and-label pairs, destructive ones in a lighter red, then a right-aligned `esc to deselect` hint in mono. It slides up 200ms and never covers the last row: the board pads its bottom while active.
+The Dream 100 payload. A hairline cell containing: a mono uppercase kind label in the kind's identity hue, the company name in Plex Sans 600, the headline, a mono detected timestamp, and the two actions. Funding, open role, promotion, and expansion each own a fixed hue so the eye learns them.
 
 ## Motion
 
-- Transitions 150ms ease-out, opacity and transform only. Drawer and bulk bar 200ms.
-- Optimistic board drags: the card moves instantly, reconciles behind, snaps back with a toast on failure.
-- Marketing sections reveal once on scroll, 400ms, 12px rise, never on repeat.
-- No skeleton shimmer. Real data fast beats a fake loading state.
+- 140ms ease-out, opacity and transform only. Glass layers 200ms with the blur fading in.
+- Optimistic board drags, reconciled behind, snap back with a toast on failure.
+- No skeleton shimmer.
 - `prefers-reduced-motion` respected everywhere.
 
 ## Interaction rules
 
-- Click-to-copy on every email, phone, and LinkedIn URL. Hover reveals the affordance, click swaps to `Copied` inline for 900ms. No toast.
-- Hover prefetch on internal links. Board drag at 60fps.
-- Visible focus ring, 2px `emerald-600` at 2px offset, on every interactive element.
+- Click-to-copy on every email, phone, and LinkedIn URL. Inline `COPIED` swap in mono for 900ms, never a toast.
+- Visible focus ring, 2px `vermilion` at 2px offset.
 - Esc closes the topmost layer and clears selection. Enter submits. `/` focuses search.
-- Destructive dialogs name the object: `Delete Sarah Chen?`, never `Are you sure?`.
-- Buttons say what they do: `Add candidate`, `Move to Interview`. Never `Submit` or `OK`.
+- Destructive dialogs name the object. Never "Are you sure?".
+- Buttons say what they do, in uppercase mono. Never "Submit" or "OK".
 - Empty states are invitations: one line of direction plus the primary action.
-- Errors say what happened and what to do. No apologies, no vagueness.
-- Sentence case everywhere except micro labels. No filler, no exclamation marks, no em dashes anywhere.
+- Sentence case in reading text, uppercase only in mono labels and buttons.
+- No em dashes. No emoji.
 
 ## Review checklist
 
-The design-review skill walks these in order.
-
-1. Token colors and scale sizes only. No raw hex, no off-scale type or spacing.
-2. Chrome is `forest-900`, primary action is `emerald-600`. Identity hues appear only where they categorize.
-3. No grey initials circles. Avatars are photos or hue-tinted initials.
-4. Cards carry real substance: person, contact, metrics, score. No thin cards.
-5. Product surfaces have zero gradients. Marketing has at most one accent word per headline.
-6. Micro labels uppercase 11px. Data literals in JetBrains Mono with tabular numbers.
-7. Bricolage appears on display and page titles only, never in body or dense UI.
-8. Focus visible everywhere. Esc, Enter, and `/` behave.
-9. Pulse dot states correct wherever candidates render.
-10. Feels fast: no layout shift, no uninvited motion, optimistic where it matters.
-11. No emoji anywhere in the UI.
+1. Tokens and scale only. No raw hex, no off-scale type or spacing.
+2. Radius is 2px everywhere except avatars and dots. No pills, no soft cards.
+3. Panels share hairline `rule-strong` edges and form a grid. Nothing floats without reason.
+4. Blur and translucency appear ONLY on floating layers. No glass on a flat surface.
+5. Micro labels are uppercase Plex Mono at 11px with +0.12em tracking.
+6. Archivo Black appears only on page titles, marketing headlines and metrics, never in body or dense UI.
+7. Buttons are uppercase mono.
+8. Background is warm paper. Nothing is pure white or neutral grey.
+9. At most one ornament per screen.
+10. Focus visible everywhere. Esc, Enter and `/` behave.
+11. Pulse dot states correct wherever candidates or companies render.
+12. Feels fast: no layout shift, no uninvited motion, optimistic where it matters.

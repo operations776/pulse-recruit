@@ -41,14 +41,14 @@ export function Dialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         aria-label="Close dialog"
-        className="absolute inset-0 bg-ink-900/25"
+        className="glass-scrim absolute inset-0"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative w-full max-w-[440px] rounded-2xl bg-surface shadow-pop"
+        className="glass relative w-full max-w-[440px] rounded-sharp"
       >
         <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-5">
           <div>
@@ -56,20 +56,20 @@ export function Dialog({
               {title}
             </h2>
             {description ? (
-              <p className="mt-1 text-[13px] text-ink-600">{description}</p>
+              <p className="mt-1 text-[13px] text-ink-soft">{description}</p>
             ) : null}
           </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="rounded-lg p-1 text-ink-400 hover:bg-canvas hover:text-ink-900"
+            className="rounded-sharp p-1 text-ink-mute hover:bg-paper hover:text-ink"
           >
             <X size={16} strokeWidth={1.75} />
           </button>
         </div>
         <div className="px-5 pb-5">{children}</div>
         {footer ? (
-          <div className="flex justify-end gap-2 border-t border-line px-5 py-3.5">
+          <div className="flex justify-end gap-2 border-t border-rule px-5 py-3.5">
             {footer}
           </div>
         ) : null}
@@ -96,12 +96,12 @@ export function Drawer({
     <div className="fixed inset-0 z-40">
       <button
         aria-label="Close panel"
-        className="absolute inset-0 bg-ink-900/20"
+        className="glass-scrim absolute inset-0"
         onClick={onClose}
       />
       <aside
         aria-label={label}
-        className="absolute right-0 top-0 flex h-full w-[480px] flex-col border-l border-line bg-surface shadow-pop"
+        className="glass absolute right-0 top-0 flex h-full w-[480px] flex-col border-y-0 border-r-0"
       >
         {children}
       </aside>

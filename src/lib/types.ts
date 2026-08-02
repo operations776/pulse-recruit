@@ -104,10 +104,21 @@ export type ActivityEvent = {
   createdAt: string;
 };
 
+// "promotion" is the signal Daniyal called out specifically: somebody moving up
+// inside a target company is a hiring trigger, because they backfill their old
+// seat and they build their own team.
+export type SignalKind =
+  | "open_role"
+  | "funding"
+  | "promotion"
+  | "leadership"
+  | "expansion";
+
 export type Signal = {
   id: string;
   orgId: string;
-  kind: "open_role" | "funding" | "leadership" | "expansion";
+  dreamCompanyId: string;
+  kind: SignalKind;
   companyName: string;
   domain: string;
   headline: string;
@@ -122,4 +133,19 @@ export type CandidateMetrics = {
   notes: number;
   documents: number;
   interviews: number;
+};
+
+// The Dream 100 watchlist. The recruiter loads the companies he wants to win,
+// and Pulse reports what those companies are doing. This is the differentiator:
+// signals are scoped to a named target list, not a generic market feed.
+export type DreamCompany = {
+  id: string;
+  orgId: string;
+  name: string;
+  domain: string;
+  industry: string;
+  headcount: string;
+  tier: 1 | 2 | 3;
+  addedAt: string;
+  lastSignalAt: string | null;
 };

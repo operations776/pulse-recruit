@@ -30,15 +30,15 @@ export function IconRail() {
   return (
     <nav
       aria-label="Primary"
-      className="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-line bg-surface py-3"
+      className="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-rule bg-paper-white py-3"
     >
       {workspaces.map((name, i) => (
         <button
           key={name}
           title={name}
           aria-label={name}
-          className={`flex size-8 items-center justify-center rounded-lg text-[12px] font-bold text-white ${hueBg[hueByIndex(i)]} ${
-            i === 0 ? "ring-2 ring-ink-900 ring-offset-2" : ""
+          className={`flex size-8 items-center justify-center rounded-sharp text-[12px] font-bold text-white ${hueBg[hueByIndex(i)]} ${
+            i === 0 ? "ring-2 ring-ink ring-offset-2" : ""
           }`}
         >
           {name[0]}
@@ -47,12 +47,12 @@ export function IconRail() {
       <button
         title="Add workspace"
         aria-label="Add workspace"
-        className="flex size-8 items-center justify-center rounded-lg border border-dashed border-line text-ink-400 hover:border-ink-400 hover:text-ink-600"
+        className="flex size-8 items-center justify-center rounded-sharp border border-dashed border-rule text-ink-mute hover:border-ink-mute hover:text-ink-soft"
       >
         <Plus size={15} strokeWidth={2} />
       </button>
 
-      <span className="my-2 h-px w-6 bg-line" />
+      <span className="my-2 h-px w-6 bg-rule" />
 
       {nav.map(({ href, icon: Icon, label }) => {
         const active = pathname.startsWith(href);
@@ -63,10 +63,10 @@ export function IconRail() {
             title={label}
             aria-label={label}
             aria-current={active ? "page" : undefined}
-            className={`flex size-8 items-center justify-center rounded-lg ${
+            className={`flex size-8 items-center justify-center rounded-sharp ${
               active
-                ? "bg-emerald-50 text-emerald-700"
-                : "text-ink-400 hover:bg-canvas hover:text-ink-600"
+                ? "bg-vermilion-wash text-vermilion-deep"
+                : "text-ink-mute hover:bg-paper hover:text-ink-soft"
             }`}
           >
             <Icon size={17} strokeWidth={1.75} />
@@ -78,10 +78,10 @@ export function IconRail() {
         href="/settings"
         title="Settings"
         aria-label="Settings"
-        className={`mt-auto flex size-8 items-center justify-center rounded-lg ${
+        className={`mt-auto flex size-8 items-center justify-center rounded-sharp ${
           pathname.startsWith("/settings")
-            ? "bg-emerald-50 text-emerald-700"
-            : "text-ink-400 hover:bg-canvas hover:text-ink-600"
+            ? "bg-vermilion-wash text-vermilion-deep"
+            : "text-ink-mute hover:bg-paper hover:text-ink-soft"
         }`}
       >
         <Settings size={17} strokeWidth={1.75} />

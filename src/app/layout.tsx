@@ -1,29 +1,28 @@
 import type { Metadata } from "next";
-import {
-  Bricolage_Grotesque,
-  JetBrains_Mono,
-  Plus_Jakarta_Sans,
-} from "next/font/google";
+import { Archivo_Black, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { brand } from "@/config/brand";
 import "./globals.css";
 
-// Three faces per DESIGN.md. Display carries the personality and is used with
-// restraint; Jakarta runs all product UI; mono is for data literals only.
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
+// Three faces per DESIGN.md. Archivo Black carries the whole personality and is
+// restricted to display. Plex Sans reads, Plex Mono labels everything.
+const archivo = Archivo_Black({
+  variable: "--font-archivo",
   subsets: ["latin"],
+  weight: "400",
   display: "swap",
 });
 
-const jakarta = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const jetbrains = JetBrains_Mono({
-  variable: "--font-jetbrains",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
@@ -40,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bricolage.variable} ${jakarta.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       {/* Browser extensions such as Grammarly inject attributes onto body
           before React hydrates, which reports as a hydration mismatch that is

@@ -1,18 +1,18 @@
-// Identity palette assignment. DESIGN.md: the six hues categorize, they never
-// decorate, so the same key must always resolve to the same hue.
+// Identity palette assignment. DESIGN.md: the six vintage hues categorize, they
+// never decorate, so the same key must always resolve to the same hue.
 
 export const HUES = [
-  "coral",
-  "amber",
-  "indigo",
-  "violet",
-  "sky",
-  "pink",
+  "vermilion",
+  "mustard",
+  "sage",
+  "teal",
+  "plum",
+  "clay",
 ] as const;
 
 export type Hue = (typeof HUES)[number];
 
-// Ordered collections (pipeline stages, workspace tiles) assign by position so
+// Ordered collections (stages, workspace tiles) assign by position so
 // neighbours can never collide. Hashing is only correct for unordered identity.
 export function hueByIndex(index: number): Hue {
   return HUES[index % HUES.length];
@@ -26,34 +26,41 @@ export function hueFor(key: string): Hue {
   return HUES[hash % HUES.length];
 }
 
-// Tailwind cannot see dynamically built class names, so the variants are
-// spelled out. Text and background are kept separate because tinted surfaces
-// use the same hue at low opacity.
+// Tailwind cannot see dynamically built class names, so variants are spelled out.
 export const hueText: Record<Hue, string> = {
-  coral: "text-hue-coral",
-  amber: "text-hue-amber",
-  indigo: "text-hue-indigo",
-  violet: "text-hue-violet",
-  sky: "text-hue-sky",
-  pink: "text-hue-pink",
+  vermilion: "text-hue-vermilion",
+  mustard: "text-hue-mustard",
+  sage: "text-hue-sage",
+  teal: "text-hue-teal",
+  plum: "text-hue-plum",
+  clay: "text-hue-clay",
 };
 
 export const hueBg: Record<Hue, string> = {
-  coral: "bg-hue-coral",
-  amber: "bg-hue-amber",
-  indigo: "bg-hue-indigo",
-  violet: "bg-hue-violet",
-  sky: "bg-hue-sky",
-  pink: "bg-hue-pink",
+  vermilion: "bg-hue-vermilion",
+  mustard: "bg-hue-mustard",
+  sage: "bg-hue-sage",
+  teal: "bg-hue-teal",
+  plum: "bg-hue-plum",
+  clay: "bg-hue-clay",
 };
 
 export const hueTint: Record<Hue, string> = {
-  coral: "bg-hue-coral/10",
-  amber: "bg-hue-amber/10",
-  indigo: "bg-hue-indigo/10",
-  violet: "bg-hue-violet/10",
-  sky: "bg-hue-sky/10",
-  pink: "bg-hue-pink/10",
+  vermilion: "bg-hue-vermilion/12",
+  mustard: "bg-hue-mustard/12",
+  sage: "bg-hue-sage/12",
+  teal: "bg-hue-teal/12",
+  plum: "bg-hue-plum/12",
+  clay: "bg-hue-clay/12",
+};
+
+export const hueBorder: Record<Hue, string> = {
+  vermilion: "border-hue-vermilion",
+  mustard: "border-hue-mustard",
+  sage: "border-hue-sage",
+  teal: "border-hue-teal",
+  plum: "border-hue-plum",
+  clay: "border-hue-clay",
 };
 
 export function initials(name: string): string {

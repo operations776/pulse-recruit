@@ -109,7 +109,7 @@ export default function CandidatesPage() {
   const openCandidate = rows.find((c) => c.id === openId) ?? null;
 
   return (
-    <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-canvas">
+    <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-paper">
       <div className="px-6 pt-4">
         <Breadcrumb trail={["Recruitment", "Candidates"]} />
 
@@ -119,8 +119,8 @@ export default function CandidatesPage() {
               Candidates
             </h1>
             <span className="flex items-baseline gap-1.5">
-              <span className="data-literal text-ink-900">{rows.length}</span>
-              <span className="micro-label text-ink-400">
+              <span className="data-literal text-ink">{rows.length}</span>
+              <span className="micro-label text-ink-mute">
                 {rows.length === 1 ? "result" : "results"}
               </span>
             </span>
@@ -130,14 +130,14 @@ export default function CandidatesPage() {
               button style. One tab stop, one focus ring, real navigation. */}
           <Link
             href="/pipeline"
-            className="inline-flex h-[34px] shrink-0 items-center justify-center gap-1.5 rounded-full bg-emerald-600 px-3.5 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-emerald-700"
+            className="inline-flex h-[34px] shrink-0 items-center justify-center gap-1.5 rounded-full bg-vermilion px-3.5 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-vermilion-deep"
           >
             <Plus size={15} strokeWidth={2.25} />
             Add candidate
           </Link>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-b border-line pb-4">
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-b border-rule pb-4">
           <SearchInput
             ref={searchRef}
             value={query}
@@ -199,7 +199,7 @@ export default function CandidatesPage() {
             action={<Button onClick={clearFilters}>Clear filters</Button>}
           />
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+          <div className="overflow-hidden rounded-sharp border border-rule bg-paper-white ">
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr>
@@ -207,7 +207,7 @@ export default function CandidatesPage() {
                     <th
                       key={label}
                       scope="col"
-                      className="micro-label sticky top-0 z-10 h-9 border-b border-line bg-surface px-3 text-ink-400"
+                      className="micro-label sticky top-0 z-10 h-9 border-b border-rule bg-paper-white px-3 text-ink-mute"
                     >
                       {label}
                     </th>
@@ -227,7 +227,7 @@ export default function CandidatesPage() {
                         if ((e.target as HTMLElement).closest("a, button")) return;
                         setOpenId(c.id);
                       }}
-                      className="h-11 cursor-pointer border-b border-line-soft last:border-b-0 hover:bg-canvas"
+                      className="h-11 cursor-pointer border-b border-rule last:border-b-0 hover:bg-paper"
                     >
                       <td className="px-3">
                         <span className="flex items-center gap-2.5">
@@ -235,11 +235,11 @@ export default function CandidatesPage() {
                           <span className="flex min-w-0 flex-col">
                             <button
                               onClick={() => setOpenId(c.id)}
-                              className="truncate rounded text-left text-[13px] font-semibold leading-[18px] hover:text-emerald-700"
+                              className="truncate rounded text-left text-[13px] font-semibold leading-[18px] hover:text-vermilion-deep"
                             >
                               {c.name}
                             </button>
-                            <span className="truncate text-[12px] leading-4 text-ink-600">
+                            <span className="truncate text-[12px] leading-4 text-ink-soft">
                               {c.title}
                             </span>
                           </span>
@@ -276,7 +276,7 @@ export default function CandidatesPage() {
                         {c.match > 0 ? (
                           <MatchScore value={c.match} />
                         ) : (
-                          <span className="data-literal text-ink-400">--</span>
+                          <span className="data-literal text-ink-mute">--</span>
                         )}
                       </td>
                       <td className="px-3">

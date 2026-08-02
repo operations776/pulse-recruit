@@ -12,7 +12,7 @@ import { brand } from "@/config/brand";
 export default function SignUpPage() {
   return (
     <ToastProvider>
-      <div className="flex flex-1 items-center justify-center bg-canvas px-6 py-12">
+      <div className="flex flex-1 items-center justify-center bg-paper px-6 py-12">
         <SignUpCard />
       </div>
     </ToastProvider>
@@ -40,13 +40,13 @@ function SignUpCard() {
   };
 
   return (
-    <div className="w-full max-w-[400px] rounded-2xl border border-line bg-surface p-6 shadow-card">
+    <div className="w-full max-w-[400px] rounded-sharp border border-rule bg-paper-white p-6 ">
       <span className="flex items-center gap-2">
         <span
           aria-hidden
-          className="flex size-8 items-center justify-center rounded-lg bg-forest-900"
+          className="flex size-8 items-center justify-center rounded-sharp bg-ink"
         >
-          <span className="size-2 rounded-full bg-emerald-500" />
+          <span className="size-2 rounded-full bg-sage" />
         </span>
         <span className="font-display text-[17px] font-bold">{brand.name}</span>
       </span>
@@ -54,7 +54,7 @@ function SignUpCard() {
       <h1 className="mt-6 font-display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
         Create your workspace
       </h1>
-      <p className="mt-1.5 text-[13px] text-ink-600">
+      <p className="mt-1.5 text-[13px] text-ink-soft">
         One workspace per agency. Invite the rest of the desk once you are in.
       </p>
 
@@ -102,7 +102,7 @@ function SignUpCard() {
         </Field>
 
         {error ? (
-          <p role="alert" className="text-[12px] font-medium text-danger-500">
+          <p role="alert" className="text-[12px] font-medium text-brick">
             {error}
           </p>
         ) : null}
@@ -112,16 +112,16 @@ function SignUpCard() {
         </Button>
       </form>
 
-      <p className="mt-5 text-center text-[13px] text-ink-600">
+      <p className="mt-5 text-center text-[13px] text-ink-soft">
         <Link
           href="/signin"
-          className="font-semibold text-emerald-700 hover:underline"
+          className="font-semibold text-vermilion-deep hover:underline"
         >
           Already have an account? Sign in
         </Link>
       </p>
 
-      <p className="mt-3 text-center text-[12px] text-ink-400">
+      <p className="mt-3 text-center text-[12px] text-ink-mute">
         Questions before you start? {brand.supportEmail}
       </p>
     </div>

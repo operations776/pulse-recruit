@@ -12,7 +12,7 @@ import { brand } from "@/config/brand";
 export default function SignInPage() {
   return (
     <ToastProvider>
-      <div className="flex flex-1 items-center justify-center bg-canvas px-6 py-12">
+      <div className="flex flex-1 items-center justify-center bg-paper px-6 py-12">
         <SignInCard />
       </div>
     </ToastProvider>
@@ -36,13 +36,13 @@ function SignInCard() {
   };
 
   return (
-    <div className="w-full max-w-[400px] rounded-2xl border border-line bg-surface p-6 shadow-card">
+    <div className="w-full max-w-[400px] rounded-sharp border border-rule bg-paper-white p-6 ">
       <span className="flex items-center gap-2">
         <span
           aria-hidden
-          className="flex size-8 items-center justify-center rounded-lg bg-forest-900"
+          className="flex size-8 items-center justify-center rounded-sharp bg-ink"
         >
-          <span className="size-2 rounded-full bg-emerald-500" />
+          <span className="size-2 rounded-full bg-sage" />
         </span>
         <span className="font-display text-[17px] font-bold">{brand.name}</span>
       </span>
@@ -50,7 +50,7 @@ function SignInCard() {
       <h1 className="mt-6 font-display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
         Welcome back
       </h1>
-      <p className="mt-1.5 text-[13px] text-ink-600">
+      <p className="mt-1.5 text-[13px] text-ink-soft">
         Sign in to pick your pipeline back up where you left it.
       </p>
 
@@ -78,7 +78,7 @@ function SignInCard() {
         </Field>
 
         {error ? (
-          <p role="alert" className="text-[12px] font-medium text-danger-500">
+          <p role="alert" className="text-[12px] font-medium text-brick">
             {error}
           </p>
         ) : null}
@@ -89,9 +89,9 @@ function SignInCard() {
       </form>
 
       <div className="my-5 flex items-center gap-3">
-        <span aria-hidden className="h-px flex-1 bg-line" />
-        <span className="text-[12px] text-ink-400">or</span>
-        <span aria-hidden className="h-px flex-1 bg-line" />
+        <span aria-hidden className="h-px flex-1 bg-rule" />
+        <span className="text-[12px] text-ink-mute">or</span>
+        <span aria-hidden className="h-px flex-1 bg-rule" />
       </div>
 
       <Button
@@ -102,10 +102,10 @@ function SignInCard() {
         Continue with Google
       </Button>
 
-      <p className="mt-5 text-center text-[13px] text-ink-600">
+      <p className="mt-5 text-center text-[13px] text-ink-soft">
         <Link
           href="/signup"
-          className="font-semibold text-emerald-700 hover:underline"
+          className="font-semibold text-vermilion-deep hover:underline"
         >
           New here? Create an account
         </Link>

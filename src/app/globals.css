@@ -1,51 +1,48 @@
 @import "tailwindcss";
 
-/* Design tokens. The single source of truth is DESIGN.md. No raw hex in components. */
+/* Design tokens. Single source of truth is DESIGN.md. No raw hex in components. */
 @theme {
-  /* Brand */
-  --color-forest-900: #0c3225;
-  --color-forest-800: #10402f;
-  --color-forest-700: #14543c;
+  /* Paper and ink */
+  --color-paper: #f7efe8;
+  --color-paper-deep: #efe2d7;
+  --color-paper-white: #fffbf7;
 
-  --color-emerald-700: #0e8543;
-  --color-emerald-600: #12a150;
-  --color-emerald-500: #22c55e;
-  --color-emerald-50: #e9f8ef;
+  --color-ink: #1c1a2e;
+  --color-ink-soft: #56526e;
+  --color-ink-mute: #8e8aa3;
+
+  --color-rule: #dccec2;
+  --color-rule-strong: #1c1a2e;
+
+  /* Accent and semantic */
+  --color-vermilion: #e8481f;
+  --color-vermilion-deep: #c33a14;
+  --color-vermilion-wash: #fbe3da;
+  --color-sage: #4e7c62;
+  --color-mustard: #c08a2e;
+  --color-brick: #a9382a;
 
   /* Identity palette: categorization only, never decoration */
-  --color-hue-coral: #ff6b5a;
-  --color-hue-amber: #f5a524;
-  --color-hue-indigo: #5b5bd6;
-  --color-hue-violet: #8b5cf6;
-  --color-hue-sky: #2e90fa;
-  --color-hue-pink: #ee46bc;
-
-  /* Neutrals */
-  --color-canvas: #f6f7f8;
-  --color-surface: #ffffff;
-  --color-ink-900: #111827;
-  --color-ink-600: #5b6472;
-  --color-ink-400: #98a1ae;
-  --color-line: #e5e7eb;
-  --color-line-soft: #f0f1f3;
-
-  /* Semantic */
-  --color-warn-500: #b45309;
-  --color-danger-500: #d92d20;
+  --color-hue-vermilion: #e8481f;
+  --color-hue-mustard: #d9a441;
+  --color-hue-sage: #5c8a6e;
+  --color-hue-teal: #2f6f7e;
+  --color-hue-plum: #7a4e6e;
+  --color-hue-clay: #a9603f;
 
   /* Faces */
-  --font-display: var(--font-bricolage);
-  --font-sans: var(--font-jakarta);
-  --font-mono: var(--font-jetbrains);
+  --font-display: var(--font-archivo);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
 
-  /* Elevation: two levels only */
-  --shadow-card: 0 1px 2px rgb(17 24 39 / 0.06);
-  --shadow-pop: 0 8px 28px rgb(17 24 39 / 0.14);
+  --shadow-glass: 0 16px 40px rgb(28 26 46 / 0.18);
+
+  --radius-sharp: 2px;
 }
 
 body {
-  background: var(--color-canvas);
-  color: var(--color-ink-900);
+  background: var(--color-paper);
+  color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 20px;
@@ -53,34 +50,59 @@ body {
 }
 
 @layer components {
+  /* The signature label: wide-tracked uppercase mono, straight from the reference */
   .micro-label {
+    font-family: var(--font-mono);
     font-size: 11px;
     line-height: 14px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
+    font-weight: 500;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
   .data-literal {
     font-family: var(--font-mono);
-    font-size: 13px;
-    line-height: 18px;
+    font-size: 12px;
+    line-height: 16px;
     font-variant-numeric: tabular-nums;
   }
 
-  /* Marketing signature: one accent word per headline, gradient clipped to text */
-  .grad-fresh {
-    background: linear-gradient(96deg, #12a150, #22c55e 45%, #a3e635);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  .btn-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
-  .grad-warm {
-    background: linear-gradient(96deg, #f5a524, #ff6b5a 55%, #ee46bc);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  .display {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+  }
+
+  /* Glass: floating layers ONLY. Never on a flat surface. */
+  .glass {
+    background: rgb(255 251 247 / 0.72);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid rgb(28 26 46 / 0.14);
+    box-shadow: var(--shadow-glass);
+  }
+
+  .glass-dark {
+    background: rgb(28 26 46 / 0.86);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid rgb(255 251 247 / 0.14);
+    box-shadow: var(--shadow-glass);
+  }
+
+  .glass-scrim {
+    background: rgb(28 26 46 / 0.28);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
   }
 }
 
@@ -102,11 +124,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .pulse-dot-live {
     animation: none;
-    box-shadow: 0 0 0 2px var(--color-emerald-50);
+    box-shadow: 0 0 0 2px var(--color-vermilion-wash);
   }
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-emerald-600);
+  outline: 2px solid var(--color-vermilion);
   outline-offset: 2px;
 }

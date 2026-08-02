@@ -7,7 +7,7 @@ import type { ComponentProps, ReactNode } from "react";
 // inline filter select to full width and stacked the filter bar vertically.
 // Callers own their width; the default suits form fields.
 const base =
-  "rounded-lg border border-line bg-surface text-[13px] text-ink-900 placeholder:text-ink-400 focus:border-emerald-600 focus:outline-none";
+  "rounded-sharp border border-rule bg-paper-white text-[13px] text-ink placeholder:text-ink-mute focus:border-vermilion focus:outline-none";
 
 export function Input({ className = "w-full", ...props }: ComponentProps<"input">) {
   return <input className={`${base} h-[34px] px-3 ${className}`} {...props} />;
@@ -41,7 +41,7 @@ export function SearchInput({
       <Search
         size={14}
         strokeWidth={1.75}
-        className="pointer-events-none absolute left-3 text-ink-400"
+        className="pointer-events-none absolute left-3 text-ink-mute"
       />
       <input
         type="search"
@@ -63,9 +63,9 @@ export function Field({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="micro-label text-ink-600">{label}</span>
+      <span className="micro-label text-ink-soft">{label}</span>
       {children}
-      {hint ? <span className="text-[12px] text-ink-400">{hint}</span> : null}
+      {hint ? <span className="text-[12px] text-ink-mute">{hint}</span> : null}
     </label>
   );
 }

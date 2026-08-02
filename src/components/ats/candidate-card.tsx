@@ -36,10 +36,10 @@ export function CandidateCard({
       role="button"
       tabIndex={0}
       aria-label={`Open ${candidate.name}`}
-      className={`group relative cursor-pointer rounded-xl border bg-surface p-3 shadow-card transition-colors duration-150 ${
+      className={`group relative cursor-pointer rounded-sharp border bg-paper-white p-3 transition-colors duration-150 ${
         selected
-          ? "border-emerald-600 ring-1 ring-emerald-600"
-          : "border-line hover:border-ink-400"
+          ? "border-vermilion bg-vermilion-wash"
+          : "border-rule-strong hover:bg-paper-deep"
       }`}
     >
       <button
@@ -49,10 +49,10 @@ export function CandidateCard({
         }}
         aria-label={selected ? `Deselect ${candidate.name}` : `Select ${candidate.name}`}
         aria-pressed={selected}
-        className={`absolute right-3 top-3 flex size-4 items-center justify-center rounded-[5px] border ${
+        className={`absolute right-2.5 top-2.5 flex size-4 items-center justify-center rounded-sharp border ${
           selected
-            ? "border-emerald-600 bg-emerald-600 text-white"
-            : "border-line bg-surface opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+            ? "border-vermilion bg-vermilion text-paper-white"
+            : "border-rule-strong bg-paper-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
         }`}
       >
         {selected ? <Check size={11} strokeWidth={3} /> : null}
@@ -61,19 +61,19 @@ export function CandidateCard({
       <div className="flex items-start gap-2.5 pr-6">
         <Avatar name={candidate.name} src={candidate.avatarUrl} size="lg" />
         <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold leading-[18px]">
+          <p className="truncate text-[13px] font-semibold leading-[17px]">
             {candidate.name}
           </p>
-          <p className="truncate text-[12px] leading-4 text-ink-600">
-            {candidate.email}
+          <p className="mt-0.5 truncate text-[12px] leading-4 text-ink-soft">
+            {candidate.title}
           </p>
-          <p className="data-literal truncate text-[12px] text-ink-400">
-            {candidate.phone}
+          <p className="data-literal mt-0.5 truncate text-ink-mute">
+            {candidate.email}
           </p>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line-soft pt-2.5">
+      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-rule pt-2">
         <MetricRow metrics={metricsFor(candidate.id)} />
         <span className="flex items-center gap-2.5">
           <Activity

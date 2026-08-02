@@ -50,19 +50,19 @@ export function CandidateDrawer({
 
   return (
     <Drawer open onClose={onClose} label={`${candidate.name} details`}>
-      <div className="flex items-start justify-between gap-3 border-b border-line p-5">
+      <div className="flex items-start justify-between gap-3 border-b border-rule p-5">
         <div className="flex min-w-0 gap-3">
           <Avatar name={candidate.name} src={candidate.avatarUrl} size="lg" />
           <div className="min-w-0">
             <h2 className="truncate font-display text-[18px] font-semibold leading-6">
               {candidate.name}
             </h2>
-            <p className="truncate text-[13px] text-ink-600">
+            <p className="truncate text-[13px] text-ink-soft">
               {candidate.title}
               {candidate.companyName ? ` at ${candidate.companyName}` : ""}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              {stage ? <Badge hue="emerald">{stage.name}</Badge> : null}
+              {stage ? <Badge hue="accent">{stage.name}</Badge> : null}
               {candidate.match > 0 ? <MatchScore value={candidate.match} /> : null}
               <Activity
                 freshness={freshnessFor(new Date(candidate.lastActivityAt), NOW)}
@@ -74,26 +74,26 @@ export function CandidateDrawer({
         <button
           onClick={onClose}
           aria-label="Close"
-          className="rounded-lg p-1 text-ink-400 hover:bg-canvas hover:text-ink-900"
+          className="rounded-sharp p-1 text-ink-mute hover:bg-paper hover:text-ink"
         >
           <X size={16} strokeWidth={1.75} />
         </button>
       </div>
 
-      <div className="flex gap-1 border-b border-line px-5">
+      <div className="flex gap-1 border-b border-rule px-5">
         {(["profile", "notes", "activity"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`border-b-2 px-3 pb-2.5 pt-2 text-[13px] capitalize ${
               tab === t
-                ? "border-emerald-600 font-semibold text-emerald-700"
-                : "border-transparent text-ink-600 hover:text-ink-900"
+                ? "border-vermilion font-semibold text-vermilion-deep"
+                : "border-transparent text-ink-soft hover:text-ink"
             }`}
           >
             {t}
             {t === "notes" && notes.length > 0 ? (
-              <span className="data-literal ml-1.5 text-[11px] text-ink-400">
+              <span className="data-literal ml-1.5 text-[11px] text-ink-mute">
                 {notes.length}
               </span>
             ) : null}
@@ -105,10 +105,10 @@ export function CandidateDrawer({
         {tab === "profile" ? (
           <div className="flex flex-col gap-5">
             <section>
-              <h3 className="micro-label mb-2.5 text-ink-600">Contact</h3>
+              <h3 className="micro-label mb-2.5 text-ink-soft">Contact</h3>
               <dl className="flex flex-col gap-2.5">
                 <div className="flex items-baseline gap-3">
-                  <dt className="w-20 shrink-0 text-[12px] text-ink-400">Email</dt>
+                  <dt className="w-20 shrink-0 text-[12px] text-ink-mute">Email</dt>
                   <dd className="min-w-0">
                     <CopyField
                       value={candidate.email}
@@ -118,26 +118,26 @@ export function CandidateDrawer({
                   </dd>
                 </div>
                 <div className="flex items-baseline gap-3">
-                  <dt className="w-20 shrink-0 text-[12px] text-ink-400">Phone</dt>
+                  <dt className="w-20 shrink-0 text-[12px] text-ink-mute">Phone</dt>
                   <dd className="min-w-0">
                     <CopyField value={candidate.phone} label="phone" />
                   </dd>
                 </div>
                 <div className="flex items-baseline gap-3">
-                  <dt className="w-20 shrink-0 text-[12px] text-ink-400">LinkedIn</dt>
+                  <dt className="w-20 shrink-0 text-[12px] text-ink-mute">LinkedIn</dt>
                   <dd className="min-w-0">
                     {candidate.linkedinUrl ? (
                       <a
                         href={candidate.linkedinUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-1.5 text-[13px] text-emerald-700 hover:underline"
+                        className="flex items-center gap-1.5 text-[13px] text-vermilion-deep hover:underline"
                       >
                         <ExternalLink size={13} strokeWidth={1.75} />
                         Open profile
                       </a>
                     ) : (
-                      <span className="text-[13px] text-ink-400">Not provided</span>
+                      <span className="text-[13px] text-ink-mute">Not provided</span>
                     )}
                   </dd>
                 </div>
@@ -145,7 +145,7 @@ export function CandidateDrawer({
             </section>
 
             <section>
-              <h3 className="micro-label mb-2.5 text-ink-600">Details</h3>
+              <h3 className="micro-label mb-2.5 text-ink-soft">Details</h3>
               <dl className="flex flex-col gap-2.5 text-[13px]">
                 {[
                   ["Location", candidate.location, MapPin],
@@ -155,10 +155,10 @@ export function CandidateDrawer({
                   ["Added", formatDate(candidate.createdAt), null],
                 ].map(([label, value]) => (
                   <div key={label as string} className="flex items-baseline gap-3">
-                    <dt className="w-20 shrink-0 text-[12px] text-ink-400">
+                    <dt className="w-20 shrink-0 text-[12px] text-ink-mute">
                       {label as string}
                     </dt>
-                    <dd className="text-ink-900">
+                    <dd className="text-ink">
                       {(value as string) || "Not provided"}
                     </dd>
                   </div>
@@ -167,7 +167,7 @@ export function CandidateDrawer({
             </section>
 
             <section>
-              <h3 className="micro-label mb-2.5 text-ink-600">Move to stage</h3>
+              <h3 className="micro-label mb-2.5 text-ink-soft">Move to stage</h3>
               <div className="flex flex-wrap gap-1.5">
                 {stages.map((s) => (
                   <button
@@ -179,8 +179,8 @@ export function CandidateDrawer({
                     }}
                     className={`h-8 rounded-full border px-3 text-[12px] font-medium ${
                       s.id === candidate.stageId
-                        ? "border-emerald-600 bg-emerald-50 text-emerald-700"
-                        : "border-line hover:border-emerald-600 hover:bg-emerald-50"
+                        ? "border-vermilion bg-vermilion-wash text-vermilion-deep"
+                        : "border-rule hover:border-vermilion hover:bg-vermilion-wash"
                     }`}
                   >
                     {s.name}
@@ -194,7 +194,7 @@ export function CandidateDrawer({
         {tab === "notes" ? (
           <div className="flex flex-col gap-4">
             {notes.length === 0 ? (
-              <p className="text-[13px] text-ink-600">
+              <p className="text-[13px] text-ink-soft">
                 No notes yet. Add the first one below.
               </p>
             ) : (
@@ -206,11 +206,11 @@ export function CandidateDrawer({
                       <span className="text-[13px] font-semibold">
                         {memberById(n.authorId)?.name}
                       </span>
-                      <span className="data-literal text-[11px] text-ink-400">
+                      <span className="data-literal text-[11px] text-ink-mute">
                         {relativeTime(n.createdAt)}
                       </span>
                     </p>
-                    <p className="mt-1 text-[13px] leading-5 text-ink-600">
+                    <p className="mt-1 text-[13px] leading-5 text-ink-soft">
                       {n.body}
                     </p>
                   </div>
@@ -224,24 +224,24 @@ export function CandidateDrawer({
           <ol className="flex flex-col gap-3.5">
             {events.map((e) => (
               <li key={e.id} className="flex gap-2.5">
-                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-line" />
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-rule" />
                 <div className="min-w-0">
                   <p className="text-[13px]">{e.summary}</p>
-                  <p className="data-literal text-[11px] text-ink-400">
+                  <p className="data-literal text-[11px] text-ink-mute">
                     {memberById(e.actorId)?.name} · {relativeTime(e.createdAt)}
                   </p>
                 </div>
               </li>
             ))}
             {events.length === 0 ? (
-              <p className="text-[13px] text-ink-600">Nothing recorded yet.</p>
+              <p className="text-[13px] text-ink-soft">Nothing recorded yet.</p>
             ) : null}
           </ol>
         ) : null}
       </div>
 
       {tab === "notes" ? (
-        <div className="border-t border-line p-4">
+        <div className="border-t border-rule p-4">
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}

@@ -1,19 +1,18 @@
 import type { ComponentProps } from "react";
 
-// DESIGN.md: pill radius, 34px default, 28px compact. Buttons say what they do.
-
+// DESIGN.md: square (2px), uppercase mono label. No pills.
 const variants = {
-  primary: "bg-emerald-600 text-white hover:bg-emerald-700",
+  primary:
+    "bg-vermilion text-paper-white border border-vermilion hover:bg-vermilion-deep hover:border-vermilion-deep",
   secondary:
-    "border border-line bg-surface text-ink-900 hover:bg-canvas",
-  ghost: "text-ink-600 hover:bg-canvas hover:text-ink-900",
-  danger:
-    "border border-danger-500/30 text-danger-500 hover:bg-danger-500/5",
+    "border border-rule-strong bg-transparent text-ink hover:bg-ink hover:text-paper-white",
+  ghost: "border border-transparent text-ink-soft hover:text-ink hover:border-rule",
+  danger: "border border-brick text-brick hover:bg-brick hover:text-paper-white",
 } as const;
 
 const sizes = {
-  md: "h-[34px] px-3.5 text-[13px]",
-  sm: "h-7 px-3 text-[12px]",
+  md: "h-8 px-3.5",
+  sm: "h-[26px] px-2.5",
 } as const;
 
 export function Button({
@@ -27,7 +26,7 @@ export function Button({
 }) {
   return (
     <button
-      className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full font-semibold transition-colors duration-150 ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`btn-label inline-flex shrink-0 items-center justify-center gap-1.5 rounded-sharp transition-colors duration-150 disabled:opacity-40 ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     />
   );

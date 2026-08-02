@@ -24,15 +24,15 @@ export function BulkActionBar({ stages }: { stages: Stage[] }) {
   return (
     <>
       <div className="pointer-events-none sticky bottom-6 z-20 flex justify-center px-6">
-        <div className="pointer-events-auto flex items-center gap-1 rounded-full bg-forest-900 py-2 pl-4 pr-2 text-white shadow-pop">
-          <span className="data-literal text-[12px] text-white/70">
+        <div className="glass-dark pointer-events-auto flex items-center gap-1 rounded-sharp py-2 pl-4 pr-2 text-paper-white">
+          <span className="data-literal text-[12px] text-paper-white/70">
             {count} selected
           </span>
-          <span className="mx-2 h-4 w-px bg-white/15" />
+          <span className="mx-2 h-4 w-px bg-paper-white/15" />
 
           <button
             onClick={() => setMoveOpen(true)}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium hover:bg-white/10"
+            className="btn-label flex items-center gap-1.5 rounded-sharp px-2.5 py-1.5 hover:bg-paper-white/10"
           >
             <MoveRight size={14} strokeWidth={1.75} />
             Move
@@ -43,7 +43,7 @@ export function BulkActionBar({ stages }: { stages: Stage[] }) {
               bulkArchive();
               notify(`Archived ${count} ${noun}`);
             }}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium hover:bg-white/10"
+            className="btn-label flex items-center gap-1.5 rounded-sharp px-2.5 py-1.5 hover:bg-paper-white/10"
           >
             <Archive size={14} strokeWidth={1.75} />
             Archive
@@ -51,21 +51,21 @@ export function BulkActionBar({ stages }: { stages: Stage[] }) {
 
           <button
             onClick={() => setConfirmDelete(true)}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium text-hue-coral hover:bg-white/10"
+            className="btn-label flex items-center gap-1.5 rounded-sharp px-2.5 py-1.5 text-hue-vermilion hover:bg-paper-white/10"
           >
             <Trash2 size={14} strokeWidth={1.75} />
             Delete
           </button>
 
-          <span className="mx-2 h-4 w-px bg-white/15" />
+          <span className="mx-2 h-4 w-px bg-paper-white/15" />
           <button
             onClick={clearSelection}
             aria-label="Clear selection"
-            className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white"
+            className="rounded-sharp p-1.5 text-paper-white/60 hover:bg-paper-white/10 hover:text-paper-white"
           >
             <X size={14} strokeWidth={2} />
           </button>
-          <span className="data-literal pr-2 text-[11px] text-white/50">
+          <span className="data-literal pr-2 text-[11px] text-paper-white/50">
             esc to deselect
           </span>
         </div>
@@ -86,7 +86,7 @@ export function BulkActionBar({ stages }: { stages: Stage[] }) {
                 setMoveOpen(false);
                 notify(`Moved ${count} ${noun} to ${stage.name}`);
               }}
-              className="flex h-10 items-center rounded-lg border border-line px-3 text-left text-[13px] font-medium hover:border-emerald-600 hover:bg-emerald-50"
+              className="flex h-10 items-center rounded-sharp border border-rule px-3 text-left text-[13px] font-medium hover:border-vermilion hover:bg-vermilion-wash"
             >
               {stage.name}
             </button>
@@ -115,7 +115,7 @@ export function BulkActionBar({ stages }: { stages: Stage[] }) {
           </>
         }
       >
-        <p className="text-[13px] text-ink-600">
+        <p className="text-[13px] text-ink-soft">
           Archiving keeps the record and hides it from the board. Deleting does
           not.
         </p>

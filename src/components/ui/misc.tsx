@@ -10,14 +10,14 @@ export function Badge({
   solid = false,
 }: {
   children: ReactNode;
-  hue: Hue | "emerald" | "neutral";
+  hue: Hue | "accent" | "neutral";
   solid?: boolean;
 }) {
-  if (hue === "emerald") {
+  if (hue === "accent") {
     return (
       <span
-        className={`micro-label inline-flex h-5 items-center rounded-md px-1.5 ${
-          solid ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-700"
+        className={`micro-label inline-flex h-5 items-center rounded-sharp px-1.5 ${
+          solid ? "bg-vermilion text-white" : "bg-vermilion-wash text-vermilion-deep"
         }`}
       >
         {children}
@@ -26,14 +26,14 @@ export function Badge({
   }
   if (hue === "neutral") {
     return (
-      <span className="micro-label inline-flex h-5 items-center rounded-md bg-line-soft px-1.5 text-ink-600">
+      <span className="micro-label inline-flex h-5 items-center rounded-sharp bg-rule px-1.5 text-ink-soft">
         {children}
       </span>
     );
   }
   return (
     <span
-      className={`micro-label inline-flex h-5 items-center rounded-md px-1.5 ${hueTint[hue]} ${hueText[hue]}`}
+      className={`micro-label inline-flex h-5 items-center rounded-sharp px-1.5 ${hueTint[hue]} ${hueText[hue]}`}
     >
       {children}
     </span>
@@ -43,20 +43,20 @@ export function Badge({
 export function StatusDot({ state }: { state: "open" | "risk" | "closed" }) {
   const tone =
     state === "open"
-      ? "bg-emerald-500"
+      ? "bg-sage"
       : state === "risk"
-        ? "bg-hue-amber"
-        : "bg-ink-400";
+        ? "bg-hue-mustard"
+        : "bg-ink-mute";
   return <span className={`size-1.5 shrink-0 rounded-full ${tone}`} />;
 }
 
 export function Breadcrumb({ trail }: { trail: string[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[12px] text-ink-400">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[12px] text-ink-mute">
       {trail.map((item, i) => (
         <span key={item} className="flex items-center gap-1.5">
           {i > 0 ? <span aria-hidden>/</span> : null}
-          <span className={i === trail.length - 1 ? "text-ink-600" : ""}>
+          <span className={i === trail.length - 1 ? "text-ink-soft" : ""}>
             {item}
           </span>
         </span>
@@ -67,7 +67,7 @@ export function Breadcrumb({ trail }: { trail: string[] }) {
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="rounded-[4px] border border-line bg-canvas px-1 font-mono text-[11px] text-ink-400">
+    <kbd className="rounded-sharp border border-rule bg-paper px-1 font-mono text-[11px] text-ink-mute">
       {children}
     </kbd>
   );
@@ -83,9 +83,9 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-14 text-center">
+    <div className="flex flex-col items-center justify-center rounded-sharp border border-dashed border-rule bg-paper-white px-6 py-14 text-center">
       <p className="text-[15px] font-semibold">{title}</p>
-      <p className="mt-1.5 max-w-[42ch] text-[13px] text-ink-600">{body}</p>
+      <p className="mt-1.5 max-w-[42ch] text-[13px] text-ink-soft">{body}</p>
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );
@@ -104,7 +104,7 @@ export function CopyField({
   const [copied, setCopied] = useState(false);
 
   if (!value) {
-    return <span className="text-[13px] text-ink-400">Not provided</span>;
+    return <span className="text-[13px] text-ink-mute">Not provided</span>;
   }
 
   const copy = async () => {
@@ -123,26 +123,26 @@ export function CopyField({
       {href ? (
         <a
           href={href}
-          className="data-literal truncate text-ink-900 hover:text-emerald-700 hover:underline"
+          className="data-literal truncate text-ink hover:text-vermilion-deep hover:underline"
         >
           {value}
         </a>
       ) : (
-        <span className="data-literal truncate text-ink-900">{value}</span>
+        <span className="data-literal truncate text-ink">{value}</span>
       )}
       <button
         onClick={copy}
         aria-label={`Copy ${label ?? value}`}
-        className="shrink-0 rounded p-0.5 text-ink-400 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+        className="shrink-0 rounded p-0.5 text-ink-mute opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
       >
         {copied ? (
-          <Check size={13} strokeWidth={2} className="text-emerald-600" />
+          <Check size={13} strokeWidth={2} className="text-vermilion" />
         ) : (
           <Copy size={13} strokeWidth={1.75} />
         )}
       </button>
       {copied ? (
-        <span className="text-[11px] font-medium text-emerald-600">Copied</span>
+        <span className="text-[11px] font-medium text-vermilion">Copied</span>
       ) : null}
     </span>
   );

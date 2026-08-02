@@ -20,6 +20,7 @@ import {
   NOW,
   ORG,
   SIGNALS,
+  DREAM_COMPANIES,
   STAGES,
 } from "@/lib/mock/seed";
 import type {
@@ -29,6 +30,7 @@ import type {
   Company,
   Note,
   Signal,
+  DreamCompany,
 } from "@/lib/types";
 
 // In-memory stand-in for the Supabase data layer.
@@ -44,6 +46,7 @@ type State = {
   notes: Note[];
   activity: ActivityEvent[];
   signals: Signal[];
+  dreamCompanies: DreamCompany[];
   archivedIds: string[];
 };
 
@@ -192,6 +195,7 @@ const initialState: State = {
   notes: NOTES,
   activity: ACTIVITY,
   signals: SIGNALS,
+  dreamCompanies: DREAM_COMPANIES,
   archivedIds: [],
 };
 

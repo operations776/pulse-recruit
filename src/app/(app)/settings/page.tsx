@@ -17,10 +17,10 @@ type Section = (typeof SECTIONS)[number];
 
 // Owner is the brand relationship, admin is a categorization, member is plain.
 const ROLE_BADGE = {
-  owner: "emerald",
-  admin: "indigo",
+  owner: "accent",
+  admin: "teal",
   member: "neutral",
-} as const satisfies Record<Role, "emerald" | "indigo" | "neutral">;
+} as const satisfies Record<Role, "accent" | "teal" | "neutral">;
 
 const PLAN_FEATURES = [
   "Unlimited jobs, candidates and companies",
@@ -30,13 +30,13 @@ const PLAN_FEATURES = [
   "Priority support from the people who built it",
 ];
 
-const CARD = "rounded-2xl border border-line bg-surface p-5";
+const CARD = "rounded-sharp border border-rule bg-paper-white p-5";
 
 export default function SettingsPage() {
   const [section, setSection] = useState<Section>("General");
 
   return (
-    <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-canvas">
+    <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-paper">
       <div className="px-6 pt-4">
         <Breadcrumb trail={["Settings"]} />
         <h1 className="mt-2 font-display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
@@ -47,7 +47,7 @@ export default function SettingsPage() {
       <div className="flex flex-1 items-start gap-6 px-6 pb-8 pt-5">
         <nav
           aria-label="Settings sections"
-          className="sticky top-0 w-48 shrink-0 rounded-2xl border border-line bg-surface p-1.5"
+          className="sticky top-0 w-48 shrink-0 rounded-sharp border border-rule bg-paper-white p-1.5"
         >
           <ul className="flex flex-col gap-0.5">
             {SECTIONS.map((item) => {
@@ -57,10 +57,10 @@ export default function SettingsPage() {
                   <button
                     onClick={() => setSection(item)}
                     aria-current={active ? "page" : undefined}
-                    className={`w-full rounded-lg px-3 py-2 text-left text-[13px] transition-colors duration-150 ${
+                    className={`w-full rounded-sharp px-3 py-2 text-left text-[13px] transition-colors duration-150 ${
                       active
-                        ? "bg-emerald-50 font-semibold text-emerald-700"
-                        : "text-ink-600 hover:bg-canvas hover:text-ink-900"
+                        ? "bg-vermilion-wash font-semibold text-vermilion-deep"
+                        : "text-ink-soft hover:bg-paper hover:text-ink"
                     }`}
                   >
                     {item}
@@ -93,7 +93,7 @@ function GeneralPanel() {
     <div className="flex flex-col gap-4">
       <section className={CARD}>
         <h2 className="text-[16px] font-semibold leading-[22px]">Workspace</h2>
-        <p className="mt-1 text-[13px] text-ink-600">
+        <p className="mt-1 text-[13px] text-ink-soft">
           The name your team sees in the top bar, and the address candidates and
           clients land on.
         </p>
@@ -112,7 +112,7 @@ function GeneralPanel() {
             hint="Lowercase letters, numbers and hyphens."
           >
             <span className="flex items-center gap-2">
-              <span className="shrink-0 text-[12px] text-ink-400">
+              <span className="shrink-0 text-[12px] text-ink-mute">
                 {brand.domain}/
               </span>
               <Input
@@ -136,7 +136,7 @@ function GeneralPanel() {
 
       <section className={CARD}>
         <h2 className="text-[16px] font-semibold leading-[22px]">Danger zone</h2>
-        <p className="mt-1 text-[13px] text-ink-600">
+        <p className="mt-1 text-[13px] text-ink-soft">
           Deleting the workspace removes every job, candidate, note and file for
           the whole team. There is no undo and no export afterwards.
         </p>
@@ -219,8 +219,8 @@ function TeamPanel() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <span className="flex items-baseline gap-1.5">
-          <span className="data-literal text-ink-900">{members.length}</span>
-          <span className="micro-label text-ink-400">
+          <span className="data-literal text-ink">{members.length}</span>
+          <span className="micro-label text-ink-mute">
             {members.length === 1 ? "member" : "members"}
           </span>
         </span>
@@ -231,14 +231,14 @@ function TeamPanel() {
         </Button>
       </div>
 
-      <section className="rounded-2xl border border-line bg-surface px-5 py-1">
+      <section className="rounded-sharp border border-rule bg-paper-white px-5 py-1">
         <ul>
           {members.map((member) => {
             const isYou = member.id === currentUser.id;
             return (
               <li
                 key={member.id}
-                className="flex h-11 items-center gap-3 border-b border-line-soft last:border-b-0"
+                className="flex h-11 items-center gap-3 border-b border-rule last:border-b-0"
               >
                 <Avatar name={member.name} src={member.avatarUrl} size="sm" />
 
@@ -246,7 +246,7 @@ function TeamPanel() {
                   <span className="truncate text-[13px] font-medium">
                     {member.name}
                   </span>
-                  <span className="data-literal truncate text-ink-600">
+                  <span className="data-literal truncate text-ink-soft">
                     {member.email}
                   </span>
                 </span>
@@ -254,7 +254,7 @@ function TeamPanel() {
                 <Badge hue={ROLE_BADGE[member.role]}>{member.role}</Badge>
 
                 {isYou ? (
-                  <span className="w-[74px] shrink-0 text-right text-[12px] text-ink-400">
+                  <span className="w-[74px] shrink-0 text-right text-[12px] text-ink-mute">
                     You
                   </span>
                 ) : (
@@ -355,7 +355,7 @@ function InviteDialog({
         </Field>
 
         {error ? (
-          <p role="alert" className="text-[12px] font-medium text-danger-500">
+          <p role="alert" className="text-[12px] font-medium text-brick">
             {error}
           </p>
         ) : null}
@@ -369,7 +369,7 @@ function BillingPanel() {
 
   return (
     <section className={CARD}>
-      <p className="micro-label text-ink-400">Current plan</p>
+      <p className="micro-label text-ink-mute">Current plan</p>
       <h2 className="mt-1.5 text-[16px] font-semibold leading-[22px]">
         Founding agency
       </h2>
@@ -378,18 +378,18 @@ function BillingPanel() {
         <span className="font-mono text-[24px] font-semibold leading-[30px] tabular-nums">
           $50
         </span>
-        <span className="text-[12px] text-ink-400">/month</span>
+        <span className="text-[12px] text-ink-mute">/month</span>
       </p>
 
-      <p className="mt-2 text-[13px] text-ink-600">
+      <p className="mt-2 text-[13px] text-ink-soft">
         Locked for the first ten agencies, then $299.
       </p>
 
-      <ul className="mt-4 flex flex-col gap-2.5 border-t border-line-soft pt-4">
+      <ul className="mt-4 flex flex-col gap-2.5 border-t border-rule pt-4">
         {PLAN_FEATURES.map((item) => (
           <li key={item} className="flex items-start gap-2.5 text-[13px]">
-            <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-50">
-              <Check size={11} strokeWidth={3} className="text-emerald-600" />
+            <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-vermilion-wash">
+              <Check size={11} strokeWidth={3} className="text-vermilion" />
             </span>
             {item}
           </li>

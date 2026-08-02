@@ -86,7 +86,7 @@ export default function CompaniesPage() {
   };
 
   return (
-    <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-canvas">
+    <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-paper">
       <div className="px-6 pt-4">
         <Breadcrumb trail={["Recruitment", "Companies"]} />
 
@@ -96,8 +96,8 @@ export default function CompaniesPage() {
               Companies
             </h1>
             <span className="flex items-baseline gap-1.5">
-              <span className="data-literal text-ink-900">{rows.length}</span>
-              <span className="micro-label text-ink-400">
+              <span className="data-literal text-ink">{rows.length}</span>
+              <span className="micro-label text-ink-mute">
                 {rows.length === 1 ? "result" : "results"}
               </span>
             </span>
@@ -109,7 +109,7 @@ export default function CompaniesPage() {
           </Button>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-b border-line">
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-b border-rule">
           <div className="flex items-center gap-1">
             {TABS.map((t) => (
               <button
@@ -118,12 +118,12 @@ export default function CompaniesPage() {
                 aria-pressed={tab === t}
                 className={`border-b-2 px-3 pb-2.5 text-[13px] ${
                   tab === t
-                    ? "border-emerald-600 font-semibold text-emerald-700"
-                    : "border-transparent text-ink-600 hover:text-ink-900"
+                    ? "border-vermilion font-semibold text-vermilion-deep"
+                    : "border-transparent text-ink-soft hover:text-ink"
                 }`}
               >
                 {t}
-                <span className="data-literal ml-1.5 text-[11px] text-ink-400">
+                <span className="data-literal ml-1.5 text-[11px] text-ink-mute">
                   {counts[t]}
                 </span>
               </button>
@@ -160,12 +160,12 @@ export default function CompaniesPage() {
               return (
                 <article
                   key={company.id}
-                  className="rounded-2xl border border-line bg-surface p-4 shadow-card"
+                  className="rounded-sharp border border-rule bg-paper-white p-4 "
                 >
                   <div className="flex items-start gap-3">
                     <span
                       aria-hidden
-                      className={`flex size-9 shrink-0 items-center justify-center rounded-xl text-[13px] font-semibold ${hueTint[hue]} ${hueText[hue]}`}
+                      className={`flex size-9 shrink-0 items-center justify-center rounded-sharp text-[13px] font-semibold ${hueTint[hue]} ${hueText[hue]}`}
                     >
                       {company.name.slice(0, 1).toUpperCase()}
                     </span>
@@ -177,7 +177,7 @@ export default function CompaniesPage() {
                         href={`https://${normalizeDomain(company.domain)}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="data-literal block truncate text-ink-600 hover:text-emerald-700 hover:underline"
+                        className="data-literal block truncate text-ink-soft hover:text-vermilion-deep hover:underline"
                       >
                         {company.domain}
                       </a>
@@ -186,18 +186,18 @@ export default function CompaniesPage() {
 
                   <dl className="mt-3.5 flex items-start gap-6">
                     <div className="min-w-0">
-                      <dt className="micro-label text-ink-400">Location</dt>
+                      <dt className="micro-label text-ink-mute">Location</dt>
                       <dd className="mt-0.5 truncate text-[13px]">
                         {company.location || "Not recorded"}
                       </dd>
                     </div>
                     <div className="min-w-0">
-                      <dt className="micro-label text-ink-400">Headcount</dt>
+                      <dt className="micro-label text-ink-mute">Headcount</dt>
                       <dd className="mt-0.5 truncate">
                         {company.headcount ? (
                           <span className="data-literal">{company.headcount}</span>
                         ) : (
-                          <span className="text-[13px] text-ink-400">
+                          <span className="text-[13px] text-ink-mute">
                             Not recorded
                           </span>
                         )}
@@ -205,14 +205,14 @@ export default function CompaniesPage() {
                     </div>
                   </dl>
 
-                  <div className="mt-3.5 flex items-center justify-between gap-3 border-t border-line-soft pt-3">
+                  <div className="mt-3.5 flex items-center justify-between gap-3 border-t border-rule pt-3">
                     <span className="flex min-w-0 items-center gap-2">
                       <Avatar name={ownerName} src={owner?.avatarUrl} size="sm" />
-                      <span className="truncate text-[13px] text-ink-600">
+                      <span className="truncate text-[13px] text-ink-soft">
                         {ownerName}
                       </span>
                     </span>
-                    <Badge hue={company.type === "client" ? "emerald" : "neutral"}>
+                    <Badge hue={company.type === "client" ? "accent" : "neutral"}>
                       {company.type}
                     </Badge>
                   </div>
@@ -356,7 +356,7 @@ function AddCompanyDialog({
         </div>
 
         {error ? (
-          <p role="alert" className="text-[12px] font-medium text-danger-500">
+          <p role="alert" className="text-[12px] font-medium text-brick">
             {error}
           </p>
         ) : null}

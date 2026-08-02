@@ -17,7 +17,7 @@ const items = [
 
 export function MetricRow({ metrics }: { metrics: Metrics }) {
   return (
-    <span className="flex items-center gap-2.5 text-ink-400">
+    <span className="flex items-center gap-2.5 text-ink-mute">
       {items.map(({ key, icon: Icon, label }) => {
         const value = metrics[key];
         return (
