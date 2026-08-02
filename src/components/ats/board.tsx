@@ -53,24 +53,14 @@ export function Board({
   const [tab, setTab] = useState<(typeof TABS)[number]>("Candidates");
   const [, startTransition] = useTransition();
 
-  // A dropped card should land in its new column before the round trip finishes.
-  // The override is dropped as soon as the server sends back a row that agrees
-  // with it, so an optimistic move that failed cannot linger on screen.
-  const [moved, setMoved] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    setMoved((prev) => {
-      const next = { ...prev };
-      let changed = false;
-      for (const c of candidates) {
-        if (next[c.id] && next[c.id] === c.stage_id) {
-          delete next[c.id];
-          changed = true;
-        }
-      }
-      return changed ? next : prev;
-    });
-  }, [candidates]);
+  // A dropped card should land in its new column before the round trip
+  // finishes. Each override records the stage the row was in when it was
+  // dragged, so the moment the server sends back anything else, the server
+  // wins. That keeps the optimistic view self correcting with no effect and no
+  // stale card left sitting in the wrong column.
+  const [moved, setMoved] = useState<Record<string, { from: string; to: string }>>(
+    {},
+  );
 
   // Esc clears selection when no layer is open. The layers handle their own Esc.
   useEffect(() => {
@@ -81,7 +71,10 @@ export function Board({
     return () => document.removeEventListener("keydown", handler);
   }, [openCandidate, addOpen]);
 
-  const stageOf = (c: CandidateRow) => moved[c.id] ?? c.stage_id;
+  const stageOf = (c: CandidateRow) => {
+    const pending = moved[c.id];
+    return pending && pending.from === c.stage_id ? pending.to : c.stage_id;
+  };
 
   const needle = query.trim().toLowerCase();
   const filtered = needle
@@ -114,7 +107,10 @@ export function Board({
     const moving = candidates.find((c) => c.id === id);
     if (!moving || stageOf(moving) === stage.id) return;
 
-    setMoved((prev) => ({ ...prev, [id]: stage.id }));
+    setMoved((prev) => ({
+      ...prev,
+      [id]: { from: moving.stage_id, to: stage.id },
+    }));
     startTransition(async () => {
       const result = await moveCandidate(id, stage.id);
       if (!result.ok) {

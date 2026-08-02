@@ -1,13 +1,11 @@
-"use client";
-
 import type { ReactNode } from "react";
-import { Badge, Breadcrumb } from "@/components/ui/misc";
+import { Breadcrumb, StatusChip } from "@/components/ui/misc";
+import { getReports } from "@/lib/data";
+import type { JobState } from "@/lib/supabase/types";
 
-import { useStore } from "@/lib/store";
-import type { Job } from "@/lib/types";
-
-// Every figure on this screen is derived from the store. Nothing is hardcoded,
-// so the page stays honest the moment the data layer becomes Supabase.
+// Every figure on this screen is counted from the rows getReports returned.
+// Nothing is hardcoded and nothing is estimated, so a number that looks wrong
+// is a data problem, never a display problem.
 
 function StatTile({
   label,
@@ -19,50 +17,34 @@ function StatTile({
   sub: ReactNode;
 }) {
   return (
-    <div className="rounded-control border border-rule bg-sheet p-4">
+    <div className="rounded-card border border-rule bg-sheet p-4">
       <p className="legend text-ink-2">{label}</p>
-      <p className="mt-2 font-mono text-[21px] font-semibold leading-[30px] tabular-nums">
-        {value}
-      </p>
-      <p className="mt-1 text-[12px] leading-4 text-ink-3">{sub}</p>
+      <p className="display mt-2 text-[21px] tabular-nums">{value}</p>
+      <p className="mt-1 text-[12px] leading-[1.4] text-ink-2">{sub}</p>
     </div>
   );
 }
 
 function Num({ children }: { children: ReactNode }) {
-  return <span className="font-mono tabular-nums">{children}</span>;
+  return <span className="meta text-inherit">{children}</span>;
 }
 
-const STATUS_LABEL: Record<Job["state"], string> = {
-  open: "Open",
-  risk: "At risk",
-  closed: "Closed",
-};
-
-function StatusBadge({ state }: { state: Job["state"] }) {
-  if (state === "open") return <Badge hue="accent">{STATUS_LABEL.open}</Badge>;
-  if (state === "risk") return <Badge hue="neutral">{STATUS_LABEL.risk}</Badge>;
-  return <Badge hue="neutral">{STATUS_LABEL.closed}</Badge>;
+function StateChip({ state }: { state: JobState }) {
+  if (state === "open") return <StatusChip tone="on">Open</StatusChip>;
+  if (state === "risk") return <StatusChip tone="attention">At risk</StatusChip>;
+  return <StatusChip tone="off">Closed</StatusChip>;
 }
 
-export default function ReportsPage() {
-  const { state, jobs, stages, candidatesForJob } = useStore();
-
-  const candidates = state.candidates.filter(
-    (c) => !state.archivedIds.includes(c.id),
-  );
+export default async function ReportsPage() {
+  const { candidates, jobs, stages } = await getReports();
 
   const liveRoles = jobs.filter((j) => j.state === "open");
-  const placed = jobs.reduce((sum, j) => sum + j.hired, 0);
+  const atRisk = jobs.filter((j) => j.state === "risk");
+  const hired = jobs.reduce((sum, j) => sum + j.hired, 0);
   const target = jobs.reduce((sum, j) => sum + j.target, 0);
-  const averageMatch = candidates.length
-    ? Math.round(
-        candidates.reduce((sum, c) => sum + c.match, 0) / candidates.length,
-      )
-    : 0;
 
-  // Stage names come from the seeded stage set, ordered by position, so the
-  // five columns of the board and the five bars here can never drift apart.
+  // Stage rows are per role, so the same names repeat. The bars count by the
+  // name a recruiter reads, ordered by the position the board uses.
   const nameByPosition = new Map<number, string>();
   for (const s of stages) {
     if (!nameByPosition.has(s.position)) nameByPosition.set(s.position, s.name);
@@ -74,126 +56,150 @@ export default function ReportsPage() {
   const nameByStageId = new Map(stages.map((s) => [s.id, s.name]));
   const stageCounts = stageNames.map((name) => ({
     name,
-    count: candidates.filter((c) => nameByStageId.get(c.stageId) === name)
+    count: candidates.filter((c) => nameByStageId.get(c.stage_id) === name)
       .length,
   }));
   const peak = Math.max(1, ...stageCounts.map((s) => s.count));
 
+  const countByJob = new Map<string, number>();
+  for (const c of candidates) {
+    countByJob.set(c.job_id, (countByJob.get(c.job_id) ?? 0) + 1);
+  }
+
   return (
     <main className="flex min-w-0 flex-1 flex-col overflow-auto bg-paper">
       <div className="px-6 pt-4">
-        <Breadcrumb trail={["Recruitment", "Reports"]} />
-
-        <h1 className="display mt-2 text-[18px] tracking-[-0.01em]">
-          Reports
-        </h1>
+        <Breadcrumb trail={["Talent", "Reports"]} />
+        <h1 className="display mt-2 text-[18px]">Reports</h1>
       </div>
 
-      <div className="flex flex-col gap-4 px-6 pb-8 pt-5">
+      <div className="flex flex-col gap-5 px-6 pb-8 pt-5">
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <StatTile
-            label="Total candidates"
+            label="Live candidates"
             value={String(candidates.length)}
-            sub="Everyone on the live pipeline"
+            sub="Everyone on the pipeline, archived people excluded"
           />
           <StatTile
-            label="Live roles"
+            label="Open roles"
             value={String(liveRoles.length)}
-            sub={<>Of <Num>{jobs.length}</Num> roles on the board</>}
+            sub={
+              <>
+                Of <Num>{jobs.length}</Num> roles on the book
+              </>
+            }
           />
           <StatTile
-            label="Placed this quarter"
-            value={String(placed)}
-            sub={<>Against a target of <Num>{target}</Num></>}
+            label="Hired"
+            value={String(hired)}
+            sub={
+              <>
+                Against a target of <Num>{target}</Num>
+              </>
+            }
           />
           <StatTile
-            label="Average match score"
-            value={`${averageMatch}%`}
-            sub="Mean score across every candidate"
+            label="Roles at risk"
+            value={String(atRisk.length)}
+            sub="Roles the team has flagged as slipping"
           />
         </div>
 
-        <section className="rounded-control border border-rule bg-sheet">
+        <section className="rounded-shell border border-rule bg-sheet">
           <div className="border-b border-rule px-4 py-3">
-            <h2 className="text-[18px] font-semibold leading-[22px]">
-              Pipeline by stage
-            </h2>
-            <p className="mt-0.5 text-[12px] leading-4 text-ink-2">
+            <h2 className="display text-[13px]">Pipeline by stage</h2>
+            <p className="mt-1 text-[12px] leading-[1.4] text-ink-2">
               Candidates at each stage, counted across every role.
             </p>
           </div>
 
           <div className="flex flex-col gap-3 px-4 py-4">
-            {stageCounts.map((stage) => (
-              <div key={stage.name} className="flex items-center gap-3">
-                <span className="w-24 shrink-0 text-[12px] leading-[18px]">
-                  {stage.name}
-                </span>
-                <span className="h-2 min-w-0 flex-1 rounded-full bg-rule">
-                  <span
-                    className={`block h-2 rounded-full bg-ink`}
-                    style={{ width: `${(stage.count / peak) * 100}%` }}
-                  />
-                </span>
-                <span className="meta w-8 shrink-0 text-right text-ink-2">
-                  {stage.count}
-                </span>
-              </div>
-            ))}
+            {stageCounts.length === 0 ? (
+              <p className="text-[12px] text-ink-2">
+                No stages exist yet, so there is nothing to count.
+              </p>
+            ) : (
+              stageCounts.map((stage) => (
+                <div key={stage.name} className="flex items-center gap-3">
+                  <span className="w-24 shrink-0 text-[12px]">
+                    {stage.name}
+                  </span>
+                  <span className="h-2 min-w-0 flex-1 rounded-chip bg-well">
+                    <span
+                      className="block h-2 rounded-chip bg-ink"
+                      style={{ width: `${(stage.count / peak) * 100}%` }}
+                    />
+                  </span>
+                  <span className="meta w-8 shrink-0 text-right text-ink-2">
+                    {stage.count}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </section>
 
-        <section className="rounded-control border border-rule bg-sheet">
+        <section className="rounded-shell border border-rule bg-sheet">
           <div className="border-b border-rule px-4 py-3">
-            <h2 className="text-[18px] font-semibold leading-[22px]">Roles</h2>
-            <p className="mt-0.5 text-[12px] leading-4 text-ink-2">
-              Every role on the board with its live headcount.
+            <h2 className="display text-[13px]">Roles</h2>
+            <p className="mt-1 text-[12px] leading-[1.4] text-ink-2">
+              Every role on the book with its live headcount.
             </p>
           </div>
 
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-rule">
-                <th className="legend h-11 px-4 text-left text-ink-2">
-                  Role
-                </th>
-                <th className="legend h-11 px-4 text-left text-ink-2">
-                  Status
-                </th>
-                <th className="legend h-11 px-4 text-right text-ink-2">
-                  Candidates
-                </th>
-                <th className="legend h-11 px-4 text-right text-ink-2">
-                  Hired
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((job) => (
-                <tr key={job.id} className="border-b border-rule last:border-0">
-                  <td className="h-11 px-4">
-                    <span className="flex items-center gap-2">
-                      <span className="text-[12px] leading-[18px] font-medium">
-                        {job.title}
-                      </span>
-                      <span className="meta text-ink-3">
-                        {job.code}
-                      </span>
-                    </span>
-                  </td>
-                  <td className="h-11 px-4">
-                    <StatusBadge state={job.state} />
-                  </td>
-                  <td className="meta h-11 px-4 text-right text-ink">
-                    {candidatesForJob(job.id).length}
-                  </td>
-                  <td className="meta h-11 px-4 text-right text-ink">
-                    {job.hired}/{job.target}
-                  </td>
+          {jobs.length === 0 ? (
+            <p className="px-4 py-6 text-[12px] text-ink-2">
+              No roles have been opened in this workspace yet.
+            </p>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-rule">
+                  <th scope="col" className="legend h-9 px-4 text-left text-ink-2">
+                    Role
+                  </th>
+                  <th scope="col" className="legend h-9 px-4 text-left text-ink-2">
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="legend h-9 px-4 text-right text-ink-2"
+                  >
+                    Candidates
+                  </th>
+                  <th
+                    scope="col"
+                    className="legend h-9 px-4 text-right text-ink-2"
+                  >
+                    Hired
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {jobs.map((job) => (
+                  <tr key={job.id} className="border-b border-rule last:border-0">
+                    <td className="h-11 px-4">
+                      <span className="flex items-center gap-2">
+                        <span className="text-[13px] font-medium">
+                          {job.title}
+                        </span>
+                        <span className="record-id text-ink-3">{job.ref}</span>
+                      </span>
+                    </td>
+                    <td className="h-11 px-4">
+                      <StateChip state={job.state} />
+                    </td>
+                    <td className="meta h-11 px-4 text-right text-ink">
+                      {countByJob.get(job.id) ?? 0}
+                    </td>
+                    <td className="meta h-11 px-4 text-right text-ink">
+                      {job.hired}/{job.target}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </section>
       </div>
     </main>
