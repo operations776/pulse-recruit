@@ -149,40 +149,22 @@ export async function addNote(
   return { ok: true, data: data as string };
 }
 
-export async function ask(
-  surface: ChatSurface,
-  question: string,
-): Promise<Result<{ answered: boolean }>> {
-  if (!question.trim()) return fail("Type a question first.");
-
+// Asking is not a server action: a research run streams for up to a minute and
+// a server action cannot stream. It lives at POST /api/ask (AI.md section 7).
+// The only server-side piece left here is the sweep, so a transcript with a
+// dead run in it can be reconciled without asking a new question.
+export async function sweepStalledAsks(): Promise<Result<number>> {
   const session = await requireSession();
   const supabase = await createClient();
 
-  // No research provider is connected yet, so the answer says so rather than
-  // inventing one. When Exa lands, this is the only place that changes.
-  const cost = surface === "market" ? 12 : 0;
-  const body =
-    surface === "market"
-      ? "Live market research is not connected yet. Once a research provider is added in Settings, this answer will be built from job boards, funding news and LinkedIn, and every source will be listed below it."
-      : "The ops manager is not connected to a model yet. Once it is, this answer will be built only from your own pipeline, never from the open web.";
-  const sources =
-    surface === "market"
-      ? [{ label: "Pending", detail: "No research provider connected" }]
-      : [{ label: "Pipeline", detail: "Reads your own records only" }];
-
-  const { data, error } = await supabase.rpc("ask", {
+  const { data, error } = await supabase.rpc("sweep_stalled_asks", {
     target_org: session.org.id,
-    target_surface: surface,
-    question: question.trim(),
-    answer_body: body,
-    answer_sources: sources,
-    cost,
   });
   if (error) return fail(readable(error.message));
 
-  revalidatePath(surface === "market" ? "/market" : "/ops");
-  // null means the weekly allowance is spent. Say so plainly.
-  return { ok: true, data: { answered: data !== null } };
+  revalidatePath("/market");
+  revalidatePath("/ops");
+  return { ok: true, data: (data as number) ?? 0 };
 }
 
 export async function toggleTask(

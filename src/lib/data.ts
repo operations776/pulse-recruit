@@ -155,9 +155,26 @@ export async function getChat(surface: ChatSurface) {
     supabase.from("credit_ledger").select("*").maybeSingle(),
   ]);
 
+  // A run whose process died leaves a row saying `running` until the next ask
+  // sweeps it. Presenting it as still working would be a lie, so it reads as
+  // failed here. The database is corrected by `sweep_stalled_asks`, not by a
+  // write during a render.
+  const stalledBefore = Date.now() - 10 * 60_000;
+  const rows = ((messages.data ?? []) as ChatRow[]).map((m) =>
+    m.status === "running" && new Date(m.created_at).getTime() < stalledBefore
+      ? {
+          ...m,
+          status: "failed" as const,
+          error:
+            m.error ??
+            "This run stopped before it finished. The credits it reserved have been given back.",
+        }
+      : m,
+  );
+
   return {
     session,
-    messages: (messages.data ?? []) as ChatRow[],
+    messages: rows,
     credits: (credits.data ?? null) as CreditRow | null,
   };
 }

@@ -49,3 +49,5 @@ next-env.d.ts
 # design review artifacts
 /.design-shots/
 !.env.example
+
+.vercel

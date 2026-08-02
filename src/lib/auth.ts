@@ -43,6 +43,34 @@ export async function requireSession(): Promise<Session> {
   };
 }
 
+// The same lookup without the redirect, for a route handler. A route answers
+// with a status code; only a screen can be sent somewhere.
+export async function sessionOrNull(): Promise<Session | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: membership } = await supabase
+    .from("org_memberships")
+    .select("role, org_id, orgs(id, name, slug, created_at)")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!membership?.orgs) return null;
+
+  return {
+    userId: user.id,
+    email: user.email ?? "",
+    org: membership.orgs as unknown as OrgRow,
+    role: membership.role as MembershipRow["role"],
+  };
+}
+
 export async function currentUser() {
   const supabase = await createClient();
   const {

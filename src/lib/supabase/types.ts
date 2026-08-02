@@ -37,7 +37,10 @@ export type ContentSkill =
   | "candidate_story"
   | "hiring_advice";
 
-export type ChatSource = { label: string; detail: string };
+// A line under an answer saying where it came from. `url` is present when the
+// source is a page on the open web and absent when it is the org's own data,
+// which is exactly the difference between the two surfaces.
+export type ChatSource = { label: string; detail: string; url?: string };
 
 export type OrgRow = {
   id: string;
@@ -158,8 +161,13 @@ export type CreditRow = {
   org_id: string;
   weekly_allowance: number;
   used_this_week: number;
+  // Credits claimed by a run that has not settled yet. Available credits are
+  // allowance minus used minus reserved, never allowance minus used.
+  reserved_this_week: number;
   resets_at: string;
 };
+
+export type ChatStatus = "running" | "complete" | "failed";
 
 export type ChatRow = {
   id: string;
@@ -170,6 +178,24 @@ export type ChatRow = {
   sources: ChatSource[];
   credits_spent: number;
   author_id: string | null;
+  created_at: string;
+  // A message is a run with a lifecycle. `running` means the engine is still
+  // working, `failed` means it stopped and the reservation went back.
+  status: ChatStatus;
+  reserved_credits: number;
+  error: string | null;
+  // How the answer was built and what it cost: model, tokens, searches, pages.
+  // This is what makes a credit charge auditable rather than trusted.
+  meta: Record<string, unknown>;
+};
+
+export type CreditEventRow = {
+  id: string;
+  org_id: string;
+  message_id: string | null;
+  kind: "reserve" | "settle" | "refund";
+  amount: number;
+  detail: string;
   created_at: string;
 };
 
