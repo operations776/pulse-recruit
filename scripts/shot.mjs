@@ -16,7 +16,7 @@ const page = await browser.newPage({
 });
 
 const startedAt = Date.now();
-await page.goto(url, { waitUntil: "networkidle" });
+await page.goto(url, { waitUntil: "load" });
 const loadMs = Date.now() - startedAt;
 
 await page.screenshot({ path: out, fullPage: true });

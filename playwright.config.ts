@@ -18,7 +18,23 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // The speed project runs only after every functional test has finished, so it
+  // measures a quiet server. Sharing a server with 19 parallel tests made the
+  // samples fall monotonically from 1022ms to 97ms, which measured contention
+  // rather than the application.
+  projects: [
+    {
+      name: "functional",
+      testIgnore: /speed\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "speed",
+      testMatch: /speed\.spec\.ts/,
+      dependencies: ["functional"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
   webServer: {
     command: `npm run build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,

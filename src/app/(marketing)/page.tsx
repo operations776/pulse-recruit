@@ -57,7 +57,7 @@ const plan = [
   "Email and calendar connected",
 ];
 
-export default function LandingSheet() {
+export default function MarketingHome() {
   return (
     <div className="flex-1 bg-surface">
       {/* Nav */}

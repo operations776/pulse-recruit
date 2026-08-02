@@ -2,33 +2,49 @@ import { expect, test } from "@playwright/test";
 
 // Speed budget from ARCHITECTURE.md. Speed is a feature: "if you open Stardex or
 // any ATS, it has to be fast." A PR that regresses this fails CI on purpose.
-const BUDGET_MS = 300;
+//
+// Measured as the MEDIAN of several samples, not a single navigation. One sample
+// on a freshly started server measures process cold start (~2s) and contention
+// from parallel workers, neither of which a user experiences. Isolated, these
+// routes answer in 20 to 35ms, so the budget has real headroom and a failure
+// here means an actual regression rather than a noisy machine.
+// Serialized so the samples do not race each other on the same server.
+test.describe.configure({ mode: "serial" });
 
-const routes = ["/", "/design", "/design/landing"];
+const BUDGET_MS = 300;
+const SAMPLES = 5;
+
+const routes = ["/", "/pipeline/j_1", "/candidates", "/reports"];
+
+const median = (values: number[]) =>
+  [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
 
 for (const route of routes) {
   test(`${route} responds inside the speed budget`, async ({ page }) => {
-    await page.goto(route, { waitUntil: "domcontentloaded" });
+    const samples: number[] = [];
 
-    const timing = await page.evaluate(() => {
-      const nav = performance.getEntriesByType(
-        "navigation",
-      )[0] as PerformanceNavigationTiming;
-      return {
-        response: nav.responseEnd - nav.requestStart,
-        domContentLoaded: nav.domContentLoadedEventEnd - nav.startTime,
-      };
-    });
+    for (let i = 0; i < SAMPLES + 1; i += 1) {
+      await page.goto(route, { waitUntil: "domcontentloaded" });
+      const response = await page.evaluate(() => {
+        const nav = performance.getEntriesByType(
+          "navigation",
+        )[0] as PerformanceNavigationTiming;
+        return nav.responseEnd - nav.requestStart;
+      });
+      // Discard the first, it carries cold start.
+      if (i > 0) samples.push(response);
+    }
 
+    const result = median(samples);
     expect(
-      timing.response,
-      `${route} server response was ${Math.round(timing.response)}ms, budget ${BUDGET_MS}ms`,
+      result,
+      `${route} median server response was ${Math.round(result)}ms over ${SAMPLES} samples, budget ${BUDGET_MS}ms. Samples: ${samples.map(Math.round).join(", ")}`,
     ).toBeLessThan(BUDGET_MS);
   });
 }
 
-test("no layout shift on the design sheet", async ({ page }) => {
-  await page.goto("/design");
+test("no layout shift on the pipeline board", async ({ page }) => {
+  await page.goto("/pipeline/j_1");
 
   const cls = await page.evaluate(
     () =>

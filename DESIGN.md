@@ -86,6 +86,8 @@ Three faces, all self-hosted through `next/font`, zero external requests.
 | Marketing section | 40 / 46 | Bricolage 700 | Tracking -0.02em |
 | Page title | 22 / 28 | Bricolage 600 | One per screen |
 | Section title | 16 / 22 | Jakarta 600 | |
+| Card title | 15 / 20 | Jakarta 600 | Card and empty-state headings |
+| Metric | 24 / 30 | JetBrains 600 | Dashboard and stat-tile numbers only |
 | Body | 14 / 20 | Jakarta 450 | Default |
 | Dense body | 13 / 18 | Jakarta 450 | Cards, table cells |
 | Caption | 12 / 16 | Jakarta 500 | Card metadata, helper text |

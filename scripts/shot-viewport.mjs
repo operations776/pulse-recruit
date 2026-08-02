@@ -11,7 +11,8 @@ const page = await browser.newPage({
   deviceScaleFactor: 2,
 });
 
-await page.goto(url, { waitUntil: "networkidle" });
+await page.goto(url, { waitUntil: "load" });
+ await page.waitForTimeout(700);
 if (Number(scrollY) > 0) {
   await page.evaluate((y) => window.scrollTo(0, y), Number(scrollY));
   await page.waitForTimeout(900);
