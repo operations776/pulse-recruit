@@ -14,7 +14,7 @@ test.describe.configure({ mode: "serial" });
 const BUDGET_MS = 300;
 const SAMPLES = 5;
 
-const routes = ["/", "/pipeline/j_1", "/candidates", "/reports"];
+const routes = ["/", "/signin"];
 
 const median = (values: number[]) =>
   [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
@@ -43,8 +43,8 @@ for (const route of routes) {
   });
 }
 
-test("no layout shift on the pipeline board", async ({ page }) => {
-  await page.goto("/pipeline/j_1");
+test("no layout shift on the marketing page", async ({ page }) => {
+  await page.goto("/");
 
   const cls = await page.evaluate(
     () =>

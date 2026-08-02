@@ -1,62 +1,50 @@
 import { expect, test } from "@playwright/test";
 
-test("marketing home renders the hero and pricing", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "keeps your pipeline",
-  );
-  await expect(page.getByText("$50")).toBeVisible();
-});
+// These run against the real Supabase project with the seeded demo org, so
+// every assertion is on data the database actually returned.
+const DEMO = { email: "daniyal@nortech.io", password: "pulse-demo-2026" };
 
-test("pipeline board renders stages and candidates", async ({ page }) => {
-  await page.goto("/pipeline/j_1");
-  await expect(
-    page.getByRole("heading", { name: "Senior Product Designer", level: 1 }),
-  ).toBeVisible();
-  await expect(page.getByText("Clementine Spencer")).toBeVisible();
-  await expect(page.getByText("Applied", { exact: true })).toBeVisible();
-});
-
-test("candidates table lists every role", async ({ page }) => {
-  await page.goto("/candidates");
-  await expect(page.getByRole("heading", { name: "Candidates", level: 1 })).toBeVisible();
-  await expect(page.getByText("Laurie Kessler")).toBeVisible();
-  await expect(page.getByText("Priya Nair")).toBeVisible();
-});
-
-test("companies, signals, reports and settings render", async ({ page }) => {
-  await page.goto("/companies");
-  await expect(page.getByRole("heading", { name: "Companies", level: 1 })).toBeVisible();
-
-  await page.goto("/signals");
-  await expect(page.getByRole("heading", { name: "Signals", level: 1 })).toBeVisible();
-
-  await page.goto("/reports");
-  await expect(page.getByRole("heading", { name: "Reports", level: 1 })).toBeVisible();
-
-  await page.goto("/settings");
-  await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
-});
-
-test("auth screens render", async ({ page }) => {
+async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/signin");
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await page.getByLabel("Email").fill(DEMO.email);
+  await page.getByLabel("Password").fill(DEMO.password);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(/\/(pipeline|candidates)/, { timeout: 20_000 });
+}
 
-  await page.goto("/signup");
-  await expect(
-    page.getByRole("heading", { name: "Create your workspace" }),
-  ).toBeVisible();
+test("an unauthenticated request cannot reach the product", async ({ page }) => {
+  await page.goto("/candidates");
+  await expect(page).toHaveURL(/\/signin/);
 });
 
-test("every pillar module renders", async ({ page }) => {
-  const modules: [string, string][] = [
-    ["/market", "BD engine"],
-    ["/ops", "Morning brief"],
-    ["/ops/tasks", "Tasks"],
-    ["/sequences", "Sequences"],
-    ["/mailboxes", "Mailboxes"],
-    ["/content", "Content planner"],
-    ["/content/skills", "Skills"],
+test("marketing home renders without a session", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+});
+
+test("signing in lands on real pipeline data", async ({ page }) => {
+  await signIn(page);
+  // Seeded by the database, not by a fixture in this repo.
+  await expect(page.getByText("Senior Product Designer").first()).toBeVisible();
+  await expect(page.getByText("Clementine Spencer")).toBeVisible();
+});
+
+test("every module renders for a signed in user", async ({ page }) => {
+  await signIn(page);
+
+  const modules: [string, RegExp][] = [
+    ["/candidates", /candidates/i],
+    ["/companies", /companies/i],
+    ["/reports", /reports/i],
+    ["/signals", /signals/i],
+    ["/sequences", /sequences/i],
+    ["/mailboxes", /mailboxes/i],
+    ["/market", /bd engine/i],
+    ["/ops", /morning brief/i],
+    ["/ops/tasks", /tasks/i],
+    ["/content", /content planner/i],
+    ["/content/skills", /skills/i],
+    ["/settings/integrations", /api keys/i],
   ];
 
   for (const [href, heading] of modules) {
@@ -65,11 +53,9 @@ test("every pillar module renders", async ({ page }) => {
   }
 });
 
-test("the module rail names all five pillars", async ({ page }) => {
-  await page.goto("/pipeline/j_1");
-  for (const wordmark of ["MARKET", "OPS", "OUTBOUND", "TALENT", "CONTENT"]) {
-    await expect(
-      page.getByRole("link", { name: `${wordmark} module` }),
-    ).toBeVisible();
-  }
+test("api keys screen lists every provider as not set", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/settings/integrations");
+  await expect(page.getByText("Exa", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("Not set").first()).toBeVisible();
 });

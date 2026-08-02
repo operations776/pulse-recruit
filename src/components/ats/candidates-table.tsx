@@ -283,17 +283,20 @@ export function CandidatesTable({
                       <td className="px-3">
                         <span className="flex items-center gap-2.5">
                           <Avatar name={c.name} size="md" />
-                          <span className="flex min-w-0 flex-col">
-                            <button
-                              onClick={() => openDrawer(c.id)}
-                              className="truncate rounded-control text-left text-[13px] font-medium leading-[1.3]"
-                            >
+                          {/* One control, 28px tall, covering both lines. The
+                              row is clickable too, but the button is what the
+                              keyboard lands on. */}
+                          <button
+                            onClick={() => openDrawer(c.id)}
+                            className="flex min-h-7 min-w-0 flex-col items-start justify-center rounded-control text-left"
+                          >
+                            <span className="max-w-full truncate text-[13px] font-medium leading-[1.3]">
                               {c.name}
-                            </button>
-                            <span className="truncate text-[12px] leading-[1.4] text-ink-2">
+                            </span>
+                            <span className="max-w-full truncate text-[12px] leading-[1.4] text-ink-2">
                               {c.title || "Title not recorded"}
                             </span>
-                          </span>
+                          </button>
                         </span>
                       </td>
                       <td className="px-3 text-[12px]">
