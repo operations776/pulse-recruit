@@ -10,6 +10,15 @@ import {
   type ReactNode,
 } from "react";
 import {
+  CREDITS,
+  MAILBOXES,
+  MARKET_CHAT,
+  OPS_CHAT,
+  POSTS,
+  SEQUENCES,
+  TASKS,
+} from "@/lib/mock/modules";
+import {
   ACTIVITY,
   CANDIDATES,
   COMPANIES,
@@ -31,6 +40,15 @@ import type {
   Note,
   Signal,
   DreamCompany,
+  ChatMessage,
+  ChatSurface,
+  ContentPost,
+  ContentSkill,
+  CreditLedger,
+  Mailbox,
+  Sequence,
+  SequenceStep,
+  Task,
 } from "@/lib/types";
 
 // In-memory stand-in for the Supabase data layer.
@@ -47,6 +65,12 @@ type State = {
   activity: ActivityEvent[];
   signals: Signal[];
   dreamCompanies: DreamCompany[];
+  credits: CreditLedger;
+  chat: ChatMessage[];
+  tasks: Task[];
+  mailboxes: Mailbox[];
+  sequences: Sequence[];
+  posts: ContentPost[];
   archivedIds: string[];
 };
 
@@ -59,7 +83,15 @@ type Action =
   | { type: "update_candidate"; candidateId: string; patch: Partial<Candidate> }
   | { type: "add_note"; note: Note }
   | { type: "add_company"; company: Company }
-  | { type: "dismiss_signal"; signalId: string };
+  | { type: "dismiss_signal"; signalId: string }
+  | { type: "ask"; surface: ChatSurface; question: string; answer: ChatMessage }
+  | { type: "toggle_task"; taskId: string }
+  | { type: "add_task"; task: Task }
+  | { type: "set_sequence_status"; sequenceId: string; status: Sequence["status"] }
+  | { type: "update_step"; sequenceId: string; stepId: string; patch: Partial<SequenceStep> }
+  | { type: "reconnect_mailbox"; mailboxId: string }
+  | { type: "add_post"; post: ContentPost }
+  | { type: "set_post_status"; postId: string; status: ContentPost["status"] };
 
 let sequence = 0;
 function nextId(prefix: string) {
@@ -184,6 +216,92 @@ function reducer(state: State, action: Action): State {
         ),
       };
 
+    // RPC: chat_messages (two rows) + credit_ledger. The debit and both
+    // messages land together, so a spent credit can never exist without the
+    // answer it paid for, and vice versa.
+    case "ask": {
+      const user: ChatMessage = {
+        id: nextId("msg"),
+        orgId: ORG.id,
+        surface: action.surface,
+        role: "user",
+        body: action.question,
+        createdAt: NOW.toISOString(),
+      };
+      return {
+        ...state,
+        chat: [...state.chat, user, action.answer],
+        credits: {
+          ...state.credits,
+          usedThisWeek:
+            state.credits.usedThisWeek + (action.answer.creditsSpent ?? 0),
+        },
+      };
+    }
+
+    case "toggle_task":
+      return {
+        ...state,
+        tasks: state.tasks.map((t) =>
+          t.id === action.taskId ? { ...t, done: !t.done } : t,
+        ),
+      };
+
+    case "add_task":
+      return { ...state, tasks: [action.task, ...state.tasks] };
+
+    case "set_sequence_status":
+      return {
+        ...state,
+        sequences: state.sequences.map((q) =>
+          q.id === action.sequenceId ? { ...q, status: action.status } : q,
+        ),
+      };
+
+    case "update_step":
+      return {
+        ...state,
+        sequences: state.sequences.map((q) =>
+          q.id === action.sequenceId
+            ? {
+                ...q,
+                steps: q.steps.map((st) =>
+                  st.id === action.stepId ? { ...st, ...action.patch } : st,
+                ),
+              }
+            : q,
+        ),
+      };
+
+    case "reconnect_mailbox":
+      return {
+        ...state,
+        mailboxes: state.mailboxes.map((m) =>
+          m.id === action.mailboxId ? { ...m, status: "connected" } : m,
+        ),
+      };
+
+    case "add_post":
+      return { ...state, posts: [action.post, ...state.posts] };
+
+    case "set_post_status":
+      return {
+        ...state,
+        posts: state.posts.map((post) =>
+          post.id === action.postId
+            ? {
+                ...post,
+                status: action.status,
+                scheduledFor:
+                  action.status === "scheduled"
+                    ? (post.scheduledFor ??
+                      new Date(NOW.getTime() + 86_400_000).toISOString())
+                    : post.scheduledFor,
+              }
+            : post,
+        ),
+      };
+
     default:
       return state;
   }
@@ -196,6 +314,12 @@ const initialState: State = {
   activity: ACTIVITY,
   signals: SIGNALS,
   dreamCompanies: DREAM_COMPANIES,
+  credits: CREDITS,
+  chat: [...MARKET_CHAT, ...OPS_CHAT],
+  tasks: TASKS,
+  mailboxes: MAILBOXES,
+  sequences: SEQUENCES,
+  posts: POSTS,
   archivedIds: [],
 };
 
@@ -218,6 +342,16 @@ type StoreValue = {
   addNote: (candidateId: string, body: string) => void;
   addCompany: (input: NewCompanyInput) => void;
   dismissSignal: (signalId: string) => void;
+  creditsLeft: () => number;
+  ask: (surface: ChatSurface, question: string) => boolean;
+  chatFor: (surface: ChatSurface) => ChatMessage[];
+  toggleTask: (taskId: string) => void;
+  addTask: (title: string, detail: string) => void;
+  setSequenceStatus: (sequenceId: string, status: Sequence["status"]) => void;
+  updateStep: (sequenceId: string, stepId: string, patch: Partial<SequenceStep>) => void;
+  reconnectMailbox: (mailboxId: string) => void;
+  addPost: (skill: ContentSkill, hook: string) => void;
+  setPostStatus: (postId: string, status: ContentPost["status"]) => void;
   memberById: (id: string) => (typeof MEMBERS)[number] | undefined;
   stagesForJob: (jobId: string) => typeof STAGES;
   candidatesForJob: (jobId: string) => Candidate[];
@@ -357,6 +491,84 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
 
       dismissSignal: (signalId) => dispatch({ type: "dismiss_signal", signalId }),
+
+      creditsLeft: () =>
+        Math.max(0, state.credits.weeklyAllowance - state.credits.usedThisWeek),
+
+      // Returns false when the weekly allowance is spent, so the caller reports
+      // the refusal honestly instead of pretending the question went through.
+      ask: (surface, question) => {
+        const cost = surface === "market" ? 12 : 0;
+        const left = state.credits.weeklyAllowance - state.credits.usedThisWeek;
+        if (cost > left) return false;
+
+        const answer: ChatMessage = {
+          id: nextId("msg"),
+          orgId: ORG.id,
+          surface,
+          role: "assistant",
+          body:
+            surface === "market"
+              ? "Live market research is not wired up yet. When it is, this answer will be built from job boards, funding news and LinkedIn, and every source will be listed below it."
+              : "The ops manager is not wired up to a model yet. When it is, this answer will be built only from your own pipeline, never from the open web.",
+          sources:
+            surface === "market"
+              ? [{ label: "Pending", detail: "Research provider not connected" }]
+              : [{ label: "Pipeline", detail: "Reads your ATS only" }],
+          creditsSpent: cost,
+          createdAt: NOW.toISOString(),
+        };
+
+        dispatch({ type: "ask", surface, question, answer });
+        return true;
+      },
+
+      chatFor: (surface) => state.chat.filter((m) => m.surface === surface),
+
+      toggleTask: (taskId) => dispatch({ type: "toggle_task", taskId }),
+
+      addTask: (title, detail) =>
+        dispatch({
+          type: "add_task",
+          task: {
+            id: nextId("task"),
+            ref: `TASK-${1200 + sequence}`,
+            orgId: ORG.id,
+            title,
+            detail,
+            due: NOW.toISOString(),
+            done: false,
+            origin: "manual",
+          },
+        }),
+
+      setSequenceStatus: (sequenceId, status) =>
+        dispatch({ type: "set_sequence_status", sequenceId, status }),
+
+      updateStep: (sequenceId, stepId, patch) =>
+        dispatch({ type: "update_step", sequenceId, stepId, patch }),
+
+      reconnectMailbox: (mailboxId) =>
+        dispatch({ type: "reconnect_mailbox", mailboxId }),
+
+      addPost: (skill, hook) =>
+        dispatch({
+          type: "add_post",
+          post: {
+            id: nextId("post"),
+            ref: `POST-${1000 + sequence}`,
+            orgId: ORG.id,
+            skill,
+            hook,
+            body: "",
+            status: "idea",
+            scheduledFor: null,
+            createdAt: NOW.toISOString(),
+          },
+        }),
+
+      setPostStatus: (postId, status) =>
+        dispatch({ type: "set_post_status", postId, status }),
 
       memberById: (id) => MEMBERS.find((m) => m.id === id),
 

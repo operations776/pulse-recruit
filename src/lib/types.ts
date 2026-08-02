@@ -153,3 +153,102 @@ export type DreamCompany = {
   addedAt: string;
   lastSignalAt: string | null;
 };
+
+// ---------------------------------------------------------------------------
+// Modules beyond TALENT. One per RecruiterGTM pillar.
+// ---------------------------------------------------------------------------
+
+export type ModuleKey = "talent" | "market" | "outbound" | "ops" | "content";
+
+// Credits. The BD engine and enrichment run on our API keys, so usage is
+// metered against a weekly allowance per plan.
+export type CreditLedger = {
+  orgId: string;
+  weeklyAllowance: number;
+  usedThisWeek: number;
+  resetsAt: string;
+};
+
+export type ChatRole = "user" | "assistant";
+
+export type ChatSurface = "market" | "ops";
+
+export type ChatMessage = {
+  id: string;
+  orgId: string;
+  surface: ChatSurface;
+  role: ChatRole;
+  body: string;
+  // What the answer was built from, shown so the user can audit it.
+  sources?: { label: string; detail: string }[];
+  creditsSpent?: number;
+  createdAt: string;
+};
+
+// Pillar 3. Mailboxes are connected here so sending happens in Pulse.
+export type Mailbox = {
+  id: string;
+  orgId: string;
+  address: string;
+  provider: "google" | "microsoft" | "smtp";
+  status: "connected" | "warming" | "error";
+  dailyCap: number;
+  sentToday: number;
+  warmupDays: number;
+};
+
+export type SequenceStep = {
+  id: string;
+  channel: "email" | "linkedin";
+  dayOffset: number;
+  subject?: string;
+  body: string;
+};
+
+export type Sequence = {
+  id: string;
+  ref: string;
+  orgId: string;
+  name: string;
+  status: "running" | "paused" | "draft";
+  signalTrigger: SignalKind | null;
+  enrolled: number;
+  replied: number;
+  booked: number;
+  mailboxIds: string[];
+  steps: SequenceStep[];
+  createdAt: string;
+};
+
+// Pillar 2. The ops manager works a task list it can also fill itself.
+export type Task = {
+  id: string;
+  ref: string;
+  orgId: string;
+  title: string;
+  detail: string;
+  due: string;
+  done: boolean;
+  origin: "claude" | "manual";
+  linkedCandidateId?: string;
+};
+
+// Pillar 5. A content skill is a named prompt shape, not free text.
+export type ContentSkill =
+  | "jd_post"
+  | "personal_story"
+  | "market_insight"
+  | "candidate_story"
+  | "hiring_advice";
+
+export type ContentPost = {
+  id: string;
+  ref: string;
+  orgId: string;
+  skill: ContentSkill;
+  hook: string;
+  body: string;
+  status: "idea" | "drafted" | "scheduled" | "published";
+  scheduledFor: string | null;
+  createdAt: string;
+};

@@ -2,7 +2,6 @@
 
 import { notFound, useParams } from "next/navigation";
 import { Board } from "@/components/ats/board";
-import { JobPanel } from "@/components/shell/job-panel";
 import { useStore } from "@/lib/store";
 
 export default function PipelinePage() {
@@ -14,7 +13,7 @@ export default function PipelinePage() {
 
   return (
     <>
-      <JobPanel activeJobId={job.id} />
+      
       <Board job={job} />
     </>
   );
