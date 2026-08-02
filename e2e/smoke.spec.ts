@@ -47,3 +47,29 @@ test("auth screens render", async ({ page }) => {
     page.getByRole("heading", { name: "Create your workspace" }),
   ).toBeVisible();
 });
+
+test("every pillar module renders", async ({ page }) => {
+  const modules: [string, string][] = [
+    ["/market", "BD engine"],
+    ["/ops", "Morning brief"],
+    ["/ops/tasks", "Tasks"],
+    ["/sequences", "Sequences"],
+    ["/mailboxes", "Mailboxes"],
+    ["/content", "Content planner"],
+    ["/content/skills", "Skills"],
+  ];
+
+  for (const [href, heading] of modules) {
+    await page.goto(href);
+    await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
+  }
+});
+
+test("the module rail names all five pillars", async ({ page }) => {
+  await page.goto("/pipeline/j_1");
+  for (const wordmark of ["MARKET", "OPS", "OUTBOUND", "TALENT", "CONTENT"]) {
+    await expect(
+      page.getByRole("link", { name: `${wordmark} module` }),
+    ).toBeVisible();
+  }
+});

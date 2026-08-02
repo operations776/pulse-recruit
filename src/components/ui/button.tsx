@@ -14,8 +14,9 @@ const variants = {
 
 const sizes = {
   // 48px for primary actions, 44px is the floor for everything else.
-  lg: "h-7 px-2.5.5",
-  md: "h-7 px-2.5",
+  // DESIGN.md section 2: 32px for primary actions, 28px is the floor.
+  lg: "h-8 px-3.5",
+  md: "h-7 px-3",
 } as const;
 
 export function Button({
