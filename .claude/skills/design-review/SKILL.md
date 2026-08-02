@@ -45,16 +45,19 @@ Note the load time the script prints. Over 300 ms on a static route is a finding
 
 Read `DESIGN.md` fresh each run; it evolves. Walk all ten checklist items in its Review checklist section, in order, for each screenshot:
 
-1. Only token colors and scale sizes, no raw hex, no off-scale font sizes or spacing
-2. One accent color on screen; semantic color only where it carries meaning
-3. Density right way around: dense data, quiet chrome, gutters intact
-4. No emoji, no decorative gradients, no shadow on flat surfaces
-5. Micro labels uppercase 11px on tables, columns, field groups
-6. Data literals in mono with tabular numbers
-7. Focus visible on every interactive element; Esc and Enter behave
-8. Copy follows the interaction rules: exact verbs, sentence case, no filler, no em dashes
+1. Token colors and scale sizes only. No raw hex, no off-scale type or spacing
+2. Chrome is `forest-900`, primary action is `emerald-600`. Identity hues only where they categorize
+3. No grey initials circles. Avatars are photos or hue-tinted initials
+4. Cards carry real substance: person, contact, metrics, score. No thin cards
+5. Product surfaces have zero gradients. Marketing has at most one accent word per headline
+6. Micro labels uppercase 11px. Data literals in JetBrains Mono with tabular numbers
+7. Bricolage appears on display and page titles only, never in body or dense UI
+8. Focus visible everywhere. Esc, Enter, and `/` behave
 9. Pulse dot states correct wherever candidates render
 10. Feels fast: no layout shift, no uninvited motion, optimistic where it matters
+11. No emoji anywhere in the UI
+
+Ordered collections (pipeline stages, workspace tiles) must use `hueByIndex`, never `hueFor`. Hashing lets neighbours collide, which reads as a bug.
 
 Then grep the diff for the mechanical violations, which are cheaper to catch in text than in pixels:
 

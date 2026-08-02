@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 4310;
+// Configurable so a stray server on the default port cannot silently hijack a
+// run. Playwright never reuses an existing server: doing so once made the suite
+// pass against a stale build, which is worse than having no suite.
+const PORT = Number(process.env.PULSE_TEST_PORT ?? 4399);
 
 // Tests run against the production build, never the dev server. Dev-only layout
 // shift and slow fonts produce false results, especially for the speed budget.
@@ -19,7 +22,7 @@ export default defineConfig({
   webServer: {
     command: `npm run build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 180_000,
   },
 });

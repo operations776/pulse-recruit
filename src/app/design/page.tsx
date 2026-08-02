@@ -1,330 +1,426 @@
 import {
-  Building2,
-  Calendar,
-  Copy,
-  Kanban,
-  LayoutDashboard,
-  PenLine,
+  Archive,
+  Bell,
+  Briefcase,
+  ChartNoAxesColumn,
+  ChevronsLeft,
+  ChevronDown,
+  CircleHelp,
+  FileText,
+  Folder,
+  Inbox,
+  LayoutGrid,
+  MessageSquare,
+  MoveRight,
+  Newspaper,
   Plus,
-  Radio,
   Search,
   Settings,
-  SlidersHorizontal,
-  Upload,
+  Trash2,
   Users,
 } from "lucide-react";
+import { Avatar, AvatarStack } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { MatchScore } from "@/components/ui/match-score";
+import { MetricRow, type Metrics } from "@/components/ui/metric-row";
+import { Activity, type Freshness } from "@/components/ui/pulse-dot";
 import { brand } from "@/config/brand";
+import { hueBg, hueByIndex, hueTint } from "@/lib/hue";
 
-// Static taste-lock sheet for DESIGN.md. Not a product screen; the component
-// library gets built ticket by ticket after this direction is approved.
-
-type Freshness = "live" | "warm" | "cold";
-
-function PulseDot({ freshness }: { freshness: Freshness }) {
-  if (freshness === "cold") {
-    return (
-      <span className="inline-block size-1.5 rounded-full border-[1.5px] border-warn-500" />
-    );
-  }
-  return (
-    <span
-      className={`inline-block size-1.5 rounded-full ${
-        freshness === "live" ? "bg-pulse-600 pulse-dot-live" : "bg-ink-400"
-      }`}
-    />
-  );
-}
-
-function Activity({ freshness, time }: { freshness: Freshness; time: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <PulseDot freshness={freshness} />
-      <span className="data-literal">{time}</span>
-    </span>
-  );
-}
-
-function Avatar({ name }: { name: string }) {
-  const initials = name
-    .split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("");
-  return (
-    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-line-soft text-[11px] font-[550] text-ink-600">
-      {initials}
-    </span>
-  );
-}
-
-const stageChipStyles: Record<string, string> = {
-  Sourced: "bg-line-soft text-ink-600",
-  Contacted: "bg-info-500/8 text-info-500",
-  Replied: "bg-stage-violet/8 text-stage-violet",
-  Interview: "bg-pulse-600/8 text-pulse-700",
-  Offer: "bg-warn-500/8 text-warn-500",
-  Placed: "bg-pulse-600 text-white",
-  Rejected: "bg-line-soft text-ink-400 line-through",
-};
-
-function StageChip({ stage }: { stage: string }) {
-  return (
-    <span
-      className={`micro-label inline-flex h-5 items-center rounded-[4px] px-1.5 ${stageChipStyles[stage]}`}
-    >
-      {stage}
-    </span>
-  );
-}
+// Taste-lock sheet for the product interior, judged against DESIGN.md.
+// Static by design: the real screens get built ticket by ticket.
 
 type Candidate = {
   name: string;
-  role: string;
-  company: string;
-  salary: string;
+  email: string;
+  phone: string;
+  metrics: Metrics;
+  match: number;
   freshness: Freshness;
   time: string;
+  selected?: boolean;
 };
 
-const board: { stage: string; candidates: Candidate[] }[] = [
+const columns: { stage: string; candidates: Candidate[] }[] = [
   {
-    stage: "Contacted",
+    stage: "Applied",
     candidates: [
-      { name: "Sarah Chen", role: "Platform Engineer", company: "Nortech", salary: "$145k", freshness: "live", time: "3h" },
-      { name: "Marcus Webb", role: "Head of Data", company: "Fieldstone", salary: "$180k", freshness: "warm", time: "4d" },
-      { name: "Priya Nair", role: "DevOps Lead", company: "Cloudline", salary: "$130k", freshness: "cold", time: "12d" },
+      { name: "Laurie Kessler", email: "laurie.kessler@nortech.io", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 0 }, match: 72, freshness: "live", time: "3h" },
+      { name: "Clementine Spencer", email: "c.spencer@fieldstone.com", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 0 }, match: 98, freshness: "live", time: "5h", selected: true },
+      { name: "Karlie Pfannerstill", email: "karlie.p@brightpath.dev", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 0 }, match: 49, freshness: "warm", time: "4d" },
+      { name: "Rylee Thiel", email: "rylee@cloudline.dev", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 0 }, match: 68, freshness: "cold", time: "12d", selected: true },
+      { name: "Alysa Kunde", email: "alysa.kunde@meridian.co", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 0 }, match: 77, freshness: "warm", time: "6d" },
     ],
   },
   {
-    stage: "Replied",
+    stage: "Test",
     candidates: [
-      { name: "Tom Okafor", role: "Staff Engineer", company: "Meridian", salary: "$165k", freshness: "live", time: "1h" },
-      { name: "Elena Vasquez", role: "Engineering Manager", company: "Brightpath", salary: "$155k", freshness: "warm", time: "3d" },
+      { name: "Berry Shields", email: "berry.shields@corewave.com", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 0 }, match: 100, freshness: "live", time: "1h" },
+      { name: "Fay Nitzsche", email: "fay@halston.io", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 0 }, match: 98, freshness: "live", time: "2h" },
+      { name: "Jace Hackett", email: "jace.hackett@vantora.co", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 0 }, match: 82, freshness: "warm", time: "3d" },
     ],
   },
   {
     stage: "Interview",
     candidates: [
-      { name: "James Park", role: "VP Engineering", company: "Corewave", salary: "$210k", freshness: "live", time: "6h" },
-      { name: "Ana Duarte", role: "Principal SRE", company: "Halston", salary: "$175k", freshness: "cold", time: "9d" },
+      { name: "Daisy Ullrich", email: "daisy.ullrich@nortech.io", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 2 }, match: 100, freshness: "live", time: "45m" },
+      { name: "Aaron Johnson", email: "aaron.j@fieldstone.com", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 1 }, match: 86, freshness: "live", time: "6h" },
+      { name: "Abigail Thompson", email: "abigail@brightpath.dev", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 1 }, match: 79, freshness: "warm", time: "2d" },
+      { name: "Felix Garcia", email: "felix.garcia@corewave.com", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 3 }, match: 91, freshness: "cold", time: "9d" },
     ],
   },
   {
     stage: "Offer",
     candidates: [
-      { name: "Ryan Mitchell", role: "CTO", company: "Vantora", salary: "$240k", freshness: "live", time: "45m" },
+      { name: "Eleanor Taylor", email: "eleanor.taylor@vantora.co", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 4 }, match: 96, freshness: "live", time: "20m" },
+      { name: "Daniel Brown", email: "daniel.brown@halston.io", phone: "555 666 77", metrics: { emails: 1, notes: 3, documents: 2, interviews: 2 }, match: 88, freshness: "warm", time: "3d" },
     ],
   },
 ];
 
-const nav = [
-  { label: "Dashboard", icon: LayoutDashboard, active: false },
-  { label: "Pipeline", icon: Kanban, active: true },
-  { label: "Candidates", icon: Users, active: false },
-  { label: "Companies", icon: Building2, active: false },
-  { label: "Signals", icon: Radio, active: false },
-  { label: "Scheduling", icon: Calendar, active: false },
-  { label: "Content", icon: PenLine, active: false },
-  { label: "Settings", icon: Settings, active: false },
+const positions = [
+  { title: "Senior Product Design", code: "P_001", state: "open" },
+  { title: "Middle Business Analyst", code: "P_002", state: "open" },
+  { title: "Assistant Product Manager", code: "P_003", state: "risk" },
+  { title: "Scrum Master", code: "P_004", state: "open" },
+  { title: "UX Writer", code: "P_006", state: "open" },
+  { title: "Middle Project Manager", code: "P_005", state: "closed" },
+  { title: "UX Research", code: "P_007", state: "closed" },
 ];
 
-export default function DesignSheet() {
+const stateDot: Record<string, string> = {
+  open: "bg-emerald-500",
+  risk: "bg-hue-amber",
+  closed: "bg-ink-400",
+};
+
+const railNav = [
+  { icon: Users, label: "Candidates", active: true },
+  { icon: Folder, label: "Pipelines", active: false },
+  { icon: Briefcase, label: "Jobs", active: false },
+  { icon: Inbox, label: "Inbox", active: false },
+  { icon: FileText, label: "Documents", active: false },
+  { icon: ChartNoAxesColumn, label: "Reports", active: false },
+];
+
+const workspaces = [
+  { name: "Nortech", key: "nortech" },
+  { name: "Pulse Talent", key: "pulse-talent" },
+];
+
+const tabs = [
+  { label: "Candidate", icon: Users, active: true },
+  { label: "Job News", icon: Newspaper, active: false },
+  { label: "Channel", icon: MessageSquare, active: false },
+  { label: "Report", icon: ChartNoAxesColumn, active: false },
+];
+
+function CandidateCard({ c }: { c: Candidate }) {
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-surface">
-        <div className="flex h-12 items-center gap-2 border-b border-line-soft px-4">
-          <span className="size-2 rounded-full bg-pulse-600 pulse-dot-live" />
-          <span className="text-[14px] font-[590] tracking-[-0.01em]">
-            {brand.name}
+    <div
+      className={`group relative cursor-pointer rounded-xl border bg-surface p-3 shadow-card transition-colors duration-150 ${
+        c.selected
+          ? "border-emerald-600 ring-1 ring-emerald-600"
+          : "border-line hover:border-ink-400"
+      }`}
+    >
+      <span
+        className={`absolute right-3 top-3 flex size-4 items-center justify-center rounded-[5px] border ${
+          c.selected
+            ? "border-emerald-600 bg-emerald-600"
+            : "border-line bg-surface opacity-0 group-hover:opacity-100"
+        }`}
+      >
+        {c.selected ? (
+          <svg viewBox="0 0 10 8" className="size-2.5 fill-none stroke-white stroke-2">
+            <path d="M1 4l2.5 2.5L9 1" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : null}
+      </span>
+
+      <div className="flex items-start gap-2.5 pr-6">
+        <Avatar name={c.name} size="lg" />
+        <div className="min-w-0">
+          <p className="truncate text-[13px] font-semibold leading-[18px]">
+            {c.name}
+          </p>
+          <p className="truncate text-[12px] leading-4 text-ink-600">
+            {c.email}
+          </p>
+          <p className="data-literal text-[12px] text-ink-400">{c.phone}</p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line-soft pt-2.5">
+        <MetricRow metrics={c.metrics} />
+        <span className="flex items-center gap-2.5">
+          <Activity freshness={c.freshness} label={c.time} />
+          <MatchScore value={c.match} />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export default function DesignSheet() {
+  const selectedCount = columns
+    .flatMap((col) => col.candidates)
+    .filter((c) => c.selected).length;
+
+  return (
+    <div className="flex h-screen flex-col overflow-hidden">
+      {/* Top bar */}
+      <header className="flex h-13 shrink-0 items-center justify-between bg-forest-900 px-3 text-white">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-2 rounded-lg px-1.5 py-1">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-600">
+              <span className="size-2 rounded-full bg-white" />
+            </span>
+            <span className="font-display text-[15px] font-semibold">
+              {brand.name}
+            </span>
+          </span>
+          <span className="h-5 w-px bg-white/15" />
+          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium text-white/90 hover:bg-white/10">
+            Elio Tran
+            <ChevronDown size={14} strokeWidth={2} className="text-white/60" />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] text-white/80 hover:bg-white/10">
+            <CircleHelp size={15} strokeWidth={1.75} />
+            Need help?
+          </button>
+          <button className="relative rounded-lg p-2 text-white/80 hover:bg-white/10">
+            <Bell size={15} strokeWidth={1.75} />
+            <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-hue-coral" />
+          </button>
+          <span className="ml-1">
+            <Avatar name="Daniyal Aziz" size="sm" />
           </span>
         </div>
-        <nav className="flex flex-col gap-0.5 p-2">
-          {nav.map(({ label, icon: Icon, active }) => (
-            <a
+      </header>
+
+      <div className="flex min-h-0 flex-1">
+        {/* Icon rail */}
+        <nav className="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-line bg-surface py-3">
+          {workspaces.map((w, i) => {
+            const hue = hueByIndex(i);
+            return (
+              <button
+                key={w.key}
+                title={w.name}
+                className={`flex size-8 items-center justify-center rounded-lg text-[12px] font-bold text-white ${hueBg[hue]} ${
+                  i === 0 ? "ring-2 ring-ink-900 ring-offset-2" : ""
+                }`}
+              >
+                {w.name[0]}
+              </button>
+            );
+          })}
+          <button
+            title="Add workspace"
+            className="flex size-8 items-center justify-center rounded-lg border border-dashed border-line text-ink-400 hover:border-ink-400 hover:text-ink-600"
+          >
+            <Plus size={15} strokeWidth={2} />
+          </button>
+
+          <span className="my-2 h-px w-6 bg-line" />
+
+          {railNav.map(({ icon: Icon, label, active }) => (
+            <button
               key={label}
-              href="#"
-              className={`flex h-8 items-center gap-2.5 rounded-control px-2.5 text-[13px] ${
+              title={label}
+              className={`flex size-8 items-center justify-center rounded-lg ${
                 active
-                  ? "bg-pulse-50 font-[550] text-pulse-700"
-                  : "text-ink-600 hover:bg-canvas hover:text-ink-900"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "text-ink-400 hover:bg-canvas hover:text-ink-600"
               }`}
             >
-              <Icon size={16} strokeWidth={1.5} />
-              {label}
-            </a>
-          ))}
-        </nav>
-      </aside>
-
-      {/* Main */}
-      <main className="flex-1 overflow-x-auto">
-        {/* Topbar */}
-        <div className="flex h-12 items-center justify-between border-b border-line bg-surface px-6">
-          <div className="flex h-8 w-72 items-center gap-2 rounded-control border border-line bg-canvas px-2.5 text-ink-400">
-            <Search size={16} strokeWidth={1.5} />
-            <span className="text-[13px]">Search candidates, companies</span>
-            <kbd className="ml-auto rounded-[4px] border border-line bg-surface px-1 font-mono text-[11px] text-ink-400">
-              /
-            </kbd>
-          </div>
-          <Avatar name="Daniyal Aziz" />
-        </div>
-
-        <div className="p-6">
-          {/* Page header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-baseline gap-3">
-              <h1 className="text-[20px] font-[590] leading-7 tracking-[-0.01em]">
-                Pipeline
-              </h1>
-              <span className="data-literal">128 candidates</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="flex h-8 items-center gap-1.5 rounded-control border border-line bg-surface px-3 text-[13px] font-[550] text-ink-900 hover:bg-canvas">
-                <Upload size={16} strokeWidth={1.5} />
-                Import
-              </button>
-              <button className="flex h-8 items-center gap-1.5 rounded-control bg-pulse-600 px-3 text-[13px] font-[550] text-white hover:bg-pulse-700">
-                <Plus size={16} strokeWidth={1.5} />
-                Add candidate
-              </button>
-            </div>
-          </div>
-
-          {/* Filter bar */}
-          <div className="mt-4 flex items-center gap-2">
-            <button className="flex h-7 items-center gap-1.5 rounded-control border border-line bg-surface px-2.5 text-[13px] text-ink-600 hover:bg-canvas">
-              <SlidersHorizontal size={14} strokeWidth={1.5} />
-              Filter
+              <Icon size={17} strokeWidth={1.75} />
             </button>
-            <span className="flex h-7 items-center gap-1 rounded-control bg-pulse-50 px-2.5 text-[13px] text-pulse-700">
-              Role: Engineering
+          ))}
+
+          <span className="mt-auto flex flex-col gap-1">
+            <button
+              title="Settings"
+              className="flex size-8 items-center justify-center rounded-lg text-ink-400 hover:bg-canvas hover:text-ink-600"
+            >
+              <Settings size={17} strokeWidth={1.75} />
+            </button>
+          </span>
+        </nav>
+
+        {/* List panel */}
+        <aside className="flex w-66 shrink-0 flex-col border-r border-line bg-surface">
+          <div className="flex h-12 items-center justify-between px-3">
+            <span className="flex items-center gap-2">
+              <LayoutGrid size={15} strokeWidth={1.75} className="text-hue-indigo" />
+              <span className="text-[13px] font-semibold">Campaign Q2.2024</span>
             </span>
-            <span className="flex h-7 items-center gap-1 rounded-control bg-pulse-50 px-2.5 text-[13px] text-pulse-700">
-              Owner: Me
+            <button className="rounded-md p-1 text-ink-400 hover:bg-canvas">
+              <ChevronsLeft size={15} strokeWidth={1.75} />
+            </button>
+          </div>
+
+          <div className="px-3 pb-2">
+            <span className="flex h-8 items-center gap-2 rounded-lg border border-line bg-canvas px-2.5 text-ink-400">
+              <Search size={14} strokeWidth={1.75} />
+              <span className="text-[12px]">Search position</span>
             </span>
+          </div>
+
+          <div className="flex flex-col gap-0.5 overflow-y-auto px-2 pb-2">
+            {positions.map((p, i) => (
+              <button
+                key={p.code}
+                className={`flex items-center gap-2.5 rounded-lg px-2 py-2 text-left ${
+                  i === 0 ? "bg-emerald-50" : "hover:bg-canvas"
+                }`}
+              >
+                <span
+                  className={`size-1.5 shrink-0 rounded-full ${stateDot[p.state]}`}
+                />
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={`block truncate text-[13px] ${
+                      i === 0 ? "font-semibold text-emerald-700" : "text-ink-900"
+                    }`}
+                  >
+                    {p.title}
+                  </span>
+                  <span className="data-literal text-[11px] text-ink-400">
+                    {p.code}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main className="relative min-w-0 flex-1 overflow-auto bg-canvas">
+          <div className="px-6 pt-4">
+            <nav className="flex items-center gap-1.5 text-[12px] text-ink-400">
+              <span>Recruitment</span>
+              <span>/</span>
+              <span>Campaign</span>
+              <span>/</span>
+              <span className="text-ink-600">Campaign Q2.2024</span>
+            </nav>
+
+            <h1 className="mt-2 font-display text-[22px] font-semibold leading-7 tracking-[-0.01em]">
+              Senior Product Design
+            </h1>
+
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-6 gap-y-2">
+              <span className="text-[12px] text-ink-600">
+                Talent pool:{" "}
+                <span className="font-medium text-ink-900">Product design</span>
+              </span>
+              <span className="text-[12px] text-ink-600">
+                Hired: <span className="data-literal text-ink-900">1/10</span>
+              </span>
+              <span className="text-[12px] text-ink-600">
+                Time:{" "}
+                <span className="data-literal text-ink-900">
+                  01/01/26 - 01/02/26
+                </span>
+              </span>
+              <span className="flex items-center gap-2 text-[12px] text-ink-600">
+                Assigned to:
+                <AvatarStack names={["Reyhan Khan", "Salar Mansoor", "Daniyal Aziz"]} />
+                <button className="flex size-6 items-center justify-center rounded-full border border-dashed border-line text-ink-400 hover:border-ink-400 hover:text-ink-600">
+                  <Plus size={12} strokeWidth={2} />
+                </button>
+              </span>
+            </div>
+
+            <div className="mt-4 flex items-end justify-between border-b border-line">
+              <div className="flex items-center gap-1">
+                {tabs.map(({ label, icon: Icon, active }) => (
+                  <button
+                    key={label}
+                    className={`flex items-center gap-1.5 border-b-2 px-3 pb-2.5 text-[13px] ${
+                      active
+                        ? "border-emerald-600 font-semibold text-emerald-700"
+                        : "border-transparent text-ink-600 hover:text-ink-900"
+                    }`}
+                  >
+                    <Icon size={15} strokeWidth={1.75} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 pb-2">
+                <span className="flex h-[34px] w-56 items-center gap-2 rounded-full border border-line bg-surface px-3 text-ink-400">
+                  <Search size={14} strokeWidth={1.75} />
+                  <span className="text-[12px]">Search candidate</span>
+                </span>
+                <Button variant="primary">
+                  <Plus size={15} strokeWidth={2.25} />
+                  Add candidate
+                </Button>
+              </div>
+            </div>
           </div>
 
           {/* Board */}
-          <div className="mt-5 flex gap-3">
-            {board.map(({ stage, candidates }) => (
-              <div key={stage} className="w-70 shrink-0">
-                <div className="flex items-center justify-between px-1 pb-2">
-                  <span className="micro-label">{stage}</span>
-                  <span className="data-literal">{candidates.length}</span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {candidates.map((c) => (
-                    <div
-                      key={c.name}
-                      className="cursor-pointer rounded-card border border-line bg-surface p-3 hover:border-ink-400"
+          <div className="flex gap-3 px-6 pb-28 pt-4">
+            {columns.map(({ stage, candidates }, columnIndex) => {
+              const hue = hueByIndex(columnIndex);
+              return (
+                <section key={stage} className="w-71 shrink-0">
+                  <div className="mb-2.5 flex items-center gap-2">
+                    <span
+                      className={`flex size-5 items-center justify-center rounded-md ${hueTint[hue]}`}
                     >
-                      <div className="flex items-center gap-2">
-                        <Avatar name={c.name} />
-                        <span className="text-[13px] font-[550] leading-[18px]">
-                          {c.name}
-                        </span>
-                      </div>
-                      <p className="mt-1.5 text-[13px] leading-[18px] text-ink-600">
-                        {c.role} at {c.company}
-                      </p>
-                      <div className="mt-2.5 flex items-center justify-between">
-                        <span className="data-literal">{c.salary}</span>
-                        <Activity freshness={c.freshness} time={c.time} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+                      <span className={`size-2 rounded-[3px] ${hueBg[hue]}`} />
+                    </span>
+                    <span className="text-[13px] font-semibold">{stage}</span>
+                    <span className="data-literal rounded-full bg-line-soft px-1.5 text-[11px] text-ink-600">
+                      {candidates.length}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {candidates.map((c) => (
+                      <CandidateCard key={c.name} c={c} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
 
-          {/* Table sample */}
-          <h2 className="mt-8 text-[16px] font-[590] leading-6">
-            Recently added
-          </h2>
-          <div className="mt-3 overflow-hidden rounded-card border border-line bg-surface">
-            <table className="w-full border-collapse text-left">
-              <thead>
-                <tr className="border-b border-line">
-                  {["Name", "Stage", "Role", "Email", "Last activity"].map(
-                    (h) => (
-                      <th key={h} className="micro-label h-9 px-4 font-[550]">
-                        {h}
-                      </th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { name: "Sarah Chen", stage: "Contacted", role: "Platform Engineer", email: "sarah@nortech.io", freshness: "live" as const, time: "3h" },
-                  { name: "James Park", stage: "Interview", role: "VP Engineering", email: "jpark@corewave.com", freshness: "live" as const, time: "6h" },
-                  { name: "Ryan Mitchell", stage: "Offer", role: "CTO", email: "ryan@vantora.co", freshness: "live" as const, time: "45m" },
-                  { name: "Priya Nair", stage: "Sourced", role: "DevOps Lead", email: "priya.nair@cloudline.dev", freshness: "cold" as const, time: "12d" },
-                  { name: "Dana Whitfield", stage: "Placed", role: "Head of Product", email: "dana@meridian.com", freshness: "warm" as const, time: "5d" },
-                ].map((r) => (
-                  <tr
-                    key={r.name}
-                    className="border-b border-line-soft last:border-0 hover:bg-canvas"
-                  >
-                    <td className="h-10 px-4">
-                      <span className="flex items-center gap-2 text-[13px] font-[550]">
-                        <Avatar name={r.name} />
-                        {r.name}
-                      </span>
-                    </td>
-                    <td className="h-10 px-4">
-                      <StageChip stage={r.stage} />
-                    </td>
-                    <td className="h-10 px-4 text-[13px] text-ink-600">
-                      {r.role}
-                    </td>
-                    <td className="h-10 px-4">
-                      <span className="group flex cursor-pointer items-center gap-1.5">
-                        <span className="data-literal">{r.email}</span>
-                        <Copy
-                          size={13}
-                          strokeWidth={1.5}
-                          className="text-ink-400 opacity-0 group-hover:opacity-100"
-                        />
-                      </span>
-                    </td>
-                    <td className="h-10 px-4">
-                      <Activity freshness={r.freshness} time={r.time} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Bulk action bar */}
+          <div className="pointer-events-none sticky bottom-6 flex justify-center px-6">
+            <div className="pointer-events-auto flex items-center gap-1 rounded-full bg-forest-900 py-2 pl-4 pr-2 text-white shadow-pop">
+              <span className="data-literal text-[12px] text-white/70">
+                {selectedCount} selected
+              </span>
+              <span className="mx-2 h-4 w-px bg-white/15" />
+              <button className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium hover:bg-white/10">
+                <MoveRight size={14} strokeWidth={1.75} />
+                Move
+              </button>
+              <button className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium hover:bg-white/10">
+                <Archive size={14} strokeWidth={1.75} />
+                Archive
+              </button>
+              <button className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium text-hue-coral hover:bg-white/10">
+                <Trash2 size={14} strokeWidth={1.75} />
+                Delete
+              </button>
+              <span className="mx-2 h-4 w-px bg-white/15" />
+              <span className="data-literal pr-2 text-[11px] text-white/50">
+                esc to deselect
+              </span>
+            </div>
           </div>
-
-          {/* Primitive strip */}
-          <h2 className="mt-8 text-[16px] font-[590] leading-6">Primitives</h2>
-          <div className="mt-3 flex flex-wrap items-center gap-3 rounded-card border border-line bg-surface p-4">
-            <button className="h-8 rounded-control bg-pulse-600 px-3 text-[13px] font-[550] text-white hover:bg-pulse-700">
-              Add candidate
-            </button>
-            <button className="h-8 rounded-control border border-line bg-surface px-3 text-[13px] font-[550] hover:bg-canvas">
-              Export list
-            </button>
-            <button className="h-8 rounded-control px-3 text-[13px] font-[550] text-ink-600 hover:bg-canvas hover:text-ink-900">
-              Cancel
-            </button>
-            <button className="h-8 rounded-control border border-danger-500/30 px-3 text-[13px] font-[550] text-danger-500 hover:bg-danger-500/5">
-              Delete candidate
-            </button>
-            <input
-              placeholder="candidate@company.com"
-              className="h-8 w-56 rounded-control border border-line bg-surface px-2.5 text-[13px] placeholder:text-ink-400"
-            />
-            {Object.keys(stageChipStyles).map((s) => (
-              <StageChip key={s} stage={s} />
-            ))}
-          </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

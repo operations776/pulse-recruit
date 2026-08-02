@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 // any ATS, it has to be fast." A PR that regresses this fails CI on purpose.
 const BUDGET_MS = 300;
 
-const routes = ["/", "/design"];
+const routes = ["/", "/design", "/design/landing"];
 
 for (const route of routes) {
   test(`${route} responds inside the speed budget`, async ({ page }) => {

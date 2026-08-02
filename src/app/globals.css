@@ -1,34 +1,46 @@
 @import "tailwindcss";
 
-/* Design tokens: the single source of truth is DESIGN.md. No raw hex in components. */
+/* Design tokens. The single source of truth is DESIGN.md. No raw hex in components. */
 @theme {
-  --color-canvas: #f7f7f8;
+  /* Brand */
+  --color-forest-900: #0c3225;
+  --color-forest-800: #10402f;
+  --color-forest-700: #14543c;
+
+  --color-emerald-700: #0e8543;
+  --color-emerald-600: #12a150;
+  --color-emerald-500: #22c55e;
+  --color-emerald-50: #e9f8ef;
+
+  /* Identity palette: categorization only, never decoration */
+  --color-hue-coral: #ff6b5a;
+  --color-hue-amber: #f5a524;
+  --color-hue-indigo: #5b5bd6;
+  --color-hue-violet: #8b5cf6;
+  --color-hue-sky: #2e90fa;
+  --color-hue-pink: #ee46bc;
+
+  /* Neutrals */
+  --color-canvas: #f6f7f8;
   --color-surface: #ffffff;
+  --color-ink-900: #111827;
+  --color-ink-600: #5b6472;
+  --color-ink-400: #98a1ae;
+  --color-line: #e5e7eb;
+  --color-line-soft: #f0f1f3;
 
-  --color-ink-900: #16181d;
-  --color-ink-600: #5a6070;
-  --color-ink-400: #9aa0ae;
-
-  --color-line: #e4e6eb;
-  --color-line-soft: #eef0f3;
-
-  --color-pulse-50: #eaf7f2;
-  --color-pulse-600: #0c8a66;
-  --color-pulse-700: #0a6f53;
-
+  /* Semantic */
   --color-warn-500: #b45309;
   --color-danger-500: #d92d20;
-  --color-info-500: #3b6fe0;
-  --color-stage-violet: #6d5bd0;
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Faces */
+  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-jakarta);
+  --font-mono: var(--font-jetbrains);
 
-  --shadow-pop: 0 4px 16px rgb(22 24 29 / 0.08), 0 0 0 1px rgb(22 24 29 / 0.04);
-
-  --radius-control: 6px;
-  --radius-card: 8px;
-  --radius-layer: 10px;
+  /* Elevation: two levels only */
+  --shadow-card: 0 1px 2px rgb(17 24 39 / 0.06);
+  --shadow-pop: 0 8px 28px rgb(17 24 39 / 0.14);
 }
 
 body {
@@ -37,32 +49,42 @@ body {
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 20px;
-  font-weight: 450;
   -webkit-font-smoothing: antialiased;
 }
 
 @layer components {
-  /* Uppercase micro label: column headers, stage names, field labels */
   .micro-label {
     font-size: 11px;
-    line-height: 16px;
-    font-weight: 550;
-    letter-spacing: 0.06em;
+    line-height: 14px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--color-ink-600);
   }
 
-  /* Data literal: counts, dates, salaries, IDs, emails */
   .data-literal {
     font-family: var(--font-mono);
     font-size: 13px;
     line-height: 18px;
     font-variant-numeric: tabular-nums;
-    color: var(--color-ink-600);
+  }
+
+  /* Marketing signature: one accent word per headline, gradient clipped to text */
+  .grad-fresh {
+    background: linear-gradient(96deg, #12a150, #22c55e 45%, #a3e635);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .grad-warm {
+    background: linear-gradient(96deg, #f5a524, #ff6b5a 55%, #ee46bc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
 
-/* Pulse dot: the one ambient animation in the product */
+/* The one ambient animation in the product */
 @keyframes pulse-breathe {
   0%,
   100% {
@@ -80,11 +102,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .pulse-dot-live {
     animation: none;
-    box-shadow: 0 0 0 2px var(--color-pulse-50);
+    box-shadow: 0 0 0 2px var(--color-emerald-50);
   }
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-pulse-600);
+  outline: 2px solid var(--color-emerald-600);
   outline-offset: 2px;
 }
