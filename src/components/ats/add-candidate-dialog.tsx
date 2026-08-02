@@ -143,7 +143,7 @@ export function AddCandidateDialog({
         </div>
 
         {error ? (
-          <p role="alert" className="text-[12px] font-medium text-brick">
+          <p role="alert" className="text-[12px] font-medium text-red">
             {error}
           </p>
         ) : null}

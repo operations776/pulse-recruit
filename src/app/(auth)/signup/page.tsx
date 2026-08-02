@@ -46,7 +46,7 @@ function SignUpCard() {
           aria-hidden
           className="flex size-8 items-center justify-center rounded-control bg-ink"
         >
-          <span className="size-2 rounded-full bg-sage" />
+          <span className="size-2 rounded-full bg-teal" />
         </span>
         <span className="display text-[13px] font-bold">{brand.name}</span>
       </span>
@@ -102,7 +102,7 @@ function SignUpCard() {
         </Field>
 
         {error ? (
-          <p role="alert" className="text-[12px] font-medium text-brick">
+          <p role="alert" className="text-[12px] font-medium text-red">
             {error}
           </p>
         ) : null}

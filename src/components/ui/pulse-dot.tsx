@@ -13,14 +13,14 @@ export function freshnessFor(lastActivity: Date, now: Date): Freshness {
 export function PulseDot({ freshness }: { freshness: Freshness }) {
   if (freshness === "cold") {
     return (
-      <span className="inline-block size-1.5 shrink-0 rounded-full border-[1.5px] border-mustard" />
+      <span className="inline-block size-1.5 shrink-0 rounded-full border-[1.5px] border-amber" />
     );
   }
   return (
     <span
       className={`inline-block size-1.5 shrink-0 rounded-full ${
         freshness === "live"
-          ? "bg-sage pulse-dot-live"
+          ? "bg-teal pulse-dot-live"
           : "bg-ink-3"
       }`}
     />

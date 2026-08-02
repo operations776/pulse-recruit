@@ -65,7 +65,7 @@ export default function MarketingHome() {
         <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
           <span className="flex items-center gap-2">
             <span className="flex size-7 items-center justify-center rounded-control bg-ink">
-              <span className="size-2 rounded-full bg-sage" />
+              <span className="size-2 rounded-full bg-teal" />
             </span>
             <span className="display text-[13px] font-bold">
               {brand.name}
@@ -117,7 +117,7 @@ export default function MarketingHome() {
             <div className="flex h-9 items-center gap-1.5 border-b border-rule bg-paper px-3">
               <span className="size-2.5 rounded-full bg-hue-vermilion/70" />
               <span className="size-2.5 rounded-full bg-hue-mustard/70" />
-              <span className="size-2.5 rounded-full bg-sage/70" />
+              <span className="size-2.5 rounded-full bg-teal/70" />
             </div>
             <div className="flex">
               <div className="w-12 shrink-0 border-r border-rule bg-sheet py-3">
@@ -149,7 +149,7 @@ export default function MarketingHome() {
                           </div>
                           <div className="mt-2 flex items-center justify-between">
                             <span className="h-1 w-10 rounded-full bg-rule" />
-                            <span className="h-1 w-5 rounded-full bg-sage/50" />
+                            <span className="h-1 w-5 rounded-full bg-teal/50" />
                           </div>
                         </div>
                       ))}
@@ -263,7 +263,7 @@ export default function MarketingHome() {
       <footer className="border-t border-rule py-8">
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 text-[12px] text-ink-3">
           <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-sage" />
+            <span className="size-1.5 rounded-full bg-teal" />
             All systems operational
           </span>
           <span className="meta">

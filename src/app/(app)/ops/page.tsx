@@ -1,0 +1,67 @@
+"use client";
+
+import { ChatPanel } from "@/components/ai/chat-panel";
+import { freshnessFor } from "@/components/ui/pulse-dot";
+import { NOW } from "@/lib/mock/seed";
+import { useStore } from "@/lib/store";
+
+// Pillar 2. The ops manager reads your pipeline, never the open web, so these
+// answers cost no credits and the screen carries no meter.
+const SUGGESTIONS = [
+  "What needs me today?",
+  "Which candidates are going cold?",
+  "What moved yesterday?",
+];
+
+export default function OpsPage() {
+  const { state, jobs } = useStore();
+
+  const live = state.candidates.filter((c) => !state.archivedIds.includes(c.id));
+  const atRisk = jobs.filter((j) => j.state === "risk");
+  const cold = live.filter(
+    (c) => freshnessFor(new Date(c.lastActivityAt), NOW) === "cold",
+  );
+  const openTasks = state.tasks.filter((t) => !t.done);
+
+  const tiles = [
+    { label: "Live candidates", value: live.length },
+    { label: "Roles at risk", value: atRisk.length },
+    { label: "Going cold", value: cold.length },
+    { label: "Open tasks", value: openTasks.length },
+  ];
+
+  return (
+    <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-paper">
+      <header className="border-b border-rule px-6 py-5">
+        <p className="legend text-ink-3">Pillar 2 / AI operations manager</p>
+        <h1 className="display mt-2 text-[18px]">Morning brief</h1>
+        <p className="mt-2 max-w-[62ch] text-[12px] text-ink-2">
+          It reads your pipeline, not the open web. Ask it what moved, what
+          stalled and what needs you today.
+        </p>
+      </header>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-5 p-6">
+        <div className="grid shrink-0 grid-cols-4 gap-3">
+          {tiles.map((tile) => (
+            <div
+              key={tile.label}
+              className="rounded-card border border-rule bg-sheet p-3"
+            >
+              <p className="legend text-ink-2">{tile.label}</p>
+              <p className="display mt-1.5 text-[21px]">{tile.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <ChatPanel
+          surface="ops"
+          placeholder="Ask about your pipeline"
+          emptyTitle="Nothing asked yet"
+          emptyBody="Ask what moved, what stalled, and who has gone quiet. The answer is built from your own pipeline and it costs nothing to ask."
+          suggestions={SUGGESTIONS}
+        />
+      </div>
+    </main>
+  );
+}
