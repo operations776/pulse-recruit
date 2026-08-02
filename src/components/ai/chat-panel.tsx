@@ -1,38 +1,49 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { AnswerCost, AnswerFailure, SourceList } from "@/components/ai/answer";
+import { RunLog, type LogStep } from "@/components/ai/run-log";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/misc";
-import { useToast } from "@/components/ui/toast";
-import { ask } from "@/lib/actions";
+import { decodeEvents, type RunPhase } from "@/lib/ai-events";
 import type { ChatRow, ChatSource, ChatSurface } from "@/lib/supabase/types";
 import { formatDate } from "@/lib/time";
 
-// One chat surface, two pillars. MARKET asks the open web and pays credits for
-// it, OPS asks your own pipeline and pays nothing. The only difference the
-// component knows about is the surface key, so the two screens can never drift
-// apart in behaviour.
+// One panel, two surfaces. The surface decides the tool set on the server and
+// the wording here; the behaviour is identical on purpose, because two chat
+// screens that drift apart is how a product starts feeling unfinished.
 //
-// Messages arrive from the server component above. The panel owns nothing but
-// the draft, so a refresh after a successful ask is the only way new answers
-// appear, and there is no second copy of the transcript to fall out of step.
-//
-// DESIGN.md section 7: the panel is one shell. Header, suggestions, transcript
-// and composer meet on 1px rules with no gap.
+// A run streams (AI.md section 7). The panel holds the in-flight run in local
+// state and the finished transcript comes from the server, so there is never a
+// second copy of a settled answer to fall out of step.
+
+type LiveRun = {
+  question: string;
+  phase: RunPhase;
+  steps: LogStep[];
+  sources: ChatSource[];
+  draft: string;
+};
+
+const EMPTY_RUN = (question: string): LiveRun => ({
+  question,
+  phase: "reserving",
+  steps: [],
+  sources: [],
+  draft: "",
+});
+
 export function ChatPanel({
   surface,
   messages,
-  creditsLeft,
+  available,
   weeklyAllowance,
   resetsAt,
+  configured,
+  unconfiguredReason,
   placeholder,
   suggestions = [],
   emptyTitle,
@@ -41,9 +52,14 @@ export function ChatPanel({
 }: {
   surface: ChatSurface;
   messages: ChatRow[];
-  creditsLeft: number;
+  available: number;
   weeklyAllowance: number;
   resetsAt: string;
+  // Platform keys live in Vercel, so whether the engine can run at all is a
+  // deployment fact, not something the recruiter can fix. Say so rather than
+  // taking a question and failing it.
+  configured: boolean;
+  unconfiguredReason: string;
   placeholder: string;
   suggestions?: string[];
   emptyTitle: string;
@@ -51,47 +67,129 @@ export function ChatPanel({
   headerRight?: ReactNode;
 }) {
   const router = useRouter();
-  const { notify } = useToast();
   const [draft, setDraft] = useState("");
-  const [pending, startTransition] = useTransition();
+  const [run, setRun] = useState<LiveRun | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
 
-  // A new answer lands at the bottom, so the bottom is where the eye needs to
-  // be. Scroll position only, no animation.
+  // Follow the run as it writes. Scroll position only, no smooth behaviour:
+  // DESIGN.md section 10 allows transform and opacity, and nothing else.
   useEffect(() => {
     const el = transcriptRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages.length]);
+  }, [messages.length, run?.draft, run?.steps.length, failure]);
 
-  const submit = () => {
-    const text = draft.trim();
-    if (!text || pending) return;
+  const ask = useCallback(
+    async (question: string) => {
+      const text = question.trim();
+      if (!text || run) return;
 
-    startTransition(async () => {
-      const result = await ask(surface, text);
+      setFailure(null);
+      setRun(EMPTY_RUN(text));
+      setDraft("");
 
-      // Never swallow the reason. The action already translated it into
-      // something a recruiter can act on.
-      if (!result.ok) {
-        notify(result.error, "danger");
+      let response: Response;
+      try {
+        response = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ surface, question: text }),
+        });
+      } catch {
+        setRun(null);
+        setDraft(text);
+        setFailure("Pulse could not be reached. Nothing was charged.");
         return;
       }
 
-      // answered false means the weekly allowance is spent. The question did
-      // not run, so the box keeps the text and the toast says so plainly.
-      // Clearing the box on a refusal reads as a sent message.
-      if (!result.data.answered) {
-        notify(
-          `Your weekly research allowance is spent, so this question has not been asked. It resets on ${formatDate(resetsAt)}.`,
-          "danger",
+      // A refusal arrives as JSON, not as a stream: no allowance, not signed
+      // in, question too long. The text goes back in the box, because clearing
+      // it would read as sent.
+      if (!response.ok || !response.body) {
+        const body = await response.json().catch(() => ({ error: "" }));
+        setRun(null);
+        setDraft(text);
+        setFailure(
+          body.error ||
+            "That question could not be asked. Nothing was charged.",
         );
         return;
       }
 
-      setDraft("");
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let settled = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const { events, rest } = decodeEvents(buffer);
+        buffer = rest;
+
+        for (const event of events) {
+          switch (event.type) {
+            case "phase":
+              setRun((r) => (r ? { ...r, phase: event.phase } : r));
+              break;
+            case "step":
+              setRun((r) =>
+                r
+                  ? { ...r, steps: [...r.steps, { label: event.label, detail: event.detail }] }
+                  : r,
+              );
+              break;
+            case "source":
+              setRun((r) => (r ? { ...r, sources: [...r.sources, event.source] } : r));
+              break;
+            case "delta":
+              setRun((r) => (r ? { ...r, draft: r.draft + event.text } : r));
+              break;
+            case "reset":
+              // What streamed was the model thinking before reaching for a
+              // tool. Drop it rather than leaving half a sentence on screen.
+              setRun((r) => (r ? { ...r, draft: "" } : r));
+              break;
+            case "error":
+              settled = true;
+              setFailure(event.message);
+              if (event.retryable) setDraft(text);
+              break;
+            case "done":
+              settled = true;
+              break;
+            default:
+              break;
+          }
+        }
+      }
+
+      // The server settles the run either way, so a stream that ends without a
+      // done event is still accounted for. Say so rather than looking finished.
+      if (!settled) {
+        setFailure(
+          "The connection dropped before the answer finished. Any credits it reserved are given back.",
+        );
+      }
+
+      // Pull the settled transcript, then drop the live copy. Clearing first
+      // would blank the answer for a frame.
       router.refresh();
-    });
+      setRun(null);
+      composerRef.current?.focus();
+    },
+    [router, run, surface],
+  );
+
+  const submit = () => {
+    void ask(draft);
   };
+
+  const busy = run !== null;
+  const canAsk = configured && !busy && draft.trim().length > 0;
 
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-shell border border-rule bg-sheet">
@@ -102,12 +200,26 @@ export function ChatPanel({
         </div>
       ) : null}
 
-      {suggestions.length > 0 ? (
+      {!configured ? (
+        <div className="flex items-start gap-2.5 border-b border-rule bg-amber-bg px-4 py-3">
+          <AlertTriangle size={16} strokeWidth={1.5} className="mt-0.5 shrink-0 text-amber" />
+          <div>
+            <p className="legend text-amber-text">Not available</p>
+            <p className="mt-1 text-[12px] leading-[1.5] text-ink">
+              {unconfiguredReason}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Suggestions are scaffolding for an empty screen, not furniture. Once
+          there is a transcript they are in the way. */}
+      {suggestions.length > 0 && messages.length === 0 && !busy ? (
         <div className="border-b border-rule px-4 py-3">
           <p className="legend text-ink-3">Start with one of these</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {suggestions.map((s) => (
-              <Button key={s} onClick={() => setDraft(s)}>
+              <Button key={s} disabled={!configured} onClick={() => void ask(s)}>
                 {s}
               </Button>
             ))}
@@ -119,66 +231,80 @@ export function ChatPanel({
         ref={transcriptRef}
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
       >
-        {messages.length === 0 ? (
+        {messages.length === 0 && !busy && !failure ? (
           <EmptyState title={emptyTitle} body={emptyBody} />
-        ) : (
-          messages.map((m) => {
-            if (m.role === "user") {
-              return (
-                <div key={m.id} className="flex justify-end">
-                  <p className="max-w-[70%] rounded-card bg-well px-3 py-2 text-[13px] leading-[1.5]">
-                    {m.body}
-                  </p>
-                </div>
-              );
-            }
+        ) : null}
 
-            // sources is jsonb, so an old or partial row can hand back
-            // something that is not an array. Guard rather than crash a
-            // transcript over one bad record.
-            const sources: ChatSource[] = Array.isArray(m.sources)
-              ? m.sources
-              : [];
-
+        {messages.map((m) => {
+          if (m.role === "user") {
             return (
-              <div key={m.id} className="flex justify-start">
-                <div className="max-w-[80%] rounded-card border border-rule bg-sheet px-3 py-2.5">
-                  <p className="whitespace-pre-line text-[13px] leading-[1.5]">
-                    {m.body}
-                  </p>
-
-                  {sources.length > 0 ? (
-                    <div className="mt-3 border-t border-rule pt-2.5">
-                      <p className="legend text-ink-3">Built from</p>
-                      <div className="mt-1.5">
-                        {sources.map((s, i) => (
-                          <div
-                            key={s.label}
-                            className={`flex items-baseline justify-between gap-4 py-1.5 ${
-                              i > 0 ? "border-t border-rule" : ""
-                            }`}
-                          >
-                            <span className="shrink-0 text-[12px] font-medium">
-                              {s.label}
-                            </span>
-                            <span className="text-right text-[12px] text-ink-2">
-                              {s.detail}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      {m.credits_spent > 0 ? (
-                        <p className="meta mt-1.5 text-ink-3">
-                          {m.credits_spent} credits
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
+              <div key={m.id} className="flex justify-end">
+                <p className="max-w-[70%] rounded-card bg-well px-3 py-2 text-[13px] leading-[1.5]">
+                  {m.body}
+                </p>
               </div>
             );
-          })
-        )}
+          }
+
+          if (m.status === "failed") {
+            return (
+              <div key={m.id} className="flex justify-start">
+                <AnswerFailure
+                  reason={m.error ?? "This run did not finish. Nothing was charged."}
+                />
+              </div>
+            );
+          }
+
+          // sources is jsonb, so an old or partial row can hand back something
+          // that is not an array. Guard rather than crash a transcript over one
+          // bad record.
+          const sources: ChatSource[] = Array.isArray(m.sources) ? m.sources : [];
+          const meta = (m.meta ?? {}) as Record<string, unknown>;
+
+          return (
+            <div key={m.id} className="flex justify-start">
+              <div className="max-w-[80%] rounded-card border border-rule bg-sheet px-3 py-2.5">
+                <p className="whitespace-pre-line text-[13px] leading-[1.5]">
+                  {m.body}
+                </p>
+                <SourceList sources={sources} />
+                {m.credits_spent > 0 ? (
+                  <AnswerCost credits={m.credits_spent} meta={meta} />
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+
+        {run ? (
+          <>
+            <div className="flex justify-end">
+              <p className="max-w-[70%] rounded-card bg-well px-3 py-2 text-[13px] leading-[1.5]">
+                {run.question}
+              </p>
+            </div>
+            <div className="flex justify-start">
+              <div className="flex w-[80%] flex-col gap-2.5">
+                <RunLog surface={surface} phase={run.phase} steps={run.steps} />
+                {run.draft ? (
+                  <div className="rounded-card border border-rule bg-sheet px-3 py-2.5">
+                    <p className="whitespace-pre-line text-[13px] leading-[1.5]">
+                      {run.draft}
+                    </p>
+                    <SourceList sources={run.sources} legend="Reading" />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </>
+        ) : null}
+
+        {failure && !busy ? (
+          <div className="flex justify-start">
+            <AnswerFailure reason={failure} />
+          </div>
+        ) : null}
       </div>
 
       <form
@@ -189,9 +315,11 @@ export function ChatPanel({
         }}
       >
         <Textarea
+          ref={composerRef}
           rows={2}
           value={draft}
-          placeholder={placeholder}
+          disabled={!configured || busy}
+          placeholder={configured ? placeholder : "Unavailable until Pulse is configured"}
           aria-label="Your question"
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -204,11 +332,11 @@ export function ChatPanel({
         <div className="mt-2 flex items-center justify-between gap-3">
           <p className="meta text-ink-3">
             {weeklyAllowance > 0
-              ? `${creditsLeft} of ${weeklyAllowance} credits left. Cmd + Enter to ask`
+              ? `${available} of ${weeklyAllowance} credits left, resets ${formatDate(resetsAt)}. Cmd + Enter to ask`
               : "Cmd + Enter to ask"}
           </p>
-          <Button variant="primary" type="submit" disabled={pending}>
-            {pending ? "Asking" : "Ask"}
+          <Button variant="primary" type="submit" disabled={!canAsk}>
+            {busy ? "Working" : "Ask"}
           </Button>
         </div>
       </form>

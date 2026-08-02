@@ -137,11 +137,29 @@ body {
       0 2px 6px rgb(23 22 15 / 0.08);
   }
 
+  /* The activity signature, and the only ambient animation in the product.
+     DESIGN.md section 10 allows transform and opacity, so this animates
+     opacity alone. Reduced motion is handled by the global rule below, which
+     collapses the duration and leaves the dot solid. */
+  .pulse-dot-live {
+    animation: pulse-dot 1.6s ease-out infinite;
+  }
+
   /* The layer behind a popup must actually read as glass, not as a flat tint. */
   .scrim {
     background: rgb(23 22 15 / 0.32);
     backdrop-filter: blur(10px) saturate(0.9);
     -webkit-backdrop-filter: blur(10px) saturate(0.9);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
   }
 }
 
