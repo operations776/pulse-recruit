@@ -36,6 +36,13 @@ export async function middleware(request: NextRequest) {
   );
 
   if (!user && !isPublic) {
+    // An API route answers with a status code. Redirecting one to /signin makes
+    // it reply 405 (the sign-in page has no POST handler), which reads as a
+    // broken endpoint rather than an unauthenticated one.
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
+    }
+
     const url = request.nextUrl.clone();
     url.pathname = "/signin";
     url.searchParams.set("next", pathname);

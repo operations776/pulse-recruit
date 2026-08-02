@@ -53,9 +53,57 @@ test("every module renders for a signed in user", async ({ page }) => {
   }
 });
 
-test("api keys screen lists every provider as not set", async ({ page }) => {
+test("api keys screen separates included keys from the ones you connect", async ({
+  page,
+}) => {
   await signIn(page);
   await page.goto("/settings/integrations");
-  await expect(page.getByText("Exa", { exact: false }).first()).toBeVisible();
+  // Research and model keys are Pulse's, so they read as included rather than
+  // as something to fill in (AI.md section 1).
+  await expect(page.getByText("Included with Pulse")).toBeVisible();
+  await expect(page.getByText("Included").first()).toBeVisible();
+  // The customer's own accounts still ask for a key.
+  await expect(page.getByText("Instantly", { exact: false }).first()).toBeVisible();
   await expect(page.getByText("Not set").first()).toBeVisible();
+});
+
+// The AI engine refuses honestly when the platform keys are absent, which is
+// the state of any environment that has not had them added. AI.md section 4:
+// it must not take the question, reserve credits, and then apologise.
+test("the ask API refuses a caller with no session", async ({ request }) => {
+  const response = await request.post("/api/ask", {
+    data: { surface: "market", question: "who is hiring" },
+  });
+  expect(response.status()).toBe(401);
+});
+
+test("the ask API rejects an unknown surface", async ({ page }) => {
+  await signIn(page);
+  // page.request shares the browser's cookies; the standalone request fixture
+  // does not, and would test the unauthenticated path again by accident.
+  const response = await page.request.post("/api/ask", {
+    data: { surface: "not-a-surface", question: "who is hiring" },
+  });
+  expect(response.status()).toBe(400);
+});
+
+test("a surface with no provider configured says so and takes no question", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/market");
+
+  const composer = page.getByLabel("Your question");
+  const configured = await composer.isEnabled();
+
+  if (configured) {
+    // Keys are present in this environment, so the engine is live and the
+    // composer is usable. The unconfigured path is not what is under test.
+    await expect(page.getByRole("button", { name: "Ask" })).toBeVisible();
+    return;
+  }
+
+  await expect(page.getByText("Not available")).toBeVisible();
+  await expect(composer).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Ask" })).toBeDisabled();
 });

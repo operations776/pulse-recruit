@@ -1,6 +1,6 @@
 # Pulse Architecture
 
-Binding companions: `../ROADMAP.md` (what we build), `../PLAYBOOK.md` (how we build), `DESIGN.md` (what every screen is judged against). Every commit that touches schema, env, or module boundaries cites the section here it follows.
+Binding companions: `../ROADMAP.md` (what we build), `../PLAYBOOK.md` (how we build), `DESIGN.md` (what every screen is judged against), `AI.md` (every model call, research call, and credit). Every commit that touches schema, env, or module boundaries cites the section here it follows.
 
 ## Stack
 
@@ -53,7 +53,7 @@ These come from real incidents (our ACID audit of the retainer dashboard plus th
 | Pillar | In-app module | Route group | Build week |
 | --- | --- | --- | --- |
 | 1. Offer productization | Not software. Referenced in onboarding and pricing copy only | (marketing) | 4 |
-| 2. AI Ops Manager | Claude chat surface, task management, morning workflow view, MCP server at `src/app/api/[transport]/route.ts` | `(app)/ops` | 3 |
+| 2. AI Ops Manager | Model-backed chat over the org's own rows, task writing, morning workflow view, MCP server at `src/app/api/[transport]/route.ts` | `(app)/ops` | 3 |
 | 3. Multichannel outbound | Signals feed (open jobs, leadership changes, funding), one-click LinkedIn actions. Mass email stays external (Instantly, HeyReach via their MCPs) | `(app)/signals` | 2 |
 | 4. ATS + newsletter | Candidates, companies (clients and buyers), pipeline board, candidate drawer, notes. Newsletter via Beehiiv later | `(app)/ats` | 1 |
 | 5. Content | LinkedIn posting via Unipile | `(app)/content` | 4 |
@@ -104,27 +104,30 @@ Two kinds of secret exist and they are stored in different places. Keep the dist
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project API URL | Yes | Yes | PLS-6 |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key, RLS-constrained | Yes | Yes | PLS-6 |
 | `NEXT_PUBLIC_SITE_URL` | Absolute origin, used for auth redirects | Yes | Deploy only | PLS-35 |
+| `OPENAI_API_KEY` | The model behind both AI surfaces. Central RecruiterGTM key | No | Yes | PLS-38 |
+| `EXA_API_KEY` | Live web research behind the BD engine. Central RecruiterGTM key | No | Yes | PLS-38 |
+| `OPENAI_MODEL` | Model override. Changing it means changing `MODEL_RATES` in the same commit | No | No | PLS-38 |
 
-**Per-org integration keys** are NOT env vars. A recruiter pastes their own key into Settings, and `set_integration_key` writes it into Supabase Vault, storing only a pointer plus the last four characters. This is deliberate: keys differ per customer, they must be rotatable without a deploy, and an env var shared across tenants would be a cross-tenant leak waiting to happen.
+**Two kinds of key, and the difference is who pays.**
 
-| Provider | Used for | Pillar | Status |
-| --- | --- | --- | --- |
-| `exa` | Web and market research behind the BD engine | 1 | Not connected |
-| `apollo` | Contact and company data | 1, 3 | Not connected |
-| `prospeo` | Email finding and verification | 3 | Not connected |
-| `clay` | Waterfall enrichment | 3 | Not connected |
-| `instantly` | Email sending at scale | 3 | Not connected |
-| `heyreach` | LinkedIn outreach | 3 | Not connected |
-| `unipile` | LinkedIn posting | 5 | Not connected |
-| `beehiiv` | Newsletter | 4 | Not connected |
-| `openai` | Model calls | 1, 2, 5 | Not connected |
-| `anthropic` | Claude, the ops manager | 2 | Not connected |
-| `smtp` | Custom mail transport | 3 | Not connected |
+**Platform keys** (`OPENAI_API_KEY`, `EXA_API_KEY`) are RecruiterGTM's own accounts. Every org spends against them, so credits are the cost control rather than a display meter, and the ledger has to be exact. Decided 2026-08-02; this replaces the earlier wording that made every provider a per-org key. The full contract is in `AI.md`. Verify them with `npm run verify:ai`.
 
-The service-role key is deliberately absent. Nothing in the app needs it: every read is RLS-constrained and every privileged write is a SECURITY DEFINER RPC with EXECUTE revoked from `anon`. Adding it would create a bypass with no caller.
+**Per-org integration keys** are NOT env vars. A recruiter pastes their own key into Settings, and `set_integration_key` writes it into Supabase Vault, storing only a pointer plus the last four characters. This is right for the tools that are genuinely the customer's own account: keys differ per customer, they must be rotatable without a deploy, and an env var shared across tenants would be a cross-tenant leak waiting to happen.
 
-Supabase project: `pulse`, ref `zlnctqlabowdaahnvheo`, region eu-west-2. Never the retainer dashboard (`hjwbguuqrwtmpkmgaxhc`) or the rejected Pulse Recruit project (`oyilzgfpaiusvqvmepny`).
+| Provider | Used for | Pillar | Held as | Status |
+| --- | --- | --- | --- | --- |
+| `openai` | Model calls on both AI surfaces | 1, 2, 5 | Platform env | Awaiting key |
+| `exa` | Web and market research behind the BD engine | 1 | Platform env | Awaiting key |
+| `anthropic` | Reserved for a second model provider | 2 | Platform env | Not used yet |
+| `apollo` | Contact and company data | 1, 3 | Vault, per org | Not connected |
+| `prospeo` | Email finding and verification | 3 | Vault, per org | Not connected |
+| `clay` | Waterfall enrichment | 3 | Vault, per org | Not connected |
+| `instantly` | Email sending at scale | 3 | Vault, per org | Not connected |
+| `heyreach` | LinkedIn outreach | 3 | Vault, per org | Not connected |
+| `unipile` | LinkedIn posting | 5 | Vault, per org | Not connected |
+| `beehiiv` | Newsletter | 4 | Vault, per org | Not connected |
+| `smtp` | Custom mail transport | 3 | Vault, per org | Not connected |
+
+The service-role key is deliberately absent, and the AI engine does not introduce one. Nothing in the app needs it: every read is RLS-constrained and every privileged write is a SECURITY DEFINER RPC with EXECUTE revoked from `anon`. The ops manager's tools run on the caller's own session, so RLS is the boundary there too. Adding a service-role key would create a bypass with no caller. It would never appear in a `NEXT_PUBLIC_` var and never be imported into a client component.
 
 Supabase project: `pulse`, ref `zlnctqlabowdaahnvheo`, region eu-west-2. Dedicated to this product. The retainer dashboard (`hjwbguuqrwtmpkmgaxhc`) and the rejected Pulse Recruit project (`oyilzgfpaiusvqvmepny`) are never touched by this codebase.
-
-The service-role key is deliberately absent until a server-only module needs it (PLS-7). It never appears in a `NEXT_PUBLIC_` var and never gets imported into a client component.

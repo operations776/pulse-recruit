@@ -260,3 +260,94 @@ export type PostRow = {
   author_id: string | null;
   created_at: string;
 };
+
+// ---------------------------------------------------------------------------
+// The person / candidacy model (PLS-45). Stage lives on the candidacy, so one
+// human can sit at a different stage on every role they are on, while notes,
+// files and history follow the person.
+// ---------------------------------------------------------------------------
+
+export type FileKind = "resume" | "headshot" | "video" | "other";
+
+export type PersonRow = {
+  id: string;
+  org_id: string;
+  ref: string;
+  name: string;
+  email: string;
+  phone: string;
+  title: string;
+  company_name: string;
+  location: string;
+  linkedin_url: string;
+  salary_expectation: string;
+  source: string;
+  owner_id: string | null;
+  rating: number | null;
+  headshot_path: string | null;
+  headshot_url: string | null;
+  resume_path: string | null;
+  resume_url: string | null;
+  video_url: string | null;
+  last_contacted_at: string | null;
+  replied: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CandidacyRow = {
+  id: string;
+  org_id: string;
+  person_id: string;
+  job_id: string;
+  stage_id: string;
+  sort: number;
+  source: string;
+  match: number;
+  archived_at: string | null;
+  last_activity_at: string;
+  created_at: string;
+};
+
+// A board card: the candidacy joined to its person. `id` is the CANDIDACY id
+// and `person_id` is the human. Getting those two confused is the single most
+// error-prone thing in this model, so the type keeps them both explicit.
+export type BoardCard = CandidacyRow & { person: PersonRow };
+
+export type StageEventRow = {
+  id: string;
+  org_id: string;
+  candidacy_id: string;
+  from_stage_id: string | null;
+  to_stage_id: string;
+  actor_id: string | null;
+  created_at: string;
+};
+
+export type PersonFileRow = {
+  id: string;
+  org_id: string;
+  person_id: string;
+  kind: FileKind;
+  label: string;
+  path: string | null;
+  url: string | null;
+  mime: string;
+  size_bytes: number;
+  created_at: string;
+};
+
+export type ShortlistRow = {
+  id: string;
+  org_id: string;
+  job_id: string;
+  ref: string;
+  token: string;
+  title: string;
+  client_name: string;
+  prepared_for: string;
+  person_ids: string[];
+  view_count: number;
+  revoked_at: string | null;
+  created_at: string;
+};
