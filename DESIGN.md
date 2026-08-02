@@ -1,159 +1,289 @@
-# Pulse Design Contract
+# Panelboard Soft
 
-Every screen is judged against this file by the design-review skill. A screen that violates it does not merge, whatever else it does well.
+Design system for an all-in-one recruiting operations platform: applicant tracking, outbound, operations, and content engine.
 
-## History, so the same mistake is not made a third time
+**Rev B.** Rev A was a flat printed sheet with 2px corners and hard offset shadows. Rev B keeps the instrument logic and moves the personality into softer places: rounded shells, inset wells, keycap edges, and a grained ground.
 
-Version one: grey chrome, grey initials circles, one flat accent, thin cards. Rejected as characterless.
-Version two: green chrome, colored avatars, denser cards. Rejected again, and correctly. It was still the same species, soft rounded cards floating on a neutral background with one accent color. That silhouette is the default a machine reaches for, and no amount of palette tuning fixes it.
+---
 
-Version three changes the silhouette, not the paint. Two named directions, from Daniyal's reference: **minimal vintage** for the structure and **glassmorphism** for the layers above it.
+## 1. The idea
 
-## The direction
+The interface is a piece of well-made equipment. Not a document, not a dashboard. A warm panel with a legend printed on it and controls mounted into it.
 
-**Minimal vintage.** The base is a printed page, not a dashboard. Warm cream paper, a visible hairline grid where panels butt against each other and share rules, heavy uppercase display type, monospace for labels and data, vermilion as the single hot accent against deep navy blocks. Corners are effectively square. Nothing floats without reason. The reference is editorial print: a well set magazine spread, not a SaaS template.
+Two structural rules carry the whole thing:
 
-**Glassmorphism, for layers only.** Anything that floats above the page (drawer, dialog, dropdown, toast, the bulk action bar) is frosted glass: translucent warm white, a real backdrop blur, a hairline border, and a soft shadow. This is the only place blur and translucency appear. Glass on a flat surface is decoration and is forbidden.
+- **The panel is calm. The controls are physical.** Surfaces never have depth. Only things you press or throw have depth.
+- **Panels share edges.** Inside a shell, sections meet on a 1px rule with no gap. Gaps exist only between shells.
 
-The tension between the two is the point. A crisp printed grid, with soft glass floating over it.
+Everything below is downstream of those two sentences.
 
-## Color tokens
+---
 
-Defined once in `src/app/globals.css` under `@theme`. Components never use raw hex.
+## 2. Audience constraints
 
-### Surface and ink
+Primary users are recruiters aged roughly 40 to 60, working in the product for long sessions. These are not preferences, they are the floor.
 
-| Token | Hex | Use |
-| --- | --- | --- |
-| `paper` | `#F7EFE8` | Page background, the warm sheet everything sits on |
-| `paper-deep` | `#EFE2D7` | Recessed areas, table header, section wash |
-| `paper-white` | `#FFFBF7` | Raised cells and inputs, a warm white, never pure white |
-| `ink` | `#1C1A2E` | Primary text, dark panels, structural hairlines |
-| `ink-soft` | `#56526E` | Secondary text |
-| `ink-mute` | `#8E8AA3` | Muted text, placeholders, timestamps |
-| `rule` | `#DCCEC2` | Soft dividers inside a panel |
-| `rule-strong` | `#1C1A2E` | The structural grid hairline, used at 1px, full strength |
+| Constraint | Value |
+|---|---|
+| Base body size | 17px, never below 16px |
+| Line height | 1.6 body, 1.3 display |
+| Body text contrast | 7:1 minimum, not 4.5:1 |
+| Minimum font weight | 400, no light or thin weights anywhere |
+| Hit target | 44px minimum, 48px for primary actions |
+| Mono minimum size | 13px, and only for legends, IDs, counts, metadata |
 
-### Accent and semantic
+Additional rules:
 
-| Token | Hex | Use |
-| --- | --- | --- |
-| `vermilion` | `#E8481F` | The single hot accent: primary action, active state, live signal |
-| `vermilion-deep` | `#C33A14` | Hover and pressed |
-| `vermilion-wash` | `#FBE3DA` | Selected row, active chip |
-| `sage` | `#4E7C62` | Positive, healthy, live |
-| `mustard` | `#C08A2E` | Warning, at risk, going cold |
-| `brick` | `#A9382A` | Destructive |
+- **Status is never encoded by colour alone.** Always colour plus icon plus word. Lens yellowing after 50 compresses blue and violet discrimination in particular.
+- **Nothing lives behind hover.** Row actions are visible or one deliberate click away. Hover-to-reveal is the pattern that fails this audience hardest.
+- **Toasts persist until dismissed.** No 4-second auto-dismiss. A state change nobody finished reading is an invisible state change.
+- **Nothing moves between screens.** Memorability comes from spatial consistency, not clever navigation.
+- **Uppercase is rationed.** Uppercase destroys word-shape recognition. It is allowed on the display face and on mono legends only. Buttons, body copy, and anything over three words are sentence case.
 
-### Identity palette
+---
 
-Six muted vintage hues for categorization only: pipeline stages, workspace tiles, signal kinds, avatar fallbacks, chart series. Assigned by position for ordered collections and by hash for identity. Never chosen for variety.
+## 3. Colour
 
-| Token | Hex |
-| --- | --- |
-| `hue-vermilion` | `#E8481F` |
-| `hue-mustard` | `#D9A441` |
-| `hue-sage` | `#5C8A6E` |
-| `hue-teal` | `#2F6F7E` |
-| `hue-plum` | `#7A4E6E` |
-| `hue-clay` | `#A9603F` |
+```css
+:root {
+  /* ground and surfaces */
+  --paper:      #F6F2E9;  /* page ground, carries the grain */
+  --sheet:      #FFFDF7;  /* panel and card fill */
+  --well:       #EDE7DA;  /* inset wells, control troughs, input beds */
 
-### Glass
+  /* ink */
+  --ink:        #17160F;  /* primary text, strong borders, control bodies */
+  --ink-2:      #6E675A;  /* secondary text, metadata */
+  --ink-3:      #9A9284;  /* placeholders, disabled labels */
+  --rule:       #D8D1C0;  /* 1px hairlines */
 
-Floating layers only.
+  /* action */
+  --vermilion:       #E23D1F;
+  --vermilion-hover: #C7331A;
+  --vermilion-edge:  #A8290F;  /* keycap underside */
+  --on-vermilion:    #FFFDF7;
 
-- `--glass-bg`: `rgb(255 251 247 / 0.72)`
-- `--glass-blur`: `blur(20px) saturate(1.4)`
-- `--glass-border`: `1px solid rgb(28 26 46 / 0.14)`
-- `--shadow-glass`: `0 16px 40px rgb(28 26 46 / 0.18)`
+  /* state */
+  --teal:       #0F6E56;  /* on, running, engaged */
+  --teal-edge:  #0A5240;
+  --teal-bg:    #E1F5EE;
+  --teal-text:  #085041;
 
-Dark glass, for the bulk bar over content: `rgb(28 26 46 / 0.86)` with the same blur.
+  --amber:      #BA7517;  /* needs attention, paused, stalled */
+  --amber-bg:   #FAEEDA;
+  --amber-text: #854F0B;
 
-## Typography
+  --red:        #A32D2D;  /* destructive and error only */
+  --red-bg:     #FCEBEB;
+}
+```
 
-Three faces, self-hosted through `next/font`, zero external requests.
+### Colour roles
 
-- **Archivo Black**: display only. Uppercase, tight tracking. Page titles, marketing headlines, metric numbers. This carries the whole personality and must never appear below 18px or in body copy.
-- **IBM Plex Sans**: reading text and dense UI. Warmer and more characterful than a neutral grotesque, still readable at 12px.
-- **IBM Plex Mono**: labels, data literals, buttons, stage names, codes, counts, timestamps. The vintage voice. Mono carries far more of this interface than a normal product would, and that is deliberate.
+This is the rule that keeps four products in one shell from turning into noise:
 
-| Role | Size / line height | Face, weight | Notes |
-| --- | --- | --- | --- |
-| Marketing hero | 72 / 68 | Archivo Black | Uppercase, tracking -0.02em |
-| Marketing section | 44 / 44 | Archivo Black | Uppercase |
-| Page title | 26 / 28 | Archivo Black | Uppercase, one per screen |
-| Metric | 32 / 34 | Archivo Black | Dashboard numbers |
-| Section title | 15 / 20 | Plex Sans 600 | |
-| Body | 14 / 20 | Plex Sans 400 | |
-| Dense body | 13 / 18 | Plex Sans 400 | Cards, table cells |
-| Caption | 12 / 16 | Plex Sans 400 | |
-| Micro label | 11 / 14 | Plex Mono 500 | Uppercase, tracking +0.12em. The signature label |
-| Data literal | 12 / 16 | Plex Mono 400 | Tabular numbers |
-| Button | 12 / 16 | Plex Mono 600 | Uppercase, tracking +0.08em |
+- **Vermilion is a verb.** If it is not clickable, it is not vermilion. One vermilion control per view, maximum.
+- **Teal means on.** Running sequences, active states, thrown switches. Never a button.
+- **Amber means look at this.** Stalled, paused, needs input. Never a button.
+- **Red is destructive and error only.** It is not a general warning colour.
+- **Ink is structure.** Secondary and tertiary buttons are ink outlines, not colour.
 
-Micro labels are wide-tracked uppercase mono, exactly as in the reference. This is the most recognisable single detail in the system and it appears on every column header, every field label, and every section eyebrow.
+Modules are **not** colour-coded. Colour roles are fully spoken for. Module identity runs through the masthead and the record ID prefix instead (section 8).
 
-## Structure, the part that actually changed
+---
 
-- **Radius is 2px.** Panels, cards, inputs, buttons. The only exceptions are avatars and status dots, which are circles. No pills, no 12px cards.
-- **Hairline grid.** Panels sit inside a 1px `rule-strong` border and share edges rather than floating apart with gaps. A screen should read as a divided sheet, not as a scatter of cards. Use `-ml-px` style overlap so shared edges stay 1px, never 2px.
-- **No shadows on flat surfaces.** Shadow belongs to glass layers only.
-- **Density.** 4px grid. Control height 32px, compact 26px. Table rows 40px. Page gutter 0: the content grid runs edge to edge and is divided by rules, with 20px padding inside each cell.
-- **Ornament budget: one per screen, maximum.** The reference uses a starburst and a squiggle. Ours is a single small vermilion four-point star used to mark the one thing that needs attention, nothing else. It is never decorative filler.
+## 4. Type
 
-## Component inventory
+```css
+--font-display: 'Archivo Black', system-ui, sans-serif;
+--font-body:    'IBM Plex Sans', system-ui, sans-serif;
+--font-mono:    'IBM Plex Mono', ui-monospace, monospace;
+```
 
-Primitives in `src/components/ui/`, composites in `src/components/`.
+| Role | Face | Size | Weight | Treatment |
+|---|---|---|---|---|
+| Page title | Archivo Black | 28px | 400 | Uppercase, tracking -0.01em |
+| Section head | Archivo Black | 18px | 400 | Uppercase, tracking 0 |
+| Metric number | Archivo Black | 34px | 400 | Tabular figures |
+| Record name | IBM Plex Sans | 17px | 500 | Sentence case |
+| Body | IBM Plex Sans | 17px | 400 | Line height 1.6 |
+| Secondary | IBM Plex Sans | 15px | 400 | `--ink-2` |
+| Button | IBM Plex Sans | 15px | 500 | Sentence case, never uppercase |
+| Legend / eyebrow | IBM Plex Mono | 13px | 400 | Uppercase, tracking 0.12em |
+| Record ID | IBM Plex Mono | 13px | 400 | Uppercase, tracking 0.08em |
+| Count / metadata | IBM Plex Mono | 13px | 400 | Tabular figures |
 
-Primitives: Button (primary, secondary, ghost, danger, all square and uppercase mono), IconButton, Input, SearchInput, Select, Textarea, Checkbox, Badge, Chip, Avatar, AvatarStack, Tooltip, DropdownMenu, Dialog, Drawer, Tabs, Toast, Kbd, StatusDot, PulseDot, MicroLabel, CopyField, EmptyState, Breadcrumb, Star.
+Archivo Black is the personality and it works by being rare. It appears on page titles, section heads, metric numbers, and the masthead. Nowhere else.
 
-Composites: TopBar, IconRail, ListPanel, PageHeader, MetaRow, DataTable, Board, BoardColumn, CandidateCard, MatchScore, MetricRow, CandidateDrawer, BulkActionBar, FilterBar, SignalCard, DreamCompanyRow, ImportDialog.
+---
 
-### Avatar
+## 5. Radius
 
-Photo when we have one. Otherwise a square (2px radius, not a circle) tinted in the identity hue with wide-tracked mono initials. The square avatar is part of the print language.
+Fixed scale. No arbitrary values.
 
-### PulseDot
+```css
+--r-shell:   16px;  /* outermost panel, dialog, drawer */
+--r-panel:   12px;  /* board column, sidebar section */
+--r-card:    10px;  /* record card, avatar */
+--r-control:  8px;  /* button, input, toggle, select */
+--r-chip:     6px;  /* status chip, tag, count badge */
+```
 
-Kept. 6px, on candidates and companies, beside a mono relative time.
-- Live, under 48h: `sage`, breathing 2.4s.
-- Warm, 2 to 7 days: `ink-mute`, static.
-- Cold, over 7 days: hollow 1.5px `mustard` ring.
-Only ambient animation in the product. Reduced motion gets a static ring.
+Avatars are rounded squares at `--r-card`, never circles. This is deliberate and it is a large part of what stops the layout reading as generic.
 
-### Signal card
+Pills and fully-rounded shapes do not exist in this system.
 
-The Dream 100 payload. A hairline cell containing: a mono uppercase kind label in the kind's identity hue, the company name in Plex Sans 600, the headline, a mono detected timestamp, and the two actions. Funding, open role, promotion, and expansion each own a fixed hue so the eye learns them.
+---
 
-## Motion
+## 6. Depth and texture
 
-- 140ms ease-out, opacity and transform only. Glass layers 200ms with the blur fading in.
-- Optimistic board drags, reconciled behind, snap back with a toast on failure.
-- No skeleton shimmer.
-- `prefers-reduced-motion` respected everywhere.
+Exactly three depth treatments exist. Anything else is a bug.
 
-## Interaction rules
+### 6a. Keycap edge (mounted controls)
 
-- Click-to-copy on every email, phone, and LinkedIn URL. Inline `COPIED` swap in mono for 900ms, never a toast.
-- Visible focus ring, 2px `vermilion` at 2px offset.
-- Esc closes the topmost layer and clears selection. Enter submits. `/` focuses search.
-- Destructive dialogs name the object. Never "Are you sure?".
-- Buttons say what they do, in uppercase mono. Never "Submit" or "OK".
-- Empty states are invitations: one line of direction plus the primary action.
-- Sentence case in reading text, uppercase only in mono labels and buttons.
-- No em dashes. No emoji.
+Buttons, toggles, and steppers sit proud of the panel with a solid colour edge underneath, like a keycap. Pressing translates the cap down into its own edge.
 
-## Review checklist
+```css
+.control {
+  border-radius: var(--r-control);
+  box-shadow: 0 2px 0 var(--edge), 0 3px 8px rgba(23, 22, 15, 0.10);
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out;
+}
+.control:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 var(--edge), 0 1px 3px rgba(23, 22, 15, 0.08);
+}
+```
 
-1. Tokens and scale only. No raw hex, no off-scale type or spacing.
-2. Radius is 2px everywhere except avatars and dots. No pills, no soft cards.
-3. Panels share hairline `rule-strong` edges and form a grid. Nothing floats without reason.
-4. Blur and translucency appear ONLY on floating layers. No glass on a flat surface.
-5. Micro labels are uppercase Plex Mono at 11px with +0.12em tracking.
-6. Archivo Black appears only on page titles, marketing headlines and metrics, never in body or dense UI.
-7. Buttons are uppercase mono.
-8. Background is warm paper. Nothing is pure white or neutral grey.
-9. At most one ornament per screen.
-10. Focus visible everywhere. Esc, Enter and `/` behave.
-11. Pulse dot states correct wherever candidates or companies render.
-12. Feels fast: no layout shift, no uninvited motion, optimistic where it matters.
+`--edge` is the darker tone of whatever the cap is: `--vermilion-edge`, `--teal-edge`, or `--ink` for outline controls.
+
+### 6b. Inset well (control beds and inputs)
+
+Toggle groups, segmented controls, search fields, and text inputs are recessed into the panel.
+
+```css
+.well {
+  background: var(--well);
+  border-radius: var(--r-control);
+  box-shadow: inset 0 1px 2px rgba(23, 22, 15, 0.10),
+              inset 0 -1px 0 rgba(255, 253, 247, 0.60);
+}
+```
+
+### 6c. Floating layer
+
+Dialog, drawer, and bulk-action bar. These are the only elements permitted backdrop blur, because glass on a flat surface is decoration.
+
+```css
+.floating {
+  border-radius: var(--r-shell);
+  background: rgba(255, 253, 247, 0.86);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 12px 32px rgba(23, 22, 15, 0.16),
+              0 2px 6px rgba(23, 22, 15, 0.08);
+}
+```
+
+### 6d. Grain
+
+A single soft grain sits on the page ground. It never appears on sheets, cards, or controls.
+
+```css
+body {
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,...");
+}
+```
+
+Respect `prefers-reduced-transparency` by dropping backdrop blur to a solid `--sheet` fill.
+
+---
+
+## 7. Structure
+
+### Shells and shared edges
+
+A shell is a rounded container with `--r-shell`, a 1px `--rule` border, and `--sheet` fill. Sections inside a shell meet on a 1px `--rule` divider with **no gap and no radius**. Only the shell's outer corners are rounded.
+
+Board columns are ruled columns inside one shell, not a row of detached cards. Use `-ml-px` on adjacent columns so shared edges render as a single hairline.
+
+```
++-----------------------------------------+  <- --r-shell, 1px --rule
+| SOURCED     | SCREENING   | SUBMITTED   |  <- mono legend row
++-------------+-------------+-------------+  <- shared 1px rules
+|  [ ] card   |  [ ] card   |  [ ] card   |
+|  [ ] card   |  [ ] card   |             |
++-----------------------------------------+
+```
+
+Gaps between shells: 20px. Gaps inside a shell: zero.
+
+### Spacing
+
+4px base. Use 8, 12, 16, 20, 24, 32, 48. Nothing else.
+
+---
+
+## 8. Module wayfinding
+
+Four products behind one nav is the hardest problem in this product. A user needs to know which room they are in before reading a word.
+
+Since colour is reserved for roles, identity runs through two channels:
+
+1. **Masthead lockup.** Each module has its own Archivo Black uppercase wordmark, fixed in the same position, always visible.
+2. **Record ID prefix.** Every object in the system carries a mono ID in the top-right of its card.
+
+| Module | Wordmark | Prefix |
+|---|---|---|
+| Applicant tracking | TALENT | `CAND-0417` |
+| Outbound | OUTBOUND | `SEQ-0092` |
+| Operations | OPS | `TASK-1180` |
+| Content engine | CONTENT | `POST-0031` |
+
+The prefix does the wayfinding that colour tabs would have done, and it survives being exported, printed, and pasted into an email. That is why it beats colour here.
+
+---
+
+## 9. Component anatomy
+
+**Primary button.** Vermilion cap, `--vermilion-edge` keycap edge, `--on-vermilion` label, sentence case, 48px tall, `--r-control`. One per view.
+
+**Secondary button.** Transparent fill, 1px `--ink` border, `--ink` label, keycap edge in `--ink`, 48px tall.
+
+**Ghost button.** No border, no edge, `--ink-2` label, hover fills `--well`.
+
+**Toggle group.** Inset well containing caps. Active cap is teal with `--teal-edge`, inactive caps are transparent with `--ink-2` mono labels.
+
+**Status chip.** `--r-chip`, tinted background, 1px border in the state colour, text in the state's dark text token, mono uppercase 13px, always accompanied by an icon.
+
+**Record card.** `--sheet` fill, 1px `--rule` border, `--r-card`, rounded-square avatar, name at 17px/500, secondary line at 15px in `--ink-2`, mono ID pinned top-right.
+
+**Input.** Inset well, no outer border, 48px tall, `--r-control`, 17px text, focus ring `0 0 0 2px var(--vermilion)` inset.
+
+**Dialog and drawer.** Floating layer treatment, `--r-shell`, backdrop `rgba(23,22,15,0.35)`.
+
+---
+
+## 10. Motion
+
+- Duration: 90ms for control feedback, 160ms for layer entry.
+- Easing: `ease-out` only.
+- Properties: `transform` and `opacity` only.
+- No decorative animation anywhere. Respect `prefers-reduced-motion` by reducing all durations to 0 and keeping opacity changes instant.
+
+---
+
+## 11. The contract
+
+Enforceable rules. If a component violates one of these, it is wrong regardless of how it looks.
+
+1. The radius scale is fixed. No arbitrary radius values.
+2. Exactly three depth treatments exist: keycap edge, inset well, floating layer. No other shadows.
+3. Panels inside a shell share 1px rules. Writing `gap` between two sections of one shell breaks the sheet.
+4. Grain lives on the page ground only. Never on sheets, cards, or controls.
+5. Vermilion is a verb. If it is not clickable, it is not vermilion.
+6. Backdrop blur only on dialog, drawer, and bulk bar.
+7. Archivo Black appears on titles, section heads, metric numbers, and the masthead. Nowhere else.
+8. Uppercase appears on the display face and mono legends only.
+9. Status is colour plus icon plus word, always all three.
+10. No body text below 16px, no font weight below 400, no hit target below 44px.
