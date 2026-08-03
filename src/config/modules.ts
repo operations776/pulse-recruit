@@ -7,8 +7,11 @@ import {
   Mail,
   MessageSquare,
   PenLine,
+  KeyRound,
   Radio,
   Send,
+  Settings,
+  SlidersHorizontal,
   Sparkles,
   Users,
   type LucideIcon,
@@ -22,9 +25,11 @@ import type { ModuleKey } from "@/lib/types";
 //
 // One module per RecruiterGTM pillar.
 export type ModuleDef = {
-  key: ModuleKey;
+  key: ModuleKey | "settings";
   wordmark: string;
-  pillar: number;
+  // Null for rooms that are not one of the five pillars. The masthead prints
+  // "Workspace" rather than inventing a pillar number for them.
+  pillar: number | null;
   pillarName: string;
   prefix: string;
   href: string;
@@ -110,11 +115,38 @@ export const MODULES: ModuleDef[] = [
   },
 ];
 
+// Settings is a room, not a pillar. It is not in MODULES because the icon rail
+// mounts it separately at the bottom, but it still needs a masthead: without
+// one, moduleForPath fell through to TALENT and the sidebar told you that you
+// were in the ATS while you were editing API keys. DESIGN.md section 8 exists
+// to stop exactly that.
+export const SETTINGS_MODULE: ModuleDef = {
+  key: "settings",
+  wordmark: "SETTINGS",
+  pillar: null,
+  pillarName: "Workspace and keys",
+  prefix: "SET",
+  href: "/settings",
+  icon: Settings,
+  blurb:
+    "Your workspace, your team, your plan, and the accounts you connect to Pulse.",
+  nav: [
+    { href: "/settings", label: "Workspace", icon: SlidersHorizontal },
+    { href: "/settings/integrations", label: "API keys", icon: KeyRound },
+  ],
+};
+
 export function moduleForPath(pathname: string): ModuleDef {
   const match = MODULES.find((m) =>
     m.nav.some(
       (n) => pathname === n.href || pathname.startsWith(`${n.href}/`),
     ),
   );
-  return match ?? MODULES.find((m) => m.key === "talent")!;
+  if (match) return match;
+
+  if (pathname === "/settings" || pathname.startsWith("/settings/")) {
+    return SETTINGS_MODULE;
+  }
+
+  return MODULES.find((m) => m.key === "talent")!;
 }

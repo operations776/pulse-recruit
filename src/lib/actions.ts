@@ -334,3 +334,166 @@ export async function removeIntegrationKey(provider: string): Promise<Result> {
   revalidatePath("/settings", "layout");
   return { ok: true, data: undefined };
 }
+
+// ---------------------------------------------------------------------------
+// The person / candidacy model. Each of these spans tables, so each is an RPC.
+// ---------------------------------------------------------------------------
+
+export async function moveCandidacy(
+  candidacyId: string,
+  stageId: string,
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("move_candidacy", {
+    candidacy: candidacyId,
+    target_stage: stageId,
+  });
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/pipeline", "layout");
+  return { ok: true, data: undefined };
+}
+
+export async function bulkMoveCandidacies(
+  candidacyIds: string[],
+  stageId: string,
+): Promise<Result<number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("bulk_move_candidacies", {
+    candidacy_ids: candidacyIds,
+    target_stage: stageId,
+  });
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/pipeline", "layout");
+  // The RPC returns how many actually moved, which can be fewer than asked for.
+  return { ok: true, data: (data as number) ?? 0 };
+}
+
+export async function addPersonToJob(input: {
+  jobId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  title?: string;
+  company?: string;
+  linkedin?: string;
+  source?: string;
+}): Promise<Result<string>> {
+  if (!input.name.trim()) return fail("Enter the candidate's name.");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("add_person_to_job", {
+    target_job: input.jobId,
+    p_name: input.name.trim(),
+    p_email: (input.email ?? "").trim().toLowerCase(),
+    p_phone: input.phone ?? "",
+    p_title: input.title ?? "",
+    p_company: input.company ?? "",
+    p_linkedin: input.linkedin ?? "",
+    p_source: input.source ?? "Manual",
+  });
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/pipeline", "layout");
+  revalidatePath("/candidates");
+  return { ok: true, data: data as string };
+}
+
+export async function addPersonNote(
+  personId: string,
+  body: string,
+  jobId?: string,
+): Promise<Result<string>> {
+  if (!body.trim()) return fail("Write something first.");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("add_person_note", {
+    target_person: personId,
+    note_body: body.trim(),
+    target_job: jobId ?? null,
+  });
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/pipeline", "layout");
+  return { ok: true, data: data as string };
+}
+
+// Patch one profile field. Allow-listed here AND constrained by RLS, so a
+// crafted request cannot reach a column the drawer does not expose.
+const PERSON_FIELDS = new Set([
+  "name", "email", "phone", "title", "company_name", "location",
+  "linkedin_url", "salary_expectation", "source", "video_url",
+  "last_contacted_at", "replied", "rating",
+]);
+
+export async function patchPerson(
+  personId: string,
+  field: string,
+  value: string | boolean | number | null,
+): Promise<Result> {
+  if (!PERSON_FIELDS.has(field)) return fail("That field is not editable.");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("people")
+    .update({ [field]: value, updated_at: new Date().toISOString() })
+    .eq("id", personId);
+  if (error) return fail(readable(error.message));
+
+  // No revalidate: these save on blur while the drawer is open, and
+  // revalidating under an open layer remounts it and drops the caret.
+  return { ok: true, data: undefined };
+}
+
+// Everyone at a stage becomes a shortlist. Idempotent on the same roster, so a
+// double click cannot mint two public URLs to candidate PII.
+export async function generateShortlist(input: {
+  jobId: string;
+  stageName?: string;
+  title?: string;
+  client?: string;
+  preparedFor?: string;
+}): Promise<Result<string>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("generate_shortlist", {
+    target_job: input.jobId,
+    stage_name: input.stageName ?? "Interview",
+    list_title: input.title ?? null,
+    client: input.client ?? "",
+    prepared_for: input.preparedFor ?? "",
+  });
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/pipeline", "layout");
+  return { ok: true, data: data as string };
+}
+
+export async function revokeShortlist(id: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("revoke_shortlist", { list: id });
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/pipeline", "layout");
+  return { ok: true, data: undefined };
+}
+
+// Rows first, then blobs. The RPC hands back the storage keys precisely so the
+// order cannot be got wrong: an orphan blob is cheap, a dangling pointer is not.
+export async function deletePeople(ids: string[]): Promise<Result<number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("delete_people", {
+    person_ids: ids,
+  });
+  if (error) return fail(readable(error.message));
+
+  const row = Array.isArray(data) ? data[0] : data;
+  const paths: string[] = row?.storage_paths ?? [];
+  if (paths.length > 0) {
+    await supabase.storage.from("candidate-files").remove(paths);
+  }
+
+  revalidatePath("/pipeline", "layout");
+  revalidatePath("/candidates");
+  return { ok: true, data: row?.removed ?? 0 };
+}

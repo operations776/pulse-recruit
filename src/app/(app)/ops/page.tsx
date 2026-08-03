@@ -1,5 +1,5 @@
 import { ChatPanel } from "@/components/ai/chat-panel";
-import { getChat, getReports, getTasks, getWorkspace } from "@/lib/data";
+import { getChat, getOpsTiles, getWorkspace } from "@/lib/data";
 import { hasModelKey } from "@/lib/server/ai/openai";
 
 // Pillar 2. The ops manager reads the org's own rows through the caller's
@@ -14,32 +14,21 @@ const SUGGESTIONS = [
 const COLD_AFTER_DAYS = 7;
 
 export default async function OpsPage() {
-  const [{ messages, credits }, workspace, reports, tasks] = await Promise.all([
+  const [{ messages, credits }, workspace, counts] = await Promise.all([
     getChat("ops"),
     getWorkspace(),
-    getReports(),
-    getTasks(),
+    // Counted in Postgres against candidacies, which is where the pipeline
+    // actually lives. Measured against real wall clock time, not a seed date.
+    getOpsTiles(COLD_AFTER_DAYS),
   ]);
 
-  // Measured against real wall clock time, not a fixed seed date. A tile that
-  // is stale by a day is worse than no tile.
   const now = new Date();
-  const coldBefore = now.getTime() - COLD_AFTER_DAYS * 86_400_000;
-
-  // getReports already excludes archived candidates, so every one of these is
-  // live by definition.
-  const live = reports.candidates;
-  const atRisk = reports.jobs.filter((j) => j.state === "risk");
-  const cold = live.filter(
-    (c) => new Date(c.last_activity_at).getTime() < coldBefore,
-  );
-  const openTasks = tasks.filter((t) => t.done_at === null);
 
   const tiles = [
-    { label: "Live candidates", value: live.length },
-    { label: "Roles at risk", value: atRisk.length },
-    { label: "Going cold", value: cold.length },
-    { label: "Open tasks", value: openTasks.length },
+    { label: "Live candidates", value: counts.live },
+    { label: "Roles at risk", value: counts.atRisk },
+    { label: "Going cold", value: counts.cold },
+    { label: "Open tasks", value: counts.openTasks },
   ];
 
   const allowance = credits?.weekly_allowance ?? 0;

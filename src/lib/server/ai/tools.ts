@@ -208,6 +208,12 @@ function hostOf(url: string): string {
 // ---------------------------------------------------------------------------
 // OPS: the org's own rows, through the caller's session so RLS still applies
 // ---------------------------------------------------------------------------
+//
+// The pipeline lives in `people` joined to `candidacies` (PLS-45). One human is
+// one `people` row; each role they are on is a `candidacy` carrying its own
+// stage and its own activity clock. The legacy `candidates` table still exists
+// with the pre-split rows and different ids, so reading it would under-report
+// the pipeline and resolve to the wrong person. Nothing here reads it.
 
 export const OPS_TOOLS: ToolSchema[] = [
   {
@@ -215,7 +221,7 @@ export const OPS_TOOLS: ToolSchema[] = [
     function: {
       name: "list_roles",
       description:
-        "Every live role with its stage counts, how many are hired against target, and whether it is marked at risk. Start here for almost any question about the pipeline.",
+        "Every role with its stage counts, how many are hired against target, and whether it is marked at risk. Start here for almost any question about the pipeline.",
       parameters: { type: "object", properties: {} },
     },
   },
@@ -224,11 +230,14 @@ export const OPS_TOOLS: ToolSchema[] = [
     function: {
       name: "list_candidates",
       description:
-        "Candidates, newest activity first. Filter to one role or one stage when the question is about a specific one.",
+        "People on roles, most recent activity first. One row per person per role, because the same person can sit at a different stage on two different roles. Filter to one role or one stage when the question is about a specific one.",
       parameters: {
         type: "object",
         properties: {
-          role: { type: "string", description: "Role title or ref, for example CAND-0004 or 'Senior Product Designer'." },
+          role: {
+            type: "string",
+            description: "Role title or ref, for example 'Senior Product Designer' or JOB-0002.",
+          },
           stage: { type: "string", description: "Stage name, for example 'Screening'." },
           limit: { type: "number", description: "Default 40, maximum 100." },
         },
@@ -240,7 +249,7 @@ export const OPS_TOOLS: ToolSchema[] = [
     function: {
       name: "stalled_candidates",
       description:
-        "Candidates with no activity for a number of days. This is the tool for 'who is going cold' and 'what needs me today'.",
+        "People on roles with no activity for a number of days, longest silence first. This is the tool for 'who is going cold' and 'what needs me today'.",
       parameters: {
         type: "object",
         properties: {
@@ -254,7 +263,7 @@ export const OPS_TOOLS: ToolSchema[] = [
     function: {
       name: "recent_activity",
       description:
-        "What actually moved recently: stage changes, notes, emails, interviews. Use for 'what moved yesterday' or 'what happened this week'.",
+        "What actually moved recently: stage changes with the stage moved from and to. Use for 'what moved yesterday' or 'what happened this week'.",
       parameters: {
         type: "object",
         properties: {
@@ -285,8 +294,14 @@ export const OPS_TOOLS: ToolSchema[] = [
       parameters: {
         type: "object",
         properties: {
-          title: { type: "string", description: "Short and specific. Names who or what it concerns." },
-          detail: { type: "string", description: "One or two sentences of context, including why." },
+          title: {
+            type: "string",
+            description: "Short and specific. Names who or what it concerns.",
+          },
+          detail: {
+            type: "string",
+            description: "One or two sentences of context, including why.",
+          },
         },
         required: ["title"],
       },
@@ -295,6 +310,42 @@ export const OPS_TOOLS: ToolSchema[] = [
 ];
 
 type StageLite = { id: string; name: string; job_id: string };
+type JobLite = { id: string; ref: string; title: string };
+type PersonLite = { id: string; ref: string; name: string; title: string; company_name: string };
+type CandidacyLite = {
+  id: string;
+  person_id: string;
+  job_id: string;
+  stage_id: string;
+  match: number | null;
+  last_activity_at: string;
+};
+
+// Every ops tool needs the same three lookups. Reading them once per call keeps
+// each tool a single round trip's worth of latency rather than three.
+async function pipelineIndex(supabase: ToolContext["supabase"]) {
+  const [jobs, stages, people] = await Promise.all([
+    supabase.from("jobs").select("id, ref, title, state, hired, target"),
+    supabase.from("stages").select("id, name, job_id").order("position"),
+    supabase.from("people").select("id, ref, name, title, company_name"),
+  ]);
+
+  return {
+    jobs: (jobs.data ?? []) as (JobLite & {
+      state: string;
+      hired: number;
+      target: number;
+    })[],
+    stages: (stages.data ?? []) as StageLite[],
+    jobById: new Map(((jobs.data ?? []) as JobLite[]).map((j) => [j.id, j])),
+    stageById: new Map(((stages.data ?? []) as StageLite[]).map((s) => [s.id, s])),
+    personById: new Map(((people.data ?? []) as PersonLite[]).map((p) => [p.id, p])),
+  };
+}
+
+function daysSince(iso: string): number {
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+}
 
 async function runOpsTool(
   name: string,
@@ -304,20 +355,17 @@ async function runOpsTool(
   const { supabase } = ctx;
 
   if (name === "list_roles") {
-    const [jobs, stages, candidates] = await Promise.all([
-      supabase.from("jobs").select("id, ref, title, state, hired, target, talent_pool"),
-      supabase.from("stages").select("id, name, job_id").order("position"),
-      supabase
-        .from("candidates")
-        .select("id, job_id, stage_id")
-        .is("archived_at", null),
-    ]);
+    const index = await pipelineIndex(supabase);
+    const { data } = await supabase
+      .from("candidacies")
+      .select("id, job_id, stage_id")
+      .is("archived_at", null);
+    const live = (data ?? []) as { id: string; job_id: string; stage_id: string }[];
 
-    const stageList = (stages.data ?? []) as StageLite[];
-    const rows = (jobs.data ?? []).map((job) => {
-      const mine = (candidates.data ?? []).filter((c) => c.job_id === job.id);
+    const rows = index.jobs.map((job) => {
+      const mine = live.filter((c) => c.job_id === job.id);
       const byStage: Record<string, number> = {};
-      for (const stage of stageList.filter((s) => s.job_id === job.id)) {
+      for (const stage of index.stages.filter((s) => s.job_id === job.id)) {
         byStage[stage.name] = mine.filter((c) => c.stage_id === stage.id).length;
       }
       return {
@@ -344,32 +392,34 @@ async function runOpsTool(
     const roleFilter = str(args, "role").toLowerCase();
     const stageFilter = str(args, "stage").toLowerCase();
 
-    const [jobs, stages, candidates] = await Promise.all([
-      supabase.from("jobs").select("id, ref, title"),
-      supabase.from("stages").select("id, name, job_id"),
-      supabase
-        .from("candidates")
-        .select("ref, name, title, company_name, stage_id, job_id, match, last_activity_at, email, phone")
-        .is("archived_at", null)
-        .order("last_activity_at", { ascending: false })
-        .limit(200),
-    ]);
+    const index = await pipelineIndex(supabase);
+    const { data } = await supabase
+      .from("candidacies")
+      .select("id, person_id, job_id, stage_id, match, last_activity_at")
+      .is("archived_at", null)
+      .order("last_activity_at", { ascending: false })
+      .limit(200);
 
-    const jobById = new Map((jobs.data ?? []).map((j) => [j.id, j]));
-    const stageById = new Map(((stages.data ?? []) as StageLite[]).map((s) => [s.id, s]));
-
-    const rows = (candidates.data ?? [])
-      .map((c) => ({
-        ref: c.ref,
-        name: c.name,
-        title: c.title,
-        company: c.company_name,
-        role: jobById.get(c.job_id)?.title ?? "",
-        role_ref: jobById.get(c.job_id)?.ref ?? "",
-        stage: stageById.get(c.stage_id)?.name ?? "",
-        match: c.match,
-        last_activity: c.last_activity_at,
-      }))
+    const rows = ((data ?? []) as CandidacyLite[])
+      .map((c) => {
+        const person = index.personById.get(c.person_id);
+        const job = index.jobById.get(c.job_id);
+        return {
+          ref: person?.ref ?? "",
+          name: person?.name ?? "",
+          title: person?.title ?? "",
+          company: person?.company_name ?? "",
+          role: job?.title ?? "",
+          role_ref: job?.ref ?? "",
+          stage: index.stageById.get(c.stage_id)?.name ?? "",
+          match: c.match,
+          last_activity: c.last_activity_at,
+          silent_days: daysSince(c.last_activity_at),
+        };
+      })
+      // A candidacy whose person row is missing is a broken record, not a
+      // nameless candidate. Reporting it as a blank name would be worse.
+      .filter((c) => c.name !== "")
       .filter((c) => {
         if (roleFilter && !`${c.role} ${c.role_ref}`.toLowerCase().includes(roleFilter)) {
           return false;
@@ -391,30 +441,27 @@ async function runOpsTool(
     const days = Math.min(Math.max(num(args, "days", 7), 1), 90);
     const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
 
-    const [jobs, stages, candidates] = await Promise.all([
-      supabase.from("jobs").select("id, ref, title"),
-      supabase.from("stages").select("id, name, job_id"),
-      supabase
-        .from("candidates")
-        .select("ref, name, stage_id, job_id, last_activity_at, owner_id")
-        .is("archived_at", null)
-        .lt("last_activity_at", cutoff)
-        .order("last_activity_at", { ascending: true })
-        .limit(100),
-    ]);
+    const index = await pipelineIndex(supabase);
+    const { data } = await supabase
+      .from("candidacies")
+      .select("id, person_id, job_id, stage_id, last_activity_at")
+      .is("archived_at", null)
+      .lt("last_activity_at", cutoff)
+      .order("last_activity_at", { ascending: true })
+      .limit(100);
 
-    const jobById = new Map((jobs.data ?? []).map((j) => [j.id, j]));
-    const stageById = new Map(((stages.data ?? []) as StageLite[]).map((s) => [s.id, s]));
-
-    const rows = (candidates.data ?? []).map((c) => ({
-      ref: c.ref,
-      name: c.name,
-      role: jobById.get(c.job_id)?.title ?? "",
-      stage: stageById.get(c.stage_id)?.name ?? "",
-      silent_days: Math.floor(
-        (Date.now() - new Date(c.last_activity_at).getTime()) / 86_400_000,
-      ),
-    }));
+    const rows = ((data ?? []) as CandidacyLite[])
+      .map((c) => {
+        const person = index.personById.get(c.person_id);
+        return {
+          ref: person?.ref ?? "",
+          name: person?.name ?? "",
+          role: index.jobById.get(c.job_id)?.title ?? "",
+          stage: index.stageById.get(c.stage_id)?.name ?? "",
+          silent_days: daysSince(c.last_activity_at),
+        };
+      })
+      .filter((c) => c.name !== "");
 
     return {
       result: JSON.stringify({ threshold_days: days, stalled: rows }),
@@ -433,30 +480,53 @@ async function runOpsTool(
     const hours = Math.min(Math.max(num(args, "hours", 24), 1), 720);
     const cutoff = new Date(Date.now() - hours * 3_600_000).toISOString();
 
-    const [events, candidates] = await Promise.all([
+    // stage_events is the history of the person model. activity_events still
+    // hangs off the pre-split `candidates` table with ids that no longer match
+    // anyone, so reading it here would attach real events to the wrong names.
+    const index = await pipelineIndex(supabase);
+    const [events, candidacies] = await Promise.all([
       supabase
-        .from("activity_events")
-        .select("kind, summary, candidate_id, created_at")
+        .from("stage_events")
+        .select("candidacy_id, from_stage_id, to_stage_id, created_at")
         .gte("created_at", cutoff)
         .order("created_at", { ascending: false })
         .limit(100),
-      supabase.from("candidates").select("id, name, ref"),
+      supabase.from("candidacies").select("id, person_id, job_id"),
     ]);
 
-    const nameById = new Map((candidates.data ?? []).map((c) => [c.id, c]));
-    const rows = (events.data ?? []).map((e) => ({
-      when: e.created_at,
-      kind: e.kind,
-      summary: e.summary,
-      candidate: nameById.get(e.candidate_id)?.name ?? "",
-      candidate_ref: nameById.get(e.candidate_id)?.ref ?? "",
-    }));
+    const candidacyById = new Map(
+      ((candidacies.data ?? []) as { id: string; person_id: string; job_id: string }[]).map(
+        (c) => [c.id, c],
+      ),
+    );
+
+    const rows = ((events.data ?? []) as {
+      candidacy_id: string;
+      from_stage_id: string | null;
+      to_stage_id: string;
+      created_at: string;
+    }[])
+      .map((e) => {
+        const candidacy = candidacyById.get(e.candidacy_id);
+        const person = candidacy ? index.personById.get(candidacy.person_id) : undefined;
+        return {
+          when: e.created_at,
+          person: person?.name ?? "",
+          person_ref: person?.ref ?? "",
+          role: candidacy ? (index.jobById.get(candidacy.job_id)?.title ?? "") : "",
+          from_stage: e.from_stage_id
+            ? (index.stageById.get(e.from_stage_id)?.name ?? "")
+            : null,
+          to_stage: index.stageById.get(e.to_stage_id)?.name ?? "",
+        };
+      })
+      .filter((e) => e.person !== "");
 
     return {
-      result: JSON.stringify({ window_hours: hours, events: rows }),
+      result: JSON.stringify({ window_hours: hours, stage_changes: rows }),
       steps: [{ label: "Read activity", detail: `${rows.length} in the last ${hours}h` }],
       sources: [
-        { label: "Activity", detail: `${rows.length} events in the last ${hours} hours` },
+        { label: "Activity", detail: `${rows.length} stage changes in the last ${hours} hours` },
       ],
       spent: { searches: 0, pageReads: 0 },
     };

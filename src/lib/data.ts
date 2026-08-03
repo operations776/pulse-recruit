@@ -18,6 +18,12 @@ import type {
   SequenceStepRow,
   SignalRow,
   StageRow,
+  BoardCard,
+  CandidacyRow,
+  PersonFileRow,
+  PersonRow,
+  ShortlistRow,
+  StageEventRow,
   TaskRow,
 } from "@/lib/supabase/types";
 
@@ -255,4 +261,171 @@ export async function getReports() {
     jobs: (jobs.data ?? []) as JobRow[],
     stages: (stages.data ?? []) as StageRow[],
   };
+}
+
+// The four counts on the morning brief. Its own query rather than getReports,
+// which still reads the pre-split `candidates` table and therefore misses
+// anyone added since PLS-45. A tile that is quietly wrong is worse than no
+// tile, and this one sits directly above an assistant claiming to read the
+// same pipeline.
+export async function getOpsTiles(coldAfterDays: number) {
+  await requireSession();
+  const supabase = await createClient();
+
+  const coldBefore = new Date(
+    Date.now() - coldAfterDays * 86_400_000,
+  ).toISOString();
+
+  const [live, cold, atRisk, openTasks] = await Promise.all([
+    supabase
+      .from("candidacies")
+      .select("id", { count: "exact", head: true })
+      .is("archived_at", null),
+    supabase
+      .from("candidacies")
+      .select("id", { count: "exact", head: true })
+      .is("archived_at", null)
+      .lt("last_activity_at", coldBefore),
+    supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("state", "risk"),
+    supabase
+      .from("tasks")
+      .select("id", { count: "exact", head: true })
+      .is("done_at", null),
+  ]);
+
+  return {
+    live: live.count ?? 0,
+    cold: cold.count ?? 0,
+    atRisk: atRisk.count ?? 0,
+    openTasks: openTasks.count ?? 0,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// The person / candidacy model. These supersede getBoard and getCandidates.
+// ---------------------------------------------------------------------------
+
+export async function getBoardV2(jobId: string) {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const [job, stages, cards] = await Promise.all([
+    supabase.from("jobs").select("*").eq("id", jobId).maybeSingle(),
+    supabase.from("stages").select("*").eq("job_id", jobId).order("position"),
+    supabase
+      .from("candidacies")
+      .select("*, person:people(*)")
+      .eq("job_id", jobId)
+      .is("archived_at", null)
+      .order("sort", { ascending: true })
+      .order("created_at", { ascending: true }),
+  ]);
+
+  return {
+    session,
+    job: (job.data ?? null) as JobRow | null,
+    stages: (stages.data ?? []) as StageRow[],
+    cards: (cards.data ?? []) as unknown as BoardCard[],
+  };
+}
+
+// The whole human: their profile, every role they are on, their notes, their
+// files, and the stage history of each candidacy.
+export async function getPerson(personId: string) {
+  await requireSession();
+  const supabase = await createClient();
+
+  const [person, candidacies, notes, files] = await Promise.all([
+    supabase.from("people").select("*").eq("id", personId).maybeSingle(),
+    supabase
+      .from("candidacies")
+      .select("*, job:jobs(id, title, ref, state)")
+      .eq("person_id", personId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("notes")
+      .select("*")
+      .eq("person_id", personId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("person_files")
+      .select("*")
+      .eq("person_id", personId)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const ids = (candidacies.data ?? []).map((c) => c.id);
+  const { data: events } = ids.length
+    ? await supabase
+        .from("stage_events")
+        .select("*")
+        .in("candidacy_id", ids)
+        .order("created_at", { ascending: false })
+    : { data: [] };
+
+  return {
+    person: (person.data ?? null) as PersonRow | null,
+    candidacies: (candidacies.data ?? []) as unknown as (CandidacyRow & {
+      job: { id: string; title: string; ref: string; state: string } | null;
+    })[],
+    notes: (notes.data ?? []) as NoteRow[],
+    files: (files.data ?? []) as PersonFileRow[],
+    events: (events ?? []) as StageEventRow[],
+  };
+}
+
+export async function getPeople() {
+  await requireSession();
+  const supabase = await createClient();
+
+  const [people, candidacies, jobs, stages] = await Promise.all([
+    supabase.from("people").select("*").order("created_at", { ascending: false }),
+    supabase.from("candidacies").select("*").is("archived_at", null),
+    supabase.from("jobs").select("*"),
+    supabase.from("stages").select("*"),
+  ]);
+
+  return {
+    people: (people.data ?? []) as PersonRow[],
+    candidacies: (candidacies.data ?? []) as CandidacyRow[],
+    jobs: (jobs.data ?? []) as JobRow[],
+    stages: (stages.data ?? []) as StageRow[],
+  };
+}
+
+export async function getShortlists(jobId?: string) {
+  await requireSession();
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("shortlists")
+    .select("*")
+    .is("revoked_at", null)
+    .order("created_at", { ascending: false });
+  if (jobId) query = query.eq("job_id", jobId);
+
+  const { data } = await query;
+  return (data ?? []) as ShortlistRow[];
+}
+
+// Signed URLs are minted per request and never stored. The retainer dashboard
+// bakes them into saved HTML, so every published shortlist's images 404 an hour
+// later. A short TTL is safe precisely because nothing persists it.
+export async function signPaths(paths: string[], seconds = 900) {
+  await requireSession();
+  if (paths.length === 0) return {} as Record<string, string>;
+
+  const supabase = await createClient();
+  const { data } = await supabase.storage
+    .from("candidate-files")
+    .createSignedUrls(paths, seconds);
+
+  const out: Record<string, string> = {};
+  for (const row of data ?? []) {
+    if (row.path && row.signedUrl) out[row.path] = row.signedUrl;
+  }
+  return out;
 }

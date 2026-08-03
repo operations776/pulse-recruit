@@ -330,10 +330,13 @@ export function ChatPanel({
           }}
         />
         <div className="mt-2 flex items-center justify-between gap-3">
+          {/* The allowance is stated once per screen. When the header carries a
+              meter, repeating the same figure here is two statements of one
+              fact inside a single shell. */}
           <p className="meta text-ink-3">
-            {weeklyAllowance > 0
-              ? `${available} of ${weeklyAllowance} credits left, resets ${formatDate(resetsAt)}. Cmd + Enter to ask`
-              : "Cmd + Enter to ask"}
+            {headerRight || weeklyAllowance === 0
+              ? "Cmd + Enter to ask"
+              : `${available} of ${weeklyAllowance} credits left, resets ${formatDate(resetsAt)}. Cmd + Enter to ask`}
           </p>
           <Button variant="primary" type="submit" disabled={!canAsk}>
             {busy ? "Working" : "Ask"}

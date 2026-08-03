@@ -58,7 +58,9 @@ export function ModuleRail() {
       >
         {/* Masthead: the wayfinding that colour cannot do here. */}
         <div className="border-b border-rule px-3 py-3">
-          <p className="legend text-ink-3">Pillar {active.pillar}</p>
+          <p className="legend text-ink-3">
+            {active.pillar === null ? "Workspace" : `Pillar ${active.pillar}`}
+          </p>
           <p className="display mt-1 text-[15px] leading-none">
             {active.wordmark}
           </p>
