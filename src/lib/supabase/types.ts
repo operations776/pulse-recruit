@@ -46,6 +46,10 @@ export type OrgRow = {
   id: string;
   name: string;
   slug: string;
+  // The zone the content calendar counts days in. Server and client both format
+  // against this one value, so a post never lands on a different square
+  // depending on where the viewer is sitting.
+  timezone: string;
   created_at: string;
 };
 
@@ -257,9 +261,28 @@ export type PostRow = {
   body: string;
   status: PostStatus;
   scheduled_for: string | null;
+  published_at: string | null;
   author_id: string | null;
   created_at: string;
+  updated_at: string;
 };
+
+// Media attached to a post. `url` is not a column: it is a short-lived signed
+// URL minted at read time, because the bucket is private and a stored URL would
+// either expire in the database or never expire at all.
+export type AssetRow = {
+  id: string;
+  org_id: string;
+  post_id: string;
+  storage_path: string;
+  file_name: string;
+  mime_type: string;
+  size_bytes: number;
+  sort: number;
+  created_at: string;
+};
+
+export type PostAsset = AssetRow & { url: string | null };
 
 // ---------------------------------------------------------------------------
 // The person / candidacy model (PLS-45). Stage lives on the candidacy, so one

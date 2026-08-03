@@ -23,7 +23,7 @@ export async function requireSession(): Promise<Session> {
 
   const { data: membership } = await supabase
     .from("org_memberships")
-    .select("role, org_id, orgs(id, name, slug, created_at)")
+    .select("role, org_id, orgs(id, name, slug, timezone, created_at)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
@@ -55,7 +55,7 @@ export async function sessionOrNull(): Promise<Session | null> {
 
   const { data: membership } = await supabase
     .from("org_memberships")
-    .select("role, org_id, orgs(id, name, slug, created_at)")
+    .select("role, org_id, orgs(id, name, slug, timezone, created_at)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)

@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type {
-  ChatSurface,
   ContentSkill,
   PostStatus,
   SequenceStatus,
@@ -258,24 +257,33 @@ export async function dismissSignal(signalId: string): Promise<Result> {
   return { ok: true, data: undefined };
 }
 
+/**
+ * Add a post, optionally already on a day.
+ *
+ * `when` is an absolute instant the caller resolved inside the org timezone.
+ * The RPC takes it so that creating a dated post is one write: the earlier
+ * two-step needed the new row's id, which meant finding it again by its text.
+ */
 export async function createPost(
   skill: ContentSkill,
   hook: string,
-): Promise<Result> {
+  when: string | null = null,
+): Promise<Result<string>> {
   if (!hook.trim()) return fail("Write the hook first.");
 
   const session = await requireSession();
   const supabase = await createClient();
 
-  const { error } = await supabase.rpc("create_post", {
+  const { data, error } = await supabase.rpc("create_post", {
     target_org: session.org.id,
     post_skill: skill,
     post_hook: hook.trim(),
+    post_when: when,
   });
   if (error) return fail(readable(error.message));
 
   revalidatePath("/content");
-  return { ok: true, data: undefined };
+  return { ok: true, data: data as string };
 }
 
 export async function setPostStatus(
@@ -283,10 +291,24 @@ export async function setPostStatus(
   status: PostStatus,
 ): Promise<Result> {
   const supabase = await createClient();
-  const patch: { status: PostStatus; scheduled_for?: string } = { status };
+  const patch: {
+    status: PostStatus;
+    scheduled_for?: string;
+    published_at?: string | null;
+  } = { status };
+
+  // The database refuses a scheduled row with no date and a published row with
+  // no time, so the action supplies them rather than letting the constraint
+  // surface as a raw Postgres error.
   if (status === "scheduled") {
     patch.scheduled_for = new Date(Date.now() + 86_400_000).toISOString();
   }
+  if (status === "published") {
+    patch.published_at = new Date().toISOString();
+  } else {
+    patch.published_at = null;
+  }
+
   const { error } = await supabase
     .from("content_posts")
     .update(patch)
@@ -294,6 +316,203 @@ export async function setPostStatus(
   if (error) return fail(readable(error.message));
 
   revalidatePath("/content");
+  return { ok: true, data: undefined };
+}
+
+/**
+ * Put a post on a day, or take it off one.
+ *
+ * `when` is an absolute instant the caller has already resolved inside the org
+ * timezone, so this never has to guess what "the 4th at nine" means. Passing
+ * null sends the post back to the backlog.
+ */
+export async function schedulePost(
+  postId: string,
+  when: string | null,
+): Promise<Result> {
+  const supabase = await createClient();
+
+  // A published post keeps its status: dragging it to a different square moves
+  // the record of when it went out, it does not un-publish it.
+  const { data: existing, error: readError } = await supabase
+    .from("content_posts")
+    .select("status, body")
+    .eq("id", postId)
+    .maybeSingle();
+  if (readError) return fail(readable(readError.message));
+  if (!existing) return fail("That post no longer exists.");
+
+  const status: PostStatus =
+    existing.status === "published"
+      ? "published"
+      : when
+        ? "scheduled"
+        : existing.body.trim()
+          ? "drafted"
+          : "idea";
+
+  const { error } = await supabase
+    .from("content_posts")
+    .update({ scheduled_for: when, status })
+    .eq("id", postId);
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/content");
+  return { ok: true, data: undefined };
+}
+
+/** Edit the words. Single table, so no RPC is owed. */
+export async function updatePost(
+  postId: string,
+  patch: { hook?: string; body?: string; skill?: ContentSkill },
+): Promise<Result> {
+  if (patch.hook !== undefined && !patch.hook.trim()) {
+    return fail("A post still needs a hook.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("content_posts")
+    .update({
+      ...(patch.hook !== undefined ? { hook: patch.hook.trim() } : {}),
+      ...(patch.body !== undefined ? { body: patch.body } : {}),
+      ...(patch.skill !== undefined ? { skill: patch.skill } : {}),
+    })
+    .eq("id", postId);
+  if (error) return fail(readable(error.message));
+
+  // No revalidate. This is called from an open drawer, and revalidating under
+  // an open layer remounts it and drops what the user is typing.
+  return { ok: true, data: undefined };
+}
+
+/**
+ * Delete a post and its media.
+ *
+ * The RPC removes both sets of rows in one transaction and hands back the
+ * storage paths. The blobs go afterwards, per law 4: an orphan blob costs
+ * pennies, a row pointing at a blob that is gone is a broken screen. A storage
+ * failure here is reported rather than swallowed, because the rows really are
+ * gone and the caller should know the bucket still holds the files.
+ */
+export async function deletePost(postId: string): Promise<Result> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("delete_post", {
+    target_post: postId,
+  });
+  if (error) return fail(readable(error.message));
+
+  const paths = (data as string[] | null) ?? [];
+  if (paths.length > 0) {
+    const { error: storageError } = await supabase.storage
+      .from("content-media")
+      .remove(paths);
+    if (storageError) {
+      revalidatePath("/content");
+      return fail(
+        `The post is deleted, but ${paths.length} file${paths.length === 1 ? "" : "s"} could not be removed from storage: ${storageError.message}`,
+      );
+    }
+  }
+
+  revalidatePath("/content");
+  return { ok: true, data: undefined };
+}
+
+/**
+ * A signed upload URL for one file, and the path it will land at.
+ *
+ * The browser uploads straight to storage rather than through a server action,
+ * because a 200MB video through an action is a 200MB request body. The path is
+ * org-prefixed so the storage policy can authorise it by its first segment.
+ */
+export async function createUploadUrl(
+  postId: string,
+  fileName: string,
+): Promise<Result<{ path: string; token: string }>> {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  // Confirm the post is ours before minting anything. RLS would catch a foreign
+  // id on the insert later, but a signed URL should not exist at all for a post
+  // the caller cannot see.
+  const { data: post, error: readError } = await supabase
+    .from("content_posts")
+    .select("id")
+    .eq("id", postId)
+    .maybeSingle();
+  if (readError) return fail(readable(readError.message));
+  if (!post) return fail("That post no longer exists.");
+
+  // Never trust the client's file name in a path. Keep a readable tail, put a
+  // uuid in front so two uploads of "video.mp4" cannot collide.
+  const safe = fileName.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80);
+  const path = `${session.org.id}/${postId}/${crypto.randomUUID()}-${safe}`;
+
+  const { data, error } = await supabase.storage
+    .from("content-media")
+    .createSignedUploadUrl(path);
+  if (error) return fail(readable(error.message));
+
+  return { ok: true, data: { path, token: data.token } };
+}
+
+/** Record an uploaded blob against its post. */
+export async function recordAsset(input: {
+  postId: string;
+  path: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  sort: number;
+}): Promise<Result> {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("content_assets").insert({
+    org_id: session.org.id,
+    post_id: input.postId,
+    storage_path: input.path,
+    file_name: input.fileName,
+    mime_type: input.mimeType,
+    size_bytes: input.sizeBytes,
+    sort: input.sort,
+  });
+  if (error) return fail(readable(error.message));
+
+  // No revalidate: uploads happen from inside the open drawer, and revalidating
+  // under an open layer remounts it. The planner refreshes when the drawer
+  // closes instead.
+  return { ok: true, data: undefined };
+}
+
+/** Remove one asset: the row first, then the blob (law 4). */
+export async function removeAsset(assetId: string): Promise<Result> {
+  const supabase = await createClient();
+
+  // select() after delete returns what was actually removed, which is the
+  // honest answer. RLS silently excludes another org's row.
+  const { data, error } = await supabase
+    .from("content_assets")
+    .delete()
+    .eq("id", assetId)
+    .select("storage_path");
+  if (error) return fail(readable(error.message));
+
+  const path = data?.[0]?.storage_path;
+  if (!path) return fail("That file was already gone.");
+
+  const { error: storageError } = await supabase.storage
+    .from("content-media")
+    .remove([path]);
+  if (storageError) {
+    return fail(
+      `The file is off the post, but storage did not release it: ${storageError.message}`,
+    );
+  }
+
+  // No revalidate, for the same reason as recordAsset above.
   return { ok: true, data: undefined };
 }
 

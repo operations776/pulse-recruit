@@ -1,8 +1,10 @@
 import "server-only";
 import { requireSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { dayKey } from "@/lib/time";
 import type {
   ActivityRow,
+  AssetRow,
   CandidateRow,
   ChatRow,
   ChatSurface,
@@ -13,6 +15,7 @@ import type {
   MailboxRow,
   MembershipRow,
   NoteRow,
+  PostAsset,
   PostRow,
   SequenceRow,
   SequenceStepRow,
@@ -232,6 +235,70 @@ export async function getPosts() {
     .select("*")
     .order("created_at", { ascending: false });
   return (data ?? []) as PostRow[];
+}
+
+/**
+ * The planner: every post, plus signed URLs for the media on the ones the
+ * calendar can actually show this month.
+ *
+ * Posts are low volume by design (the target is thirty a quarter), so the rows
+ * come back in one query and both the calendar and the board render from the
+ * same array. Signing is the part that does not scale, so it is scoped: a post
+ * outside the visible month carries its media count and nothing else.
+ */
+export async function getPlanner(month: string) {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const [postsResult, assetsResult] = await Promise.all([
+    supabase
+      .from("content_posts")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    supabase.from("content_assets").select("*").order("sort"),
+  ]);
+
+  const posts = (postsResult.data ?? []) as PostRow[];
+  const assets = (assetsResult.data ?? []) as AssetRow[];
+  const tz = session.org.timezone;
+
+  // Undated posts live in the backlog and are always on screen, so their media
+  // is always worth signing.
+  const visible = new Set(
+    posts
+      .filter(
+        (p) =>
+          !p.scheduled_for || dayKey(p.scheduled_for, tz).slice(0, 7) === month,
+      )
+      .map((p) => p.id),
+  );
+
+  const toSign = assets.filter((a) => visible.has(a.post_id));
+  const signed = new Map<string, string>();
+  if (toSign.length > 0) {
+    const { data } = await supabase.storage
+      .from("content-media")
+      .createSignedUrls(
+        toSign.map((a) => a.storage_path),
+        60 * 60,
+      );
+    for (const entry of data ?? []) {
+      if (entry.path && entry.signedUrl) signed.set(entry.path, entry.signedUrl);
+    }
+  }
+
+  const byPost = new Map<string, PostAsset[]>();
+  for (const asset of assets) {
+    const list = byPost.get(asset.post_id) ?? [];
+    list.push({ ...asset, url: signed.get(asset.storage_path) ?? null });
+    byPost.set(asset.post_id, list);
+  }
+
+  return {
+    posts,
+    assets: Object.fromEntries(byPost) as Record<string, PostAsset[]>,
+    timezone: tz,
+  };
 }
 
 export async function getIntegrations() {
