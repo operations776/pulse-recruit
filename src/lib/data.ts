@@ -343,6 +343,47 @@ export async function getReports() {
   };
 }
 
+// The four counts on the morning brief. Its own query rather than getReports,
+// which still reads the pre-split `candidates` table and therefore misses
+// anyone added since PLS-45. A tile that is quietly wrong is worse than no
+// tile, and this one sits directly above an assistant claiming to read the
+// same pipeline.
+export async function getOpsTiles(coldAfterDays: number) {
+  await requireSession();
+  const supabase = await createClient();
+
+  const coldBefore = new Date(
+    Date.now() - coldAfterDays * 86_400_000,
+  ).toISOString();
+
+  const [live, cold, atRisk, openTasks] = await Promise.all([
+    supabase
+      .from("candidacies")
+      .select("id", { count: "exact", head: true })
+      .is("archived_at", null),
+    supabase
+      .from("candidacies")
+      .select("id", { count: "exact", head: true })
+      .is("archived_at", null)
+      .lt("last_activity_at", coldBefore),
+    supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("state", "risk"),
+    supabase
+      .from("tasks")
+      .select("id", { count: "exact", head: true })
+      .is("done_at", null),
+  ]);
+
+  return {
+    live: live.count ?? 0,
+    cold: cold.count ?? 0,
+    atRisk: atRisk.count ?? 0,
+    openTasks: openTasks.count ?? 0,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // The person / candidacy model. These supersede getBoard and getCandidates.
 // ---------------------------------------------------------------------------

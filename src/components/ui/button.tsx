@@ -19,6 +19,13 @@ const sizes = {
   md: "h-7 px-3",
 } as const;
 
+// DESIGN.md rule 5: vermilion is a verb. A disabled control is not a verb, so a
+// disabled primary drops the cap entirely rather than fading to a washed pink
+// that is neither a token colour nor a thing you can press. Rule 2 says the
+// keycap edge belongs to things you press, so that goes too.
+const disabled =
+  "disabled:cursor-not-allowed disabled:border-transparent disabled:bg-well disabled:text-ink-3 disabled:shadow-none disabled:hover:bg-well disabled:hover:text-ink-3";
+
 export function Button({
   variant = "secondary",
   size,
@@ -31,7 +38,7 @@ export function Button({
   const resolved = size ?? (variant === "primary" ? "lg" : "md");
   return (
     <button
-      className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-control text-[12px] font-medium disabled:opacity-40 ${variants[variant]} ${sizes[resolved]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-control text-[12px] font-medium ${variants[variant]} ${sizes[resolved]} ${disabled} ${className}`}
       {...props}
     />
   );

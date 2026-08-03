@@ -30,6 +30,11 @@ test("signing in lands on real pipeline data", async ({ page }) => {
 });
 
 test("every module renders for a signed in user", async ({ page }) => {
+  // Twelve sign-in-gated navigations in one test. It takes about 20 seconds on
+  // a quiet machine, which leaves no room under the 30 second default when
+  // anything else is competing for the CPU. The work is real, so the budget
+  // should be too: this is not a hidden retry, it is an honest duration.
+  test.setTimeout(90_000);
   await signIn(page);
 
   const modules: [string, RegExp][] = [
