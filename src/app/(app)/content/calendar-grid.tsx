@@ -1,6 +1,6 @@
 "use client";
 
-import { Paperclip } from "lucide-react";
+import { Check, Paperclip } from "lucide-react";
 import { SKILL_BY_KEY } from "@/config/content-skills";
 import type { PostRow } from "@/lib/supabase/types";
 import { monthGrid, timeOfDay } from "@/lib/time";
@@ -42,7 +42,7 @@ export function CalendarGrid({
   onAddOn: (day: string) => void;
   onDragStart: (postId: string) => void;
   onDragEnd: () => void;
-  onDropOn: (day: string) => void;
+  onDropOn: (day: string, postId: string) => void;
   onDragOverDay: (day: string | null) => void;
 }) {
   const weeks = monthGrid(month);
@@ -70,6 +70,9 @@ export function CalendarGrid({
             return (
               <div
                 key={cell.day}
+                // Native HTML5 drag cannot be driven by Playwright's mouse
+                // API, so the spec dispatches real DragEvents at these hooks.
+                data-day={cell.day}
                 onDragOver={(event) => {
                   if (!draggingId) return;
                   // Without preventDefault the browser refuses the drop.
@@ -79,7 +82,11 @@ export function CalendarGrid({
                 onDragLeave={() => onDragOverDay(null)}
                 onDrop={(event) => {
                   event.preventDefault();
-                  onDropOn(cell.day);
+                  // The id comes off the drag payload, not off React state.
+                  // State set during dragstart has not necessarily committed by
+                  // the time the drop handler runs, and the payload is what the
+                  // drag actually carries.
+                  onDropOn(cell.day, event.dataTransfer.getData("text/plain"));
                 }}
                 className={[
                   "-ml-px flex min-h-[104px] w-0 flex-1 flex-col gap-1.5 border-l border-rule p-2 first:ml-0 first:border-l-0",
@@ -126,11 +133,22 @@ export function CalendarGrid({
                         ].join(" ")}
                       >
                         <span className="flex items-center gap-1.5">
-                          <span className="meta text-ink-3">
-                            {post.scheduled_for
-                              ? timeOfDay(post.scheduled_for, timezone)
-                              : ""}
-                          </span>
+                          {post.status === "published" ? (
+                            // DESIGN.md rule 9: status is colour plus icon plus
+                            // word. The strike through the hook is the shape
+                            // cue, this is the word, and there is no room for a
+                            // full chip in a cell this size.
+                            <span className="meta flex items-center gap-1 text-teal-text">
+                              <Check size={11} strokeWidth={2} />
+                              Posted
+                            </span>
+                          ) : (
+                            <span className="meta text-ink-3">
+                              {post.scheduled_for
+                                ? timeOfDay(post.scheduled_for, timezone)
+                                : ""}
+                            </span>
+                          )}
                           {files > 0 ? (
                             <Paperclip
                               size={11}

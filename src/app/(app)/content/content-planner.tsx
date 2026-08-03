@@ -256,7 +256,7 @@ export function ContentPlanner({
                 className={[
                   "legend flex h-7 items-center rounded-control px-3",
                   view === key
-                    ? "cap bg-teal text-white [--edge:var(--color-teal-edge)]"
+                    ? "cap bg-teal text-sheet [--edge:var(--color-teal-edge)]"
                     : "text-ink-2 hover:text-ink",
                 ].join(" ")}
               >
@@ -309,8 +309,11 @@ export function ContentPlanner({
                 setDropDay(null);
               }}
               onDragOverDay={setDropDay}
-              onDropOn={(day) => {
-                if (draggingId) schedule(draggingId, day);
+              onDropOn={(day, postId) => {
+                // Prefer the payload the drag carries; fall back to state for
+                // any browser that hands back an empty dataTransfer.
+                const id = postId || draggingId;
+                if (id) schedule(id, day);
               }}
             />
 

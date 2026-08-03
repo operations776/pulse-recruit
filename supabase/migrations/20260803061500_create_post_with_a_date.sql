@@ -24,9 +24,14 @@ begin
   if not is_org_member(target_org) then raise exception 'forbidden'; end if;
   if length(trim(post_hook)) = 0 then raise exception 'a post needs a hook'; end if;
 
+  -- Both branches are cast because Postgres resolves a CASE to text and then
+  -- refuses to insert text into an enum column. The e2e spec found this.
   insert into content_posts (org_id, ref, skill, hook, status, scheduled_for, author_id)
   values (target_org, next_ref(target_org, 'POST'), post_skill, trim(post_hook),
-          case when post_when is null then 'idea' else 'scheduled' end,
+          case when post_when is null
+               then 'idea'::post_status
+               else 'scheduled'::post_status
+          end,
           post_when, auth.uid())
   returning id into new_id;
 

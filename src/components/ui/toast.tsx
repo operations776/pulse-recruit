@@ -42,7 +42,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed bottom-6 right-6 z-[60] flex w-[380px] flex-col gap-3">
+      {/* Toasts persist until dismissed, and a right hand drawer is 480px of
+          the same corner, so a stack of two would sit permanently on top of
+          the drawer's own buttons and swallow the clicks. The drawer marks the
+          body while it is open and globals.css moves the stack to the other
+          side for as long as that lasts. */}
+      <div className="toast-stack pointer-events-none fixed bottom-6 right-6 z-[60] flex w-[380px] max-w-[calc(100vw-3rem)] flex-col gap-3">
         {toasts.map((t) => {
           const danger = t.tone === "danger";
           const Icon = danger ? AlertTriangle : Check;

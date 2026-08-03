@@ -145,6 +145,16 @@ body {
     animation: pulse-dot 1.6s ease-out infinite;
   }
 
+  /* A right hand drawer occupies the corner the toast stack lives in, and
+     toasts stay until dismissed, so the two would fight for the same pixels
+     for the whole life of the panel. While a drawer is open the stack moves to
+     the opposite corner, where the only thing it can cover is the sidebar's
+     description text. */
+  body[data-layer="drawer"] .toast-stack {
+    right: auto;
+    left: 1.5rem;
+  }
+
   /* The layer behind a popup must actually read as glass, not as a flat tint. */
   .scrim {
     background: rgb(23 22 15 / 0.32);

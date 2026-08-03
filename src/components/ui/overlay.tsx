@@ -90,6 +90,19 @@ export function Drawer({
   label: string;
 }) {
   useEscape(open, onClose);
+
+  // Toasts live in the bottom right and stay until dismissed, which is exactly
+  // where this panel's own controls are. Marking the body lets globals.css move
+  // the stack aside for as long as the drawer is open, so a couple of unread
+  // toasts cannot make the buttons in here unclickable.
+  useEffect(() => {
+    if (!open) return;
+    document.body.dataset.layer = "drawer";
+    return () => {
+      delete document.body.dataset.layer;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (

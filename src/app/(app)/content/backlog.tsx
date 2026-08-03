@@ -51,6 +51,7 @@ export function Backlog({
           {posts.map((post) => (
             <li
               key={post.id}
+              data-post={post.ref}
               draggable
               onDragStart={(event) => {
                 event.dataTransfer.effectAllowed = "move";
