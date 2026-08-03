@@ -12,6 +12,7 @@ import type {
   CreditRow,
   DreamCompanyRow,
   JobRow,
+  LinkedInAccountRow,
   MailboxRow,
   MembershipRow,
   NoteRow,
@@ -299,6 +300,18 @@ export async function getPlanner(month: string) {
     assets: Object.fromEntries(byPost) as Record<string, PostAsset[]>,
     timezone: tz,
   };
+}
+
+/** The LinkedIn profiles this org has connected through Unipile. */
+export async function getLinkedInAccounts() {
+  await requireSession();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("linkedin_accounts")
+    .select("*")
+    .neq("status", "disconnected")
+    .order("connected_at", { ascending: true });
+  return (data ?? []) as LinkedInAccountRow[];
 }
 
 export async function getIntegrations() {

@@ -284,6 +284,23 @@ export type AssetRow = {
 
 export type PostAsset = AssetRow & { url: string | null };
 
+// A LinkedIn profile connected through Unipile's hosted wizard. Not a
+// credential: RecruiterGTM holds one Unipile tenant and this is an account
+// under it, which is why there is no key on this row to leak.
+export type LinkedInAccountStatus = "connected" | "credentials" | "disconnected";
+
+export type LinkedInAccountRow = {
+  id: string;
+  org_id: string;
+  unipile_account_id: string;
+  display_name: string;
+  status: LinkedInAccountStatus;
+  connected_by: string | null;
+  last_error: string;
+  connected_at: string;
+  updated_at: string;
+};
+
 // ---------------------------------------------------------------------------
 // The person / candidacy model (PLS-45). Stage lives on the candidacy, so one
 // human can sit at a different stage on every role they are on, while notes,

@@ -110,13 +110,17 @@ rather than leaving two meanings for one ID.
 
 | ID | Ticket | Depends on | Status |
 | --- | --- | --- | --- |
-| PLS-60 | Mirror the already-applied migrations into `supabase/migrations/`. Law 10 says the folder is the mirror and it started out empty | PLS-37 | todo |
+| PLS-60 | Mirror the already-applied migrations into `supabase/migrations/`. Law 10 says the folder is the mirror and it started out empty | PLS-37 | partly: everything from PLS-61 on is mirrored, the nine from before PLS-37 are not |
 | PLS-61 | Migration: `content_assets`, `content_posts` gains `published_at` and `updated_at`, org-prefixed `content-media` storage bucket with policies, `delete_post` RPC returning storage paths so DB rows die before blobs (law 4) | PLS-37 | done |
-| PLS-62 | Calendar month grid: Mon to Sun, today marked, per-day add, posts on their day. Board and Calendar are a segmented toggle so nothing moves between screens | PLS-61 | todo |
-| PLS-63 | Ideas backlog under the grid, drag an idea onto a day to schedule it at 09:00, plus a visible non-drag date control because drag alone fails the audience | PLS-62 | todo |
-| PLS-64 | Composer drawer: the skill frame beside the body, hook, schedule, copy to clipboard, mark published, delete | PLS-62 | todo |
-| PLS-65 | Media: upload to the org-prefixed bucket, signed URLs, inline preview, remove an asset (row then blob) | PLS-61, PLS-64 | todo |
-| PLS-66 | Playwright: add an idea, schedule it, open it, copy it, delete it | PLS-64 | todo |
+| PLS-62 | Calendar month grid: Mon to Sun, today marked, per-day add, posts on their day. Board and Calendar are a segmented toggle so nothing moves between screens | PLS-61 | done |
+| PLS-63 | Ideas backlog under the grid, drag an idea onto a day to schedule it at 09:00, plus a visible non-drag date control because drag alone fails the audience | PLS-62 | done |
+| PLS-64 | Composer drawer: the skill frame beside the body, hook, schedule, copy to clipboard, mark published, delete | PLS-62 | done |
+| PLS-65 | Media: upload to the org-prefixed bucket, signed URLs, inline preview, remove an asset (row then blob) | PLS-61, PLS-64 | done |
+| PLS-66 | Playwright: add an idea, schedule it, open it, copy it, delete it | PLS-64 | done |
+
+An org now carries a `timezone`, because a day only exists inside one and a
+calendar built on the machine clock disagrees with itself between the server
+render and the browser. Both sides format against that one value.
 
 ## Pillar 5, phase B: Unipile LinkedIn connection
 
@@ -127,11 +131,24 @@ key like Apollo or Exa.
 
 | ID | Ticket | Depends on | Status |
 | --- | --- | --- | --- |
-| PLS-67 | Unipile moves out of the per-org `integrations` table and becomes platform env vars: `UNIPILE_API_KEY`, `UNIPILE_DSN`, `UNIPILE_WEBHOOK_SECRET`. ARCHITECTURE.md table and DEPLOY.md updated in the same commit (law 7) | PLS-37 | todo |
-| PLS-68 | Migration: `linkedin_accounts` (`org_id`, `unipile_account_id` unique, name, status, connected_by, last_error). RLS in the same migration, `link_linkedin_account` RPC inserting with conflict handling, never check-then-insert (law 2) | PLS-67 | todo |
-| PLS-69 | Settings, Channels screen: connect, connected state, reconnect when credentials expire, disconnect. Says plainly when Unipile is not configured rather than offering a button that cannot work | PLS-68 | todo |
-| PLS-70 | Webhook `POST /api/unipile/accounts`: shared-secret verified, handles `CREATION_SUCCESS`, `RECONNECTED` and `CREDENTIALS`, claims the row before trusting it (law 3) | PLS-68 | todo |
-| PLS-71 | Playwright: the Channels screen renders, and an unverified webhook call is rejected | PLS-69, PLS-70 | todo |
+| PLS-67 | Unipile moves out of the per-org `integrations` table and becomes platform env vars: `UNIPILE_API_KEY`, `UNIPILE_DSN`, `UNIPILE_WEBHOOK_SECRET`. ARCHITECTURE.md table and DEPLOY.md updated in the same commit (law 7) | PLS-37 | done |
+| PLS-68 | Migration: `linkedin_accounts` (`org_id`, `unipile_account_id` unique, name, status, connected_by, last_error). RLS in the same migration, insert with conflict handling, never check-then-insert (law 2) | PLS-67 | done |
+| PLS-69 | Settings, Channels screen: connect, connected state, reconnect when credentials expire, disconnect. Says plainly when Unipile is not configured rather than offering a button that cannot work | PLS-68 | done |
+| PLS-70 | Webhook `POST /api/unipile/accounts`: shared-secret verified in constant time, handles `CREATION_SUCCESS`, `RECONNECTED` and `CREDENTIALS` | PLS-68 | done |
+| PLS-71 | Playwright: the Channels screen renders, an unverified webhook call is rejected, and the publishable key cannot write the table | PLS-69, PLS-70 | done |
+
+Two decisions in here are worth remembering, both written up in ARCHITECTURE.md.
+
+The `link_linkedin_account` RPC in the original PLS-68 wording was dropped. An
+RPC has to be callable, the webhook has no session so it would call as `anon`,
+and granting that RPC to `anon` would let anyone on the internet attach an
+account id to any org. The write goes through the service-role client instead,
+which now exists for exactly this one caller, and `linkedin_accounts` has no
+insert or update policy at all.
+
+Unipile is a third kind of credential. Not a platform key, not a per-org Vault
+key, but an account broker: the key is RecruiterGTM's and the accounts are per
+org. That is why LinkedIn is not on the API keys screen.
 
 ## Later weeks (placeholders, not yet specced)
 

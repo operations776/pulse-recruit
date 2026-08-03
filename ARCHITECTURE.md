@@ -56,7 +56,7 @@ These come from real incidents (our ACID audit of the retainer dashboard plus th
 | 2. AI Ops Manager | Model-backed chat over the org's own rows, task writing, morning workflow view, MCP server at `src/app/api/[transport]/route.ts` | `(app)/ops` | 3 |
 | 3. Multichannel outbound | Signals feed (open jobs, leadership changes, funding), one-click LinkedIn actions. Mass email stays external (Instantly, HeyReach via their MCPs) | `(app)/signals` | 2 |
 | 4. ATS + newsletter | Candidates, companies (clients and buyers), pipeline board, candidate drawer, notes. Newsletter via Beehiiv later | `(app)/ats` | 1 |
-| 5. Content | LinkedIn posting via Unipile | `(app)/content` | 4 |
+| 5. Content | Skills catalogue, the month calendar with a drag-to-schedule backlog, media, and LinkedIn accounts connected through Unipile at `(app)/settings/channels`. Publishing itself is still to come | `(app)/content` | 4 |
 | Cross-cutting | Scheduling (booking engine with custom routing questions, replaces Calendly) | `(app)/scheduling` | 3 |
 | Cross-cutting | Enrichment credits (waterfall email and phone, per-plan caps, our API keys) | `(app)/enrich` + `credit_ledger` | 2 |
 | Cross-cutting | Billing (Stripe, $50 founding price then $299 with credit bundle) | `(app)/settings/billing` | 4 |
@@ -107,6 +107,10 @@ Two kinds of secret exist and they are stored in different places. Keep the dist
 | `OPENAI_API_KEY` | The model behind both AI surfaces. Central RecruiterGTM key | No | Yes | PLS-38 |
 | `EXA_API_KEY` | Live web research behind the BD engine. Central RecruiterGTM key | No | Yes | PLS-38 |
 | `OPENAI_MODEL` | Model override. Changing it means changing `MODEL_RATES` in the same commit | No | No | PLS-38 |
+| `UNIPILE_API_KEY` | LinkedIn posting. Central RecruiterGTM tenant, not per org | No | Pillar 5 only | PLS-67 |
+| `UNIPILE_DSN` | That tenant's API base, for example `https://api8.unipile.com:13843` | No | Pillar 5 only | PLS-67 |
+| `UNIPILE_WEBHOOK_SECRET` | Shared secret carried in the notify URL. Unipile does not sign callbacks | No | Pillar 5 only | PLS-67 |
+| `SUPABASE_SERVICE_ROLE_KEY` | The Unipile callback only. See the note below | No | Pillar 5 only | PLS-67 |
 
 **Two kinds of key, and the difference is who pays.**
 
@@ -124,10 +128,14 @@ Two kinds of secret exist and they are stored in different places. Keep the dist
 | `clay` | Waterfall enrichment | 3 | Vault, per org | Not connected |
 | `instantly` | Email sending at scale | 3 | Vault, per org | Not connected |
 | `heyreach` | LinkedIn outreach | 3 | Vault, per org | Not connected |
-| `unipile` | LinkedIn posting | 5 | Vault, per org | Not connected |
+| `unipile` | LinkedIn posting | 5 | Platform env, accounts per org | Awaiting key |
 | `beehiiv` | Newsletter | 4 | Vault, per org | Not connected |
 | `smtp` | Custom mail transport | 3 | Vault, per org | Not connected |
 
-The service-role key is deliberately absent, and the AI engine does not introduce one. Nothing in the app needs it: every read is RLS-constrained and every privileged write is a SECURITY DEFINER RPC with EXECUTE revoked from `anon`. The ops manager's tools run on the caller's own session, so RLS is the boundary there too. Adding a service-role key would create a bypass with no caller. It would never appear in a `NEXT_PUBLIC_` var and never be imported into a client component.
+**A third kind of credential, added in PLS-67: an account broker.** Unipile is neither a platform key nor a per-org key. RecruiterGTM holds one Unipile tenant, and each recruiter authorises their own LinkedIn profile through Unipile's hosted wizard, which makes their profile an account under that tenant. So the credential is ours and the *accounts* are per org, held in `linkedin_accounts`. A recruiter never pastes a Unipile key, which is why it does not appear on the API keys screen at all: that screen sends them to Settings, Channels instead. Unipile bills roughly 5 EUR per connected account per month on a 49 EUR minimum, charged on the peak count in a 30 day window, so disconnecting releases the account on Unipile's side too rather than only deleting our row.
+
+**The service-role key exists now, for exactly one caller.** It was absent until PLS-67 because nothing needed it. The Unipile callback does: it arrives from Unipile's servers with no user session, so there is nobody for an RLS policy to check, and it is precisely the case rule 4 above names. The alternative was granting the write to `anon`, which would let anyone on the internet attach a LinkedIn account id to any org. It lives in `src/lib/server/supabase-admin.ts`, is marked `server-only` so importing it into a client component is a build error, and has exactly one import site: `src/app/api/unipile/accounts/route.ts`. Everything else, including every AI tool, still runs on the caller's own session with RLS as the boundary. It never appears in a `NEXT_PUBLIC_` var.
+
+`linkedin_accounts` has no insert or update policy at all, on purpose. Rows only ever arrive through that one route, so a browser cannot claim an account id it was never given.
 
 Supabase project: `pulse`, ref `zlnctqlabowdaahnvheo`, region eu-west-2. Dedicated to this product. The retainer dashboard (`hjwbguuqrwtmpkmgaxhc`) and the rejected Pulse Recruit project (`oyilzgfpaiusvqvmepny`) are never touched by this codebase.

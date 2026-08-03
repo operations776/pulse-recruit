@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   IntegrationFormScope,
   IntegrationRow,
@@ -28,6 +29,19 @@ const PROVIDERS: Record<string, { name: string; note?: string }> = {
 // the product does anything is the worst possible first run, so these never
 // appear as something to fill in.
 const PLATFORM_PROVIDERS = new Set(["openai", "anthropic", "exa"]);
+
+// A third kind, and conflating it with the other two is what put a "Unipile"
+// key field on this screen that nobody could ever fill in. RecruiterGTM holds
+// one Unipile tenant; a recruiter authorises their LinkedIn profile against it
+// through Unipile's hosted wizard. There is no key, so this row points at the
+// screen where the real action lives instead of offering a text box.
+const ACCOUNT_PROVIDERS = new Set(["unipile"]);
+
+// The Button primitive renders a real button and this control has to navigate,
+// so it carries the secondary variant's classes on a Link. Same keycap edge,
+// same sentence case label, same control radius.
+const LINK_BUTTON =
+  "cap inline-flex h-7 shrink-0 items-center justify-center gap-2 rounded-control border border-ink bg-transparent px-2.5 text-[12px] font-medium text-ink hover:bg-well [--edge:var(--color-ink)]";
 
 const PLATFORM_NOTE: Record<string, string> = {
   openai: "Answers on the BD engine and the ops manager",
@@ -69,7 +83,11 @@ export default async function IntegrationsPage() {
   // Two kinds of key, and conflating them is what made this screen ask for
   // things the customer should never have to supply.
   const platform = all.filter((row) => PLATFORM_PROVIDERS.has(row.provider));
-  const integrations = all.filter((row) => !PLATFORM_PROVIDERS.has(row.provider));
+  const integrations = all.filter(
+    (row) =>
+      !PLATFORM_PROVIDERS.has(row.provider) &&
+      !ACCOUNT_PROVIDERS.has(row.provider),
+  );
 
   return (
     <main className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-paper">
@@ -108,6 +126,20 @@ export default async function IntegrationsPage() {
               <StatusChip tone="on">Included</StatusChip>
             </div>
           ))}
+        </section>
+
+        <section className="mb-5 rounded-shell border border-rule bg-sheet">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+            <div className="min-w-[180px] flex-1">
+              <p className="text-[13px] font-medium">LinkedIn</p>
+              <p className="mt-0.5 text-[12px] text-ink-2">
+                Authorised through LinkedIn itself, so there is no key to paste.
+              </p>
+            </div>
+            <Link href="/settings/channels" className={LINK_BUTTON}>
+              Open Channels
+            </Link>
+          </div>
         </section>
 
         <IntegrationFormScope>

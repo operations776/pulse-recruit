@@ -1,7 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { requireSession } from "@/lib/auth";
+import {
+  createHostedAuthLink,
+  deleteAccount,
+  hasUnipile,
+} from "@/lib/server/unipile";
 import { createClient } from "@/lib/supabase/server";
 import type {
   ContentSkill,
@@ -513,6 +519,113 @@ export async function removeAsset(assetId: string): Promise<Result> {
   }
 
   // No revalidate, for the same reason as recordAsset above.
+  return { ok: true, data: undefined };
+}
+
+/* ---------------------------------------------------------------------------
+ * LinkedIn, through Unipile (Pillar 5 phase B)
+ *
+ * The recruiter never handles a key. They walk through Unipile's hosted wizard
+ * and their profile becomes an account under RecruiterGTM's single tenant, so
+ * these actions deal in links and account ids, never credentials.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Mint a hosted auth link and hand it back for the browser to visit.
+ *
+ * Returning the URL rather than redirecting from the action keeps the failure
+ * readable: a redirect that throws mid-action shows a blank error page, while
+ * this puts Unipile's own message in a toast.
+ */
+export async function startLinkedInConnect(
+  reconnectAccountId?: string,
+): Promise<Result<string>> {
+  const session = await requireSession();
+
+  if (!hasUnipile()) {
+    return fail(
+      "LinkedIn posting is not configured on this deployment yet, so there is nothing to connect to.",
+    );
+  }
+
+  // Reconnecting somebody else's profile is not a thing an org member should be
+  // able to start, so the row has to be visible to them and theirs or they have
+  // to be an admin. RLS already limits the read to the org.
+  if (reconnectAccountId) {
+    const supabase = await createClient();
+    const { data: existing } = await supabase
+      .from("linkedin_accounts")
+      .select("connected_by")
+      .eq("unipile_account_id", reconnectAccountId)
+      .maybeSingle();
+
+    if (!existing) return fail("That account is not connected to this workspace.");
+    if (
+      existing.connected_by !== session.userId &&
+      session.role === "member"
+    ) {
+      return fail("Only the person who connected that profile, or an admin, can reconnect it.");
+    }
+  }
+
+  const origin =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (await headers()).get("origin") ??
+    "http://localhost:3000";
+
+  try {
+    const url = await createHostedAuthLink({
+      orgId: session.org.id,
+      userId: session.userId,
+      origin: origin.replace(/\/+$/, ""),
+      reconnectAccountId,
+    });
+    return { ok: true, data: url };
+  } catch (error) {
+    return fail(
+      error instanceof Error ? error.message : "Unipile could not be reached.",
+    );
+  }
+}
+
+/**
+ * Disconnect a profile.
+ *
+ * The row goes first and the release second, the same ordering as law 4: a row
+ * pointing at an account Unipile no longer has is a screen that offers to post
+ * from something that cannot post. The reverse failure leaves an account we are
+ * still billed for, so if the release fails it is reported with the id rather
+ * than swallowed. Unipile charges on the peak count in a 30 day window.
+ */
+export async function disconnectLinkedIn(accountId: string): Promise<Result> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("linkedin_accounts")
+    .delete()
+    .eq("unipile_account_id", accountId)
+    .select("unipile_account_id");
+  if (error) return fail(readable(error.message));
+
+  // RLS returns an empty set rather than an error when the policy says no.
+  if (!data || data.length === 0) {
+    return fail(
+      "That profile was not disconnected. Only the person who connected it, or an admin, can remove it.",
+    );
+  }
+
+  revalidatePath("/settings/channels");
+
+  try {
+    await deleteAccount(accountId);
+  } catch (releaseError) {
+    return fail(
+      `Removed from Pulse, but Unipile still holds ${accountId} and will keep billing for it: ${
+        releaseError instanceof Error ? releaseError.message : "unknown error"
+      }`,
+    );
+  }
+
   return { ok: true, data: undefined };
 }
 

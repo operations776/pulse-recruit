@@ -6,6 +6,12 @@ import { NextResponse, type NextRequest } from "next/server";
 // middleware redirect is a convenience, not a security boundary.
 const PUBLIC_PATHS = ["/", "/signin", "/signup", "/auth"];
 
+// Provider callbacks arrive from another company's servers and have no session,
+// so the session gate would answer 401 and the connection would silently never
+// be recorded. These routes are not unprotected: each one verifies a shared
+// secret it minted itself, in constant time, before it writes anything.
+const CALLBACK_PATHS = ["/api/unipile"];
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -31,9 +37,9 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`),
-  );
+  const isPublic =
+    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
+    CALLBACK_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   if (!user && !isPublic) {
     // An API route answers with a status code. Redirecting one to /signin makes

@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, Plus } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -74,14 +73,10 @@ export default function SettingsClient({ data }: { data: SettingsData }) {
                 </li>
               );
             })}
-            <li>
-              <Link
-                href="/settings/integrations"
-                className="block w-full rounded-control px-3 py-2 text-left text-[12px] text-ink-2 transition-colors duration-150 hover:bg-paper hover:text-ink"
-              >
-                API keys
-              </Link>
-            </li>
+            {/* Channels and API keys used to be listed here because the rail
+                had no Settings sections and fell through to TALENT. It has
+                them now, so repeating them would be the same destination in
+                two places, one of which moves and one of which does not. */}
           </ul>
         </nav>
 
