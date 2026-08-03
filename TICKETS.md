@@ -150,6 +150,19 @@ Unipile is a third kind of credential. Not a platform key, not a per-org Vault
 key, but an account broker: the key is RecruiterGTM's and the accounts are per
 org. That is why LinkedIn is not on the API keys screen.
 
+## Found on the production deploy
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-72 | The anon revoke never worked in either session's migrations. Supabase's default privileges grant EXECUTE to `anon` explicitly, so `revoke ... from public` removed only the PUBLIC entry and left it. The advisor reported ten functions callable over `/rest/v1/rpc` without a session; `roll_credit_week` was the one with no membership check of its own | done |
+
+Down to three anon-callable functions, all deliberate: `is_org_member` and
+`has_org_role` are policy predicates, and `public_shortlist` is the
+token-addressed page that is meant to work without a session.
+
+Still open, and Daniyal's call because it is an Auth setting rather than
+schema: leaked password protection is disabled on the Supabase project.
+
 ## Later weeks (placeholders, not yet specced)
 
 Week 2: enrichment credits end to end (waterfall email and phone, per-plan caps), signals feed v1 (open jobs).
