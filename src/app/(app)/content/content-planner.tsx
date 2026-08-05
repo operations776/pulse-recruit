@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
@@ -30,7 +30,8 @@ import {
 } from "@/lib/time";
 import { Backlog } from "./backlog";
 import { CalendarGrid } from "./calendar-grid";
-import { PostDrawer } from "./post-drawer";
+import { PostDialog } from "./post-dialog";
+import { SkillsDialog } from "./skills-dialog";
 import { StatusBoard } from "./content-board";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -71,6 +72,7 @@ export function ContentPlanner({
   const [addError, setAddError] = useState("");
 
   const [openId, setOpenId] = useState<string | null>(null);
+  const [skillsOpen, setSkillsOpen] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropDay, setDropDay] = useState<string | null>(null);
 
@@ -256,10 +258,19 @@ export function ContentPlanner({
             </p>
           </div>
 
-          <Button variant="primary" onClick={() => setAddOpen(true)}>
-            <Plus size={16} strokeWidth={2} />
-            New post
-          </Button>
+          {/* Skills is reference material, so it sits on top of the work
+              rather than replacing it. One vermilion verb per view, and New
+              post spends it. */}
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setSkillsOpen(true)}>
+              <Sparkles size={16} strokeWidth={1.5} />
+              Skills
+            </Button>
+            <Button variant="primary" onClick={() => setAddOpen(true)}>
+              <Plus size={16} strokeWidth={2} />
+              New post
+            </Button>
+          </div>
         </div>
 
         <dl className="mt-4 flex flex-wrap gap-x-10 gap-y-3">
@@ -480,15 +491,21 @@ export function ContentPlanner({
         </div>
       </Dialog>
 
+      <SkillsDialog
+        open={skillsOpen}
+        onClose={() => setSkillsOpen(false)}
+        posts={posts}
+      />
+
       {open ? (
-        <PostDrawer
+        <PostDialog
           key={open.id}
           post={open}
           assets={assets[open.id] ?? []}
           timezone={timezone}
           onClose={() => {
             setOpenId(null);
-            // Media uploads deliberately skip revalidation while the drawer is
+            // Media uploads deliberately skip revalidation while the layer is
             // open, so the refresh happens here instead.
             router.refresh();
           }}

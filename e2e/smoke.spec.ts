@@ -54,7 +54,6 @@ test("every module renders for a signed in user", async ({ page }) => {
     ["/ops", /morning brief/i],
     ["/ops/tasks", /tasks/i],
     ["/content", /content planner/i],
-    ["/content/skills", /skills/i],
     ["/settings/integrations", /api keys/i],
   ];
 
@@ -62,6 +61,58 @@ test("every module renders for a signed in user", async ({ page }) => {
     await page.goto(href);
     await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
   }
+});
+
+test("skills is a popup on the planner, not a second room", async ({ page }) => {
+  await signIn(page);
+
+  // The route is gone on purpose, so a stale bookmark must 404 rather than
+  // render an empty shell that looks like the feature was removed.
+  const stale = await page.goto("/content/skills");
+  expect(stale?.status()).toBe(404);
+
+  await page.goto("/content");
+  // The rail carries one section now. Two would mean the nav entry came back.
+  const rail = page.getByRole("navigation", { name: "CONTENT sections" });
+  await expect(rail.getByRole("link")).toHaveCount(1);
+
+  await page.getByRole("button", { name: "Skills" }).click();
+  const dialog = page.getByRole("dialog", { name: "Skills" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("Role post")).toBeVisible();
+  await expect(dialog.getByText(/pick the shape first/i)).toBeVisible();
+
+  // Esc closes the topmost layer, and the calendar is still underneath.
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(page.locator("[data-day]")).toHaveCount(42);
+});
+
+test("a post opens as a centred dialog, not a right drawer", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/content?month=2026-08");
+
+  await page.getByText(/I lost a placement/).first().click();
+  const dialog = page.getByRole("dialog", { name: /personal story/i });
+  await expect(dialog).toBeVisible();
+
+  // Body, schedule and media all reachable without leaving the layer: the
+  // 480px drawer put the date controls below the fold.
+  await expect(dialog.getByLabel("The post")).toBeVisible();
+  await expect(dialog.getByLabel("Date")).toBeVisible();
+  await expect(dialog.getByRole("button", { name: /attach files/i })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: /copy text/i })).toBeVisible();
+
+  // Centred, not pinned right. A drawer sits flush against the viewport edge;
+  // this must not.
+  const box = await dialog.boundingBox();
+  const width = page.viewportSize()?.width ?? 0;
+  expect(box).not.toBeNull();
+  expect(box!.x).toBeGreaterThan(20);
+  expect(width - (box!.x + box!.width)).toBeGreaterThan(20);
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
 });
 
 test("api keys screen separates included keys from the ones you connect", async ({

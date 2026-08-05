@@ -169,6 +169,32 @@ Flagged out of scope until their infrastructure exists: stage emails (no send
 transport wired), interview scheduling and add-to-Google-Calendar (no per-user
 Google OAuth in Pulse).
 
+## Content redesign (persona, generation, one screen)
+
+Daniyal's read of the shipped planner: Skills is a second room for reference
+material, the post opens in a drawer too narrow for long-form copy, New post
+hands back an empty box, and skills are fixed with nothing capturing how a
+given recruiter sounds.
+
+Decisions taken before planning: persona and shape are two things (one persona
+per user, many shapes); no LinkedIn scraping, because Exa reads cache-first
+public pages truncated to 2400 chars and would quietly build a weak persona;
+generation is credit-metered as a third `content` surface, per AI.md's rule
+that nothing calls a paid provider without reserving first; voice input via the
+Web Speech API with the mic hidden where unsupported; the persona learns from
+edits and shows what it learned.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-80 | One screen: Skills becomes a popup and leaves the rail, the post moves from a 480px drawer to a centred 900px dialog with the body left and schedule plus media right. Dialog gains a size scale, a focus trap, and the toast-shift that used to be drawer-only | done |
+| PLS-81 | Migration: `content_personas`, `persona_lessons`, `content_shapes`, and the `content` value on the `chat_surface` enum with its own `SURFACE_LIMITS` entry | todo |
+| PLS-82 | The persona intake: headline and About pasted, three proud posts, three flops, then a review step showing the distilled voice back in plain sentences before it saves | todo |
+| PLS-83 | Generation: describe an idea (typed or spoken), pick a shape, stream a draft in the user's voice, set a date, add it. New `/api/content/generate` modelled on `/api/ask`, reusing begin_ask and finish_ask unchanged | todo |
+
+Flagged: the persona can only learn from what happens inside Pulse. Once
+Unipile posting is live, published posts become a better training signal than
+pasted samples and the intake can shrink.
+
 ## Found on the production deploy
 
 | ID | Ticket | Status |

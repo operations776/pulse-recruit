@@ -109,10 +109,11 @@ export const MODULES: ModuleDef[] = [
     icon: PenLine,
     blurb:
       "The content engine. Write through a named skill, then plan the week rather than starting from zero every Monday.",
-    nav: [
-      { href: "/content", label: "Planner", icon: CalendarDays },
-      { href: "/content/skills", label: "Skills", icon: Sparkles },
-    ],
+    // One entry, on purpose. Skills was a second route holding reference
+    // cards, which split one job across two rooms: you had to leave the
+    // calendar to remember what a shape asks for. It is a popup on the
+    // planner now.
+    nav: [{ href: "/content", label: "Planner", icon: CalendarDays }],
   },
 ];
 
