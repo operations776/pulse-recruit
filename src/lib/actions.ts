@@ -13,6 +13,8 @@ import type {
   ContentSkill,
   PostStatus,
   SequenceStatus,
+  TaskPriority,
+  TaskStatus,
 } from "@/lib/supabase/types";
 
 // Every write lives here. Anything touching two or more tables calls an RPC;
@@ -177,9 +179,15 @@ export async function toggleTask(
   done: boolean,
 ): Promise<Result> {
   const supabase = await createClient();
+  // The check constraint holds status and done_at to one fact, so both move in
+  // the same update. Reopening lands on todo rather than guessing which
+  // in-flight state it was in before.
   const { error } = await supabase
     .from("tasks")
-    .update({ done_at: done ? new Date().toISOString() : null })
+    .update({
+      done_at: done ? new Date().toISOString() : null,
+      status: done ? "completed" : "todo",
+    })
     .eq("id", taskId);
   if (error) return fail(readable(error.message));
 
@@ -187,9 +195,79 @@ export async function toggleTask(
   return { ok: true, data: undefined };
 }
 
+/** Move a task through its lifecycle. Completed stamps the time, per the constraint. */
+export async function setTaskStatus(
+  taskId: string,
+  status: TaskStatus,
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("tasks")
+    .update({
+      status,
+      done_at: status === "completed" ? new Date().toISOString() : null,
+    })
+    .eq("id", taskId);
+  if (error) return fail(readable(error.message));
+
+  // No revalidate: the dropdown patches optimistically and the row is already
+  // right on screen. A revalidate here would fight the optimistic state.
+  return { ok: true, data: undefined };
+}
+
+export async function setTaskPriority(
+  taskId: string,
+  priority: TaskPriority,
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("tasks")
+    .update({ priority })
+    .eq("id", taskId);
+  if (error) return fail(readable(error.message));
+  return { ok: true, data: undefined };
+}
+
+export async function setTaskDue(
+  taskId: string,
+  due: string | null,
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("tasks")
+    .update({ due })
+    .eq("id", taskId);
+  if (error) return fail(readable(error.message));
+  return { ok: true, data: undefined };
+}
+
+/**
+ * Replace who owns a task. One RPC, because delete-then-insert as two client
+ * calls wipes every assignee when the second call fails, while the action
+ * still reports success. The RPC also writes the notifications for anyone
+ * newly added, inside the same transaction.
+ */
+export async function setTaskAssignees(
+  taskId: string,
+  userIds: string[],
+): Promise<Result<number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("replace_task_assignees", {
+    target_task: taskId,
+    new_users: userIds,
+  });
+  if (error) return fail(readable(error.message));
+  return { ok: true, data: (data as number) ?? 0 };
+}
+
 export async function createTask(
   title: string,
   detail: string,
+  options?: {
+    due?: string | null;
+    priority?: TaskPriority;
+    assigneeIds?: string[];
+  },
 ): Promise<Result> {
   if (!title.trim()) return fail("Give the task a title.");
 
@@ -197,15 +275,34 @@ export async function createTask(
   const supabase = await createClient();
 
   // next_ref has EXECUTE revoked from client roles on purpose, so ref
-  // allocation happens inside the RPC rather than as a separate call.
+  // allocation happens inside the RPC rather than as a separate call. The RPC
+  // also attaches the assignees, so a crash cannot strand a task half-created.
   const { error } = await supabase.rpc("create_task", {
     target_org: session.org.id,
     task_title: title.trim(),
     task_detail: detail.trim(),
+    ...(options?.due !== undefined ? { task_due: options.due } : {}),
+    ...(options?.priority ? { task_priority_in: options.priority } : {}),
+    ...(options?.assigneeIds?.length
+      ? { assignee_ids: options.assigneeIds }
+      : {}),
   });
   if (error) return fail(readable(error.message));
 
   revalidatePath("/ops/tasks");
+  return { ok: true, data: undefined };
+}
+
+/** Mark every unread notification read. RLS scopes it to the caller's rows. */
+export async function markNotificationsRead(): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .is("read_at", null);
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }
 

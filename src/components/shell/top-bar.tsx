@@ -1,13 +1,23 @@
 "use client";
 
-import { Bell, ChevronDown, CircleHelp } from "lucide-react";
+import { ChevronDown, CircleHelp } from "lucide-react";
+import { NotificationsBell } from "@/components/shell/notifications-bell";
 import { UserMenu } from "@/components/shell/user-menu";
 import { brand } from "@/config/brand";
+import type { NotificationRow } from "@/lib/supabase/types";
 
 // The org and the signed in email come from requireSession in the layout, not
 // from client state, so the bar can never show a workspace the session does not
 // actually have.
-export function TopBar({ orgName, email }: { orgName: string; email: string }) {
+export function TopBar({
+  orgName,
+  email,
+  notifications,
+}: {
+  orgName: string;
+  email: string;
+  notifications: NotificationRow[];
+}) {
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b border-rule bg-ink px-0 text-sheet">
       <div className="flex h-full items-center">
@@ -28,13 +38,7 @@ export function TopBar({ orgName, email }: { orgName: string; email: string }) {
           <CircleHelp size={14} strokeWidth={1.75} />
           Help
         </button>
-        <button
-          aria-label="Notifications"
-          className="relative flex h-full items-center border-l border-sheet/15 px-4 hover:bg-sheet/10"
-        >
-          <Bell size={14} strokeWidth={1.75} />
-          <span className="absolute right-2.5 top-3 size-1.5 rounded-full bg-vermilion" />
-        </button>
+        <NotificationsBell notifications={notifications} />
         <UserMenu email={email} />
       </div>
     </header>

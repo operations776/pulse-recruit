@@ -16,8 +16,11 @@ import type {
   MailboxRow,
   MembershipRow,
   NoteRow,
+  NotificationRow,
+  OrgMember,
   PostAsset,
   PostRow,
+  TaskAssigneeRow,
   SequenceRow,
   SequenceStepRow,
   SignalRow,
@@ -197,6 +200,50 @@ export async function getTasks() {
     .select("*")
     .order("due", { ascending: true, nullsFirst: false });
   return (data ?? []) as TaskRow[];
+}
+
+/**
+ * Everything the tasks screen needs in one shot: the rows, who each one is
+ * assigned to, and the member directory to resolve ids into names.
+ */
+export async function getTaskBoard() {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const [tasks, assignees, members] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("*")
+      .order("due", { ascending: true, nullsFirst: false }),
+    supabase.from("task_assignees").select("*"),
+    supabase.rpc("org_members", { target_org: session.org.id }),
+  ]);
+
+  const byTask = new Map<string, string[]>();
+  for (const row of (assignees.data ?? []) as TaskAssigneeRow[]) {
+    const list = byTask.get(row.task_id) ?? [];
+    list.push(row.user_id);
+    byTask.set(row.task_id, list);
+  }
+
+  return {
+    session,
+    tasks: (tasks.data ?? []) as TaskRow[],
+    assigneesByTask: Object.fromEntries(byTask) as Record<string, string[]>,
+    members: (members.data ?? []) as OrgMember[],
+  };
+}
+
+/** The caller's unread notifications, newest first, plus the total unread. */
+export async function getNotifications() {
+  await requireSession();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("notifications")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(30);
+  return (data ?? []) as NotificationRow[];
 }
 
 export async function getSequences() {

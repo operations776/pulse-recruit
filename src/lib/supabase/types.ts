@@ -203,6 +203,14 @@ export type CreditEventRow = {
   created_at: string;
 };
 
+export type TaskStatus =
+  | "todo"
+  | "in_progress"
+  | "pending"
+  | "blocked"
+  | "completed";
+export type TaskPriority = "low" | "normal" | "high" | "urgent";
+
 export type TaskRow = {
   id: string;
   org_id: string;
@@ -211,8 +219,39 @@ export type TaskRow = {
   detail: string;
   due: string | null;
   done_at: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
   origin: "claude" | "manual";
   candidate_id: string | null;
+  created_at: string;
+};
+
+// Who owns a task. The join table is the only truth: there is deliberately no
+// assignee column on tasks, because a single column cannot say "these three".
+export type TaskAssigneeRow = {
+  task_id: string;
+  user_id: string;
+  org_id: string;
+  created_at: string;
+};
+
+// A teammate, as org_members() reports them. The only window onto auth.users.
+export type OrgMember = {
+  user_id: string;
+  email: string;
+  display_name: string;
+  role: OrgRole;
+};
+
+export type NotificationRow = {
+  id: string;
+  org_id: string;
+  user_id: string;
+  kind: string;
+  title: string;
+  body: string;
+  href: string;
+  read_at: string | null;
   created_at: string;
 };
 
