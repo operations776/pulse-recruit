@@ -187,9 +187,15 @@ edits and shows what it learned.
 | ID | Ticket | Status |
 | --- | --- | --- |
 | PLS-80 | One screen: Skills becomes a popup and leaves the rail, the post moves from a 480px drawer to a centred 900px dialog with the body left and schedule plus media right. Dialog gains a size scale, a focus trap, and the toast-shift that used to be drawer-only | done |
-| PLS-81 | Migration: `content_personas`, `persona_lessons`, `content_shapes`, and the `content` value on the `chat_surface` enum with its own `SURFACE_LIMITS` entry | todo |
-| PLS-82 | The persona intake: headline and About pasted, three proud posts, three flops, then a review step showing the distilled voice back in plain sentences before it saves | todo |
-| PLS-83 | Generation: describe an idea (typed or spoken), pick a shape, stream a draft in the user's voice, set a date, add it. New `/api/content/generate` modelled on `/api/ask`, reusing begin_ask and finish_ask unchanged | todo |
+| PLS-81 | Migration: `content_personas`, `persona_lessons`, `content_shapes`, the `content` enum value in its own migration because Postgres will not let one be added and used in a single transaction, plus its `SURFACE_LIMITS` entry | done |
+| PLS-82 | The persona intake: headline and About pasted, three proud posts, three flops, then a review step showing the distilled voice back in plain sentences before it saves | done |
+| PLS-83 | Generation: describe an idea (typed or spoken), pick a shape, stream a draft in the user's voice, set a date, add it. New `/api/content/generate` modelled on `/api/ask`, reusing begin_ask and finish_ask unchanged | done |
+| PLS-84 | Navigation was 1.4 to 3.6 seconds. `requireSession` did two Supabase round trips and every data function called it, so a page resolved the same identity up to six times in sequence. React `cache` dedupes per request; the middleware matcher stopped catching RSC payload requests; the pipeline index stopped fetching a whole workspace to read one id; the bell streams behind Suspense; the rail prefetches | done |
+
+`ChatSurface` stayed `market | ops` and a separate `CreditSurface` adds
+`content`. Widening the first would have handed `runAsk`, the tool dispatcher
+and the run log a case they can never serve, and the compiler said so
+immediately.
 
 Flagged: the persona can only learn from what happens inside Pulse. Once
 Unipile posting is live, published posts become a better training signal than

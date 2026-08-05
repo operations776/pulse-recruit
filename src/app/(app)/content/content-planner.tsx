@@ -1,16 +1,21 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Plus, Sparkles } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select } from "@/components/ui/input";
-import { Dialog } from "@/components/ui/overlay";
 import { useToast } from "@/components/ui/toast";
 import { SKILLS, SKILL_BY_KEY } from "@/config/content-skills";
 import {
   createPost,
+  createWrittenPost,
   deletePost,
   schedulePost,
   setPostStatus,
@@ -20,6 +25,7 @@ import type {
   OrgMember,
   PostAsset,
   PostRow,
+  Shape,
 } from "@/lib/supabase/types";
 import {
   dayKey,
@@ -30,11 +36,17 @@ import {
 } from "@/lib/time";
 import { Backlog } from "./backlog";
 import { CalendarGrid } from "./calendar-grid";
+import { GenerateDialog } from "./generate-dialog";
 import { PostDialog } from "./post-dialog";
 import { SkillsDialog } from "./skills-dialog";
 import { StatusBoard } from "./content-board";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
+
+// The Button primitive renders a real button and this control navigates, so it
+// wears Button's classes on a Link. Same keycap edge, same radius.
+const LINK_BUTTON =
+  "cap inline-flex h-7 shrink-0 items-center justify-center gap-2 rounded-control border border-ink bg-transparent px-3 text-[12px] font-medium text-ink hover:bg-well [--edge:var(--color-ink)]";
 
 // Dropping onto a day means nine in the morning in the workspace zone. It is a
 // default, not a rule: the drawer sets any time.
@@ -51,6 +63,9 @@ export function ContentPlanner({
   view,
   meId,
   members,
+  shapes,
+  hasPersona,
+  generationConfigured,
 }: {
   posts: PostRow[];
   assets: Record<string, PostAsset[]>;
@@ -60,17 +75,17 @@ export function ContentPlanner({
   view: View;
   meId: string;
   members: OrgMember[];
+  shapes: Shape[];
+  hasPersona: boolean;
+  generationConfigured: boolean;
 }) {
   const router = useRouter();
   const { notify } = useToast();
   const [pending, startTransition] = useTransition();
 
   const [addOpen, setAddOpen] = useState(false);
-  const [addSkill, setAddSkill] = useState<ContentSkill>(SKILLS[0].key);
-  const [addHook, setAddHook] = useState("");
-  const [addDay, setAddDay] = useState("");
-  const [addError, setAddError] = useState("");
-
+  // The day a per-cell "+" was clicked on, so the composer opens dated.
+  const [seedDay, setSeedDay] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -125,42 +140,41 @@ export function ContentPlanner({
   const href = (next: { month?: string; view?: View }) =>
     `/content?month=${next.month ?? month}&view=${next.view ?? view}`;
 
-  const closeAdd = () => {
+  /**
+   * Add the post the generate dialog produced.
+   *
+   * The dialog closes before the write, so the revalidate cannot land under an
+   * open layer and remount it. That is the named bug class in CLAUDE.md and it
+   * applies to this dialog exactly as it did to the last one.
+   */
+  const addWritten = (input: {
+    shape: Shape;
+    hook: string;
+    body: string;
+    day: string;
+    generated: string | null;
+  }) => {
     setAddOpen(false);
-    setAddSkill(SKILLS[0].key);
-    setAddHook("");
-    setAddDay("");
-    setAddError("");
-  };
-
-  const submitAdd = () => {
-    const hook = addHook.trim();
-    if (!hook) {
-      setAddError("Write the hook first. It is the line the post lives on.");
-      return;
-    }
-    const skill = addSkill;
-    const day = addDay;
-    const name = SKILL_BY_KEY[skill].name;
-
-    // The dialog closes before the write, so the revalidate cannot land under
-    // an open layer and remount it.
-    closeAdd();
 
     startTransition(async () => {
-      const created = await createPost(
-        skill,
-        hook,
-        day ? instantAt(day, DEFAULT_TIME, timezone) : null,
-      );
+      const created = await createWrittenPost({
+        // A custom shape carries its id; a built-in is identified by the skill
+        // column, which every existing reader already understands.
+        skill: (input.shape.id ? SKILLS[0].key : input.shape.key) as ContentSkill,
+        shapeId: input.shape.id,
+        hook: input.hook,
+        body: input.body,
+        when: input.day ? instantAt(input.day, DEFAULT_TIME, timezone) : null,
+        generated: input.generated,
+      });
       if (!created.ok) {
         notify(`${created.error} The post was not added.`, "danger");
         return;
       }
       notify(
-        day
-          ? `${name} added and set for ${day} at ${DEFAULT_TIME}. Pulse does not post it for you yet, so this records the plan.`
-          : `${name} added to the backlog.`,
+        input.day
+          ? `${input.shape.name} added and set for ${input.day} at ${DEFAULT_TIME}. Pulse does not post it for you yet, so this records the plan.`
+          : `${input.shape.name} added to the backlog.`,
       );
       router.refresh();
     });
@@ -262,6 +276,19 @@ export function ContentPlanner({
               rather than replacing it. One vermilion verb per view, and New
               post spends it. */}
           <div className="flex items-center gap-2">
+            {/* An unbuilt voice is the one thing that makes every draft
+                generic, so it is stated here rather than discovered later. */}
+            <Link
+              href="/content/persona"
+              className={
+                hasPersona
+                  ? LINK_BUTTON
+                  : `${LINK_BUTTON} border-amber bg-amber-bg text-amber-text [--edge:var(--color-amber)]`
+              }
+            >
+              <UserRound size={16} strokeWidth={1.5} />
+              {hasPersona ? "Your voice" : "Build your voice"}
+            </Link>
             <Button onClick={() => setSkillsOpen(true)}>
               <Sparkles size={16} strokeWidth={1.5} />
               Skills
@@ -376,8 +403,10 @@ export function ContentPlanner({
               draggingId={draggingId}
               dropDay={dropDay}
               onOpen={(post) => setOpenId(post.id)}
+              // Clicking a date opens the composer already pointed at that
+              // day, so the click is not thrown away.
               onAddOn={(day) => {
-                setAddDay(day);
+                setSeedDay(day);
                 setAddOpen(true);
               }}
               onDragStart={setDraggingId}
@@ -419,77 +448,22 @@ export function ContentPlanner({
         )}
       </div>
 
-      <Dialog
+      <GenerateDialog
+        // Remount per opening, so a seeded date lands and last time's draft
+        // never reappears in a fresh composer.
+        key={`${addOpen}-${seedDay}`}
         open={addOpen}
-        onClose={closeAdd}
-        title="New post"
-        description="Pick the shape first. The frame below is what you fill in."
-        footer={
-          <>
-            <Button onClick={closeAdd}>Cancel</Button>
-            <Button variant="primary" onClick={submitAdd} disabled={pending}>
-              Add
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-3.5">
-          <Field label="Skill" hint={SKILL_BY_KEY[addSkill].blurb}>
-            <Select
-              value={addSkill}
-              onChange={(event) =>
-                setAddSkill(event.target.value as ContentSkill)
-              }
-            >
-              {SKILLS.map((skill) => (
-                <option key={skill.key} value={skill.key}>
-                  {skill.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          <div>
-            <p className="legend text-ink-2">The frame</p>
-            <p className="well mt-2 whitespace-pre-line rounded-control p-3 text-[12px] leading-[1.5] text-ink-2">
-              {SKILL_BY_KEY[addSkill].prompt}
-            </p>
-          </div>
-
-          <Field
-            label="Hook"
-            hint="The first line, in your own words. Everything else follows it."
-          >
-            <Input
-              value={addHook}
-              autoFocus
-              onChange={(event) => {
-                setAddHook(event.target.value);
-                if (addError) setAddError("");
-              }}
-              placeholder="Six design roles went live in London this week."
-            />
-          </Field>
-
-          <Field
-            label="Date"
-            hint="Leave it empty to park the idea in the backlog."
-          >
-            <Input
-              type="date"
-              value={addDay}
-              onChange={(event) => setAddDay(event.target.value)}
-              className="w-40"
-            />
-          </Field>
-
-          {addError ? (
-            <p role="alert" className="text-[12px] font-medium text-red">
-              {addError}
-            </p>
-          ) : null}
-        </div>
-      </Dialog>
+        onClose={() => {
+          setAddOpen(false);
+          setSeedDay("");
+        }}
+        seedDay={seedDay}
+        shapes={shapes}
+        hasPersona={hasPersona}
+        configured={generationConfigured}
+        onAdd={addWritten}
+        adding={pending}
+      />
 
       <SkillsDialog
         open={skillsOpen}

@@ -1,0 +1,15 @@
+-- PLS-81, part one of two.
+--
+-- Postgres will not let a new enum value be used in the same transaction that
+-- adds it, so the value lands alone and the tables that reference it come in
+-- the next migration. Splitting this is not tidiness, it is the only order
+-- that works.
+--
+-- Generation is metered exactly like MARKET and OPS: begin_ask reserves before
+-- any provider call, finish_ask settles at the metered cost, sweep_stalled_asks
+-- refunds a run that died. AI.md's rule is that nothing calls a paid provider
+-- without reserving first, and a third surface is how content obeys it without
+-- a second credit system.
+--
+-- Mirror of the migration applied via the Supabase MCP, per law 10.
+alter type chat_surface add value if not exists 'content';

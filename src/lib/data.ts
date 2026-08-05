@@ -1,11 +1,15 @@
 import "server-only";
 import { requireSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { allShapes } from "@/lib/shapes";
 import { dayKey } from "@/lib/time";
 import type {
   ActivityRow,
   AssetRow,
   CandidateRow,
+  ContentShapeRow,
+  PersonaLessonRow,
+  PersonaRow,
   ChatRow,
   ChatSurface,
   CompanyRow,
@@ -334,14 +338,24 @@ export async function getPlanner(month: string) {
   const session = await requireSession();
   const supabase = await createClient();
 
-  const [postsResult, assetsResult, membersResult] = await Promise.all([
-    supabase
-      .from("content_posts")
-      .select("*")
-      .order("created_at", { ascending: false }),
-    supabase.from("content_assets").select("*").order("sort"),
-    supabase.rpc("org_members", { target_org: session.org.id }),
-  ]);
+  const [postsResult, assetsResult, membersResult, shapesResult, personaResult] =
+    await Promise.all([
+      supabase
+        .from("content_posts")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase.from("content_assets").select("*").order("sort"),
+      supabase.rpc("org_members", { target_org: session.org.id }),
+      supabase.from("content_shapes").select("*").order("sort"),
+      // The caller's own persona. RLS lets a member read a teammate's row, but
+      // the planner only ever needs yours: it decides whether to offer
+      // generation or the intake.
+      supabase
+        .from("content_personas")
+        .select("*")
+        .eq("user_id", session.userId)
+        .maybeSingle(),
+    ]);
 
   const posts = (postsResult.data ?? []) as PostRow[];
   const assets = (assetsResult.data ?? []) as AssetRow[];
@@ -385,6 +399,34 @@ export async function getPlanner(month: string) {
     timezone: tz,
     meId: session.userId,
     members: (membersResult.data ?? []) as OrgMember[],
+    shapes: allShapes((shapesResult.data ?? []) as ContentShapeRow[]),
+    persona: (personaResult.data ?? null) as PersonaRow | null,
+  };
+}
+
+/** The caller's persona, plus whatever it has learned and not yet applied. */
+export async function getPersona() {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const { data: persona } = await supabase
+    .from("content_personas")
+    .select("*")
+    .eq("user_id", session.userId)
+    .maybeSingle();
+
+  if (!persona) return { persona: null, lessons: [] as PersonaLessonRow[] };
+
+  const { data: lessons } = await supabase
+    .from("persona_lessons")
+    .select("*")
+    .eq("persona_id", (persona as PersonaRow).id)
+    .is("applied_at", null)
+    .order("created_at", { ascending: false });
+
+  return {
+    persona: persona as PersonaRow,
+    lessons: (lessons ?? []) as PersonaLessonRow[],
   };
 }
 

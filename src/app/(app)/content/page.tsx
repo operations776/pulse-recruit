@@ -1,4 +1,5 @@
 import { getPlanner } from "@/lib/data";
+import { hasModelKey } from "@/lib/server/ai/openai";
 import { dayKey, isMonth } from "@/lib/time";
 import { ContentPlanner } from "./content-planner";
 
@@ -30,6 +31,13 @@ export default async function ContentPlannerPage({
       timezone={planner.timezone}
       meId={planner.meId}
       members={planner.members}
+      shapes={planner.shapes}
+      // A persona with no distilled voice is not a persona yet: the intake was
+      // started and never finished, and a draft from it would be generic.
+      hasPersona={Boolean(
+        (planner.persona?.voice_profile as { summary?: string } | null)?.summary,
+      )}
+      generationConfigured={hasModelKey()}
       month={month}
       view={params.view === "board" ? "board" : "calendar"}
       // Today is read on the server inside the org zone and handed down. A

@@ -41,6 +41,20 @@ export const SURFACE_LIMITS = {
     maxPageReads: 0,
     maxSteps: 10,
   },
+  content: {
+    // Writing a post is one long completion from a persona and a shape, with
+    // no tools at all: no web, no pipeline reads, nothing to wander into. The
+    // reservation covers a generous draft plus the persona in context, and
+    // maxSteps is 1 because there is nothing for a second step to do.
+    //
+    // Deliberately larger than OPS. A post is hundreds of output tokens and
+    // output is priced at four times input, so a six credit ceiling would cut
+    // drafts off mid sentence.
+    reserveCredits: 10,
+    maxSearches: 0,
+    maxPageReads: 0,
+    maxSteps: 1,
+  },
 } as const;
 
 export type Usage = {

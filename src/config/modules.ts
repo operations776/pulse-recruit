@@ -14,6 +14,7 @@ import {
   Share2,
   SlidersHorizontal,
   Sparkles,
+  UserRound,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -108,12 +109,15 @@ export const MODULES: ModuleDef[] = [
     href: "/content",
     icon: PenLine,
     blurb:
-      "The content engine. Write through a named skill, then plan the week rather than starting from zero every Monday.",
-    // One entry, on purpose. Skills was a second route holding reference
-    // cards, which split one job across two rooms: you had to leave the
-    // calendar to remember what a shape asks for. It is a popup on the
-    // planner now.
-    nav: [{ href: "/content", label: "Planner", icon: CalendarDays }],
+      "The content engine. Describe an idea, get it written in your own voice, and plan the week rather than starting from zero every Monday.",
+    // Skills is deliberately absent: it was a second route holding reference
+    // cards, which split one job across two rooms, and it is a popup on the
+    // planner now. Your voice earns a route because it is a place you go and
+    // do something, not a card you read.
+    nav: [
+      { href: "/content", label: "Planner", icon: CalendarDays },
+      { href: "/content/persona", label: "Your voice", icon: UserRound },
+    ],
   },
 ];
 

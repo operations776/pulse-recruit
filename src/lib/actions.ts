@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { requireSession } from "@/lib/auth";
+import { buildVoiceProfile, distilLesson } from "@/lib/server/ai/content";
+import { hasModelKey } from "@/lib/server/ai/openai";
+import { SURFACE_LIMITS } from "@/lib/server/ai/pricing";
 import {
   createHostedAuthLink,
   deleteAccount,
@@ -16,6 +19,7 @@ import type {
   SequenceStatus,
   TaskPriority,
   TaskStatus,
+  VoiceProfile,
 } from "@/lib/supabase/types";
 
 // Every write lives here. Anything touching two or more tables calls an RPC;
@@ -295,6 +299,243 @@ export async function createTask(
 }
 
 /* ---------------------------------------------------------------------------
+ * Persona and shapes (PLS-81, PLS-82)
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Save the intake and distil a voice from it.
+ *
+ * Reserves before the provider call and settles after, like every other paid
+ * call in the product. The raw material is written first: if the model call
+ * fails, what they pasted is still saved and they can retry the distillation
+ * without typing it all again.
+ */
+export async function buildPersona(input: {
+  headline: string;
+  about: string;
+  proudPosts: string[];
+  flopPosts: string[];
+}): Promise<Result<VoiceProfile>> {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  if (!hasModelKey()) {
+    return fail(
+      "Post generation is not switched on for this deployment yet, so there is no model to read your voice with.",
+    );
+  }
+
+  const proud = input.proudPosts.map((p) => p.trim()).filter(Boolean);
+  const flop = input.flopPosts.map((p) => p.trim()).filter(Boolean);
+
+  // Law 2: the unique index on user_id is the race guard, so this is an upsert
+  // rather than a read followed by an insert.
+  const { data: saved, error: saveError } = await supabase
+    .from("content_personas")
+    .upsert(
+      {
+        org_id: session.org.id,
+        user_id: session.userId,
+        headline: input.headline.trim(),
+        about: input.about.trim(),
+        proud_posts: proud,
+        flop_posts: flop,
+      },
+      { onConflict: "user_id" },
+    )
+    .select("id")
+    .single();
+  if (saveError) return fail(readable(saveError.message));
+
+  const limits = SURFACE_LIMITS.content;
+  const { data: claim, error: claimError } = await supabase.rpc("begin_ask", {
+    target_org: session.org.id,
+    target_surface: "content",
+    question: "Build my persona",
+    reserve: limits.reserveCredits,
+  });
+  if (claimError) return fail(readable(claimError.message));
+  if (!claim) {
+    return fail(
+      "Your credit allowance for this week is spent, so the persona was not built. What you pasted is saved.",
+    );
+  }
+
+  const messageId = (claim as { message_id: string }).message_id;
+
+  try {
+    const outcome = await buildVoiceProfile({
+      headline: input.headline,
+      about: input.about,
+      proudPosts: proud,
+      flopPosts: flop,
+    });
+
+    const { error: writeError } = await supabase
+      .from("content_personas")
+      .update({
+        voice_profile: outcome.profile,
+        built_at: new Date().toISOString(),
+      })
+      .eq("id", saved.id);
+    if (writeError) return fail(readable(writeError.message));
+
+    await supabase.rpc("finish_ask", {
+      message: messageId,
+      answer_body: outcome.profile.summary ?? "",
+      answer_sources: [],
+      actual_cost: outcome.credits,
+      run_status: "complete",
+      answer_meta: outcome.meta,
+      error_text: null,
+    });
+
+    revalidatePath("/content", "layout");
+    return { ok: true, data: outcome.profile };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "The persona could not be built. Nothing was charged.";
+    // Refund in full. A failed run spends nothing (AI.md section 3).
+    await supabase.rpc("finish_ask", {
+      message: messageId,
+      answer_body: "",
+      answer_sources: [],
+      actual_cost: 0,
+      run_status: "failed",
+      answer_meta: {},
+      error_text: message,
+    });
+    return fail(message);
+  }
+}
+
+/** Edit the distilled voice by hand. It is theirs to correct. */
+export async function updateVoiceProfile(
+  profile: VoiceProfile,
+): Promise<Result> {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("content_personas")
+    .update({ voice_profile: profile })
+    .eq("user_id", session.userId)
+    .select("id");
+  if (error) return fail(readable(error.message));
+  if (!data || data.length === 0) return fail("You have no persona to update yet.");
+
+  revalidatePath("/content", "layout");
+  return { ok: true, data: undefined };
+}
+
+/** Fold a lesson into the voice, or discard it. Never silent, either way. */
+export async function applyLesson(
+  lessonId: string,
+  keep: boolean,
+): Promise<Result> {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const { data: lesson, error: readError } = await supabase
+    .from("persona_lessons")
+    .select("id, lesson, persona_id")
+    .eq("id", lessonId)
+    .maybeSingle();
+  if (readError) return fail(readable(readError.message));
+  if (!lesson) return fail("That lesson is already gone.");
+
+  if (keep) {
+    const { data: persona } = await supabase
+      .from("content_personas")
+      .select("voice_profile")
+      .eq("id", lesson.persona_id)
+      .eq("user_id", session.userId)
+      .maybeSingle();
+    if (!persona) return fail("That persona is not yours to change.");
+
+    const profile = (persona.voice_profile ?? {}) as VoiceProfile;
+    const learned = [...(profile.proof ?? []), lesson.lesson];
+    const { error: writeError } = await supabase
+      .from("content_personas")
+      .update({ voice_profile: { ...profile, proof: learned } })
+      .eq("id", lesson.persona_id);
+    if (writeError) return fail(readable(writeError.message));
+  }
+
+  // Marking it applied either way is what stops a discarded lesson coming back
+  // to be reviewed every time the screen loads.
+  const { error } = await supabase
+    .from("persona_lessons")
+    .update({ applied_at: new Date().toISOString() })
+    .eq("id", lessonId);
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/content", "layout");
+  return { ok: true, data: undefined };
+}
+
+/** Add a post shape this org can write through. */
+export async function createShape(input: {
+  name: string;
+  blurb: string;
+  prompt: string;
+}): Promise<Result> {
+  const name = input.name.trim();
+  const prompt = input.prompt.trim();
+  if (!name) return fail("Give the shape a name.");
+  if (!prompt) return fail("Describe what this shape asks for.");
+
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  // The key is derived once and never changes, so renaming later cannot orphan
+  // the posts already written through it.
+  const key = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 40);
+  if (!key) return fail("That name has no usable characters.");
+
+  const { count } = await supabase
+    .from("content_shapes")
+    .select("id", { count: "exact", head: true });
+
+  const { error } = await supabase.from("content_shapes").insert({
+    org_id: session.org.id,
+    key,
+    name,
+    blurb: input.blurb.trim(),
+    prompt,
+    created_by: session.userId,
+    sort: count ?? 0,
+  });
+  if (error) {
+    if (error.code === "23505") return fail("A shape with that name already exists.");
+    return fail(readable(error.message));
+  }
+
+  revalidatePath("/content", "layout");
+  return { ok: true, data: undefined };
+}
+
+export async function deleteShape(shapeId: string): Promise<Result> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("content_shapes")
+    .delete()
+    .eq("id", shapeId)
+    .select("id");
+  if (error) return fail(readable(error.message));
+  if (!data || data.length === 0) return fail("That shape was already gone.");
+
+  revalidatePath("/content", "layout");
+  return { ok: true, data: undefined };
+}
+
+/* ---------------------------------------------------------------------------
  * Public application links (PLS-78)
  * ------------------------------------------------------------------------- */
 
@@ -545,6 +786,56 @@ export async function createPost(
   return { ok: true, data: data as string };
 }
 
+/**
+ * Add a post that already has words in it.
+ *
+ * create_post owns ref allocation, so the row is made there and the body,
+ * shape and generated snapshot are written straight after. Two statements
+ * rather than an RPC change, because the second is a plain single-table update
+ * on a row this caller just created and RLS already scopes.
+ *
+ * `generated` is the draft exactly as the model wrote it. Keeping it is what
+ * makes the persona able to learn later: without it, an edit is just a body
+ * with no before to compare against.
+ */
+export async function createWrittenPost(input: {
+  skill: ContentSkill;
+  shapeId: string | null;
+  hook: string;
+  body: string;
+  when: string | null;
+  generated: string | null;
+}): Promise<Result<string>> {
+  if (!input.hook.trim()) return fail("The post needs a first line.");
+
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const { data: id, error } = await supabase.rpc("create_post", {
+    target_org: session.org.id,
+    post_skill: input.skill,
+    post_hook: input.hook.trim(),
+    post_when: input.when,
+  });
+  if (error) return fail(readable(error.message));
+
+  const { error: writeError } = await supabase
+    .from("content_posts")
+    .update({
+      body: input.body,
+      shape_id: input.shapeId,
+      generated_body: input.generated,
+      // A dated post is already 'scheduled' from the RPC. An undated one with
+      // a body is drafted, not an idea: the words exist.
+      ...(input.when ? {} : { status: "drafted" as const }),
+    })
+    .eq("id", id as string);
+  if (writeError) return fail(readable(writeError.message));
+
+  revalidatePath("/content");
+  return { ok: true, data: id as string };
+}
+
 export async function setPostStatus(
   postId: string,
   status: PostStatus,
@@ -574,8 +865,69 @@ export async function setPostStatus(
     .eq("id", postId);
   if (error) return fail(readable(error.message));
 
+  // Publishing a post that was generated and then edited is the moment the
+  // persona has something real to learn from. Deliberately after the status
+  // write and deliberately not awaited for its result: a lesson is a bonus,
+  // and it must never be the reason marking a post published fails.
+  if (status === "published") {
+    void recordLesson(postId);
+  }
+
   revalidatePath("/content");
   return { ok: true, data: undefined };
+}
+
+/**
+ * Distil what an edit says about the author's voice.
+ *
+ * Silent by design at the point of capture, visible at the point of effect:
+ * the row lands unapplied and shows up on the persona screen for review. What
+ * this must never do is change the voice on its own.
+ */
+async function recordLesson(postId: string): Promise<void> {
+  try {
+    const session = await requireSession();
+    const supabase = await createClient();
+
+    const { data: post } = await supabase
+      .from("content_posts")
+      .select("id, org_id, body, generated_body, author_id")
+      .eq("id", postId)
+      .maybeSingle();
+
+    // Nothing to compare against, or somebody else's post.
+    if (!post?.generated_body || post.author_id !== session.userId) return;
+    if (post.body.trim() === post.generated_body.trim()) return;
+
+    const { data: persona } = await supabase
+      .from("content_personas")
+      .select("id")
+      .eq("user_id", session.userId)
+      .maybeSingle();
+    if (!persona) return;
+
+    if (!hasModelKey()) return;
+
+    const outcome = await distilLesson({
+      generated: post.generated_body,
+      published: post.body,
+    });
+    // A typo fix teaches nothing, and filling the review list with noise is
+    // how someone stops reading it.
+    if (!outcome.lesson) return;
+
+    await supabase.from("persona_lessons").insert({
+      org_id: post.org_id,
+      persona_id: persona.id,
+      post_id: post.id,
+      generated: post.generated_body,
+      published: post.body,
+      lesson: outcome.lesson,
+    });
+  } catch {
+    // Learning is opportunistic. A failure here is invisible on purpose:
+    // nothing the user did has gone wrong.
+  }
 }
 
 /**

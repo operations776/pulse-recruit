@@ -23,7 +23,15 @@ export type SignalKind =
   | "promotion"
   | "leadership"
   | "expansion";
+// The two surfaces that hold a conversation. runAsk, the tool dispatcher and
+// the run log are all about these and only these.
 export type ChatSurface = "market" | "ops";
+
+// Every surface that spends credits through begin_ask and finish_ask. Content
+// generation shares that lifecycle exactly, but it has no tools, no history
+// and no transcript, so widening ChatSurface would have handed run.ts and the
+// run log a case they can never serve.
+export type CreditSurface = ChatSurface | "content";
 export type ChatRole = "user" | "assistant";
 export type MailboxProvider = "google" | "microsoft" | "smtp";
 export type MailboxStatus = "connected" | "warming" | "error";
@@ -323,6 +331,81 @@ export type PostRow = {
   author_id: string | null;
   created_at: string;
   updated_at: string;
+  // Set when the post uses an org-defined shape instead of a built-in one.
+  // `skill` still carries a valid value so every existing reader keeps working.
+  shape_id: string | null;
+  // The body as generated, kept so a later edit can be diffed against it.
+  // Null means a human wrote this from scratch and there is nothing to learn.
+  generated_body: string | null;
+};
+
+/**
+ * A recruiter's voice. One per person.
+ *
+ * Built from pasted material, never a scrape: Exa reads cache-first public
+ * pages truncated to 2400 characters and cannot sign in to LinkedIn, so a
+ * scraped persona would be quietly weak.
+ */
+export type PersonaRow = {
+  id: string;
+  org_id: string;
+  user_id: string;
+  headline: string;
+  about: string;
+  proud_posts: string[];
+  flop_posts: string[];
+  voice_profile: VoiceProfile;
+  built_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** The distilled voice the generator reads. Jsonb, so it can grow. */
+export type VoiceProfile = {
+  summary?: string;
+  tone?: string[];
+  openings?: string[];
+  rhythm?: string;
+  banned?: string[];
+  proof?: string[];
+};
+
+export type PersonaLessonRow = {
+  id: string;
+  org_id: string;
+  persona_id: string;
+  post_id: string | null;
+  generated: string;
+  published: string;
+  lesson: string;
+  applied_at: string | null;
+  created_at: string;
+};
+
+/** A post shape an org added for itself, beside the five built into the app. */
+export type ContentShapeRow = {
+  id: string;
+  org_id: string;
+  key: string;
+  name: string;
+  blurb: string;
+  prompt: string;
+  created_by: string | null;
+  sort: number;
+  created_at: string;
+};
+
+/**
+ * A shape as the UI consumes it, whether it came from code or from the
+ * database. `id` is null for the five built-ins, which is exactly the flag
+ * that decides whether a post carries `shape_id`.
+ */
+export type Shape = {
+  id: string | null;
+  key: string;
+  name: string;
+  blurb: string;
+  prompt: string;
 };
 
 // Media attached to a post. `url` is not a column: it is a short-lived signed
