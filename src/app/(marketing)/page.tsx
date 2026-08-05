@@ -8,13 +8,25 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 import { brand } from "@/config/brand";
 
 
 // Taste-lock sheet for the marketing surface, judged against DESIGN.md.
 // Structure follows the reference; palette and voice are ours.
+//
+// Every control on this page navigates, so every control is a link. The
+// UI-first build left them as handler-less buttons and href="#", which
+// rendered a page where nothing opened. A CTA that cannot navigate is not a
+// design choice, it is a broken promise with a hover state.
+
+// The Button primitive renders a real button element; these are links wearing
+// its exact clothes, same keycap edge, same radius.
+const PRIMARY_LINK =
+  "cap inline-flex items-center justify-center gap-2 rounded-control bg-vermilion text-on-vermilion hover:bg-vermilion-hover [--edge:var(--color-vermilion-edge)] font-medium";
+const SECONDARY_LINK =
+  "cap inline-flex items-center justify-center gap-2 rounded-control border border-ink bg-transparent text-ink hover:bg-well [--edge:var(--color-ink)] font-medium";
 
 const features = [
   {
@@ -71,17 +83,23 @@ export default function MarketingHome() {
               {brand.name}
             </span>
           </span>
+          {/* Only sections that exist get a nav entry. Customers and
+              Resources were links to nowhere, and a dead link is worse than a
+              shorter nav. They come back when their pages do. */}
           <nav className="hidden items-center gap-7 text-[12px] font-medium text-ink-2 md:flex">
-            <a href="#" className="hover:text-ink">Product</a>
-            <a href="#" className="hover:text-ink">Pricing</a>
-            <a href="#" className="hover:text-ink">Customers</a>
-            <a href="#" className="hover:text-ink">Resources</a>
+            <a href="#product" className="hover:text-ink">Product</a>
+            <a href="#pricing" className="hover:text-ink">Pricing</a>
           </nav>
           <span className="flex items-center gap-2">
-            <a href="#" className="px-2 text-[12px] font-medium text-ink-2 hover:text-ink">
+            <Link
+              href="/signin"
+              className="px-2 text-[12px] font-medium text-ink-2 hover:text-ink"
+            >
               Log in
-            </a>
-            <Button variant="primary">Book a demo</Button>
+            </Link>
+            <Link href="/signup" className={`${PRIMARY_LINK} h-8 px-3.5 text-[12px]`}>
+              Start your pilot
+            </Link>
           </span>
         </div>
       </header>
@@ -101,11 +119,13 @@ export default function MarketingHome() {
           forget.
         </p>
         <div className="mt-7 flex items-center justify-center gap-3">
-          <Button variant="primary" className="h-11 px-5 text-[13px]">
-            Book a demo
+          <Link href="/signup" className={`${PRIMARY_LINK} h-11 px-5 text-[13px]`}>
+            Start your pilot
             <ArrowRight size={16} strokeWidth={2} />
-          </Button>
-          <Button className="h-11 px-5 text-[13px]">See how it works</Button>
+          </Link>
+          <a href="#product" className={`${SECONDARY_LINK} h-11 px-5 text-[13px]`}>
+            See how it works
+          </a>
         </div>
         <p className="mt-4 text-[12px] text-ink-3">
           Founding price for the first ten agencies. No card required.
@@ -163,7 +183,7 @@ export default function MarketingHome() {
       </section>
 
       {/* Features */}
-      <section className="border-t border-rule bg-paper py-20">
+      <section id="product" className="border-t border-rule bg-paper py-20">
         <div className="mx-auto max-w-[1200px] px-6">
           <div className="text-center">
             <span className="legend text-ink-2">Everything in one place</span>
@@ -201,7 +221,7 @@ export default function MarketingHome() {
       </section>
 
       {/* Pricing */}
-      <section className="py-20">
+      <section id="pricing" className="py-20">
         <div className="mx-auto max-w-[1200px] px-6 text-center">
           <span className="legend text-ink-2">Pricing</span>
           <h2 className="mt-5 display text-[40px] font-bold leading-[46px] tracking-[-0.02em]">
@@ -232,9 +252,12 @@ export default function MarketingHome() {
                   </li>
                 ))}
               </ul>
-              <Button variant="primary" className="mt-6 h-11 w-full text-[13px]">
-                Book a demo
-              </Button>
+              <Link
+                href="/signup"
+                className={`${PRIMARY_LINK} mt-6 h-11 w-full text-[13px]`}
+              >
+                Start your pilot
+              </Link>
             </div>
           </div>
         </div>
@@ -252,10 +275,13 @@ export default function MarketingHome() {
             <p className="mt-4 text-[12px] leading-6 text-sheet/70">
               Ten agencies, founding price, ninety day pilot.
             </p>
-            <Button variant="primary" className="mt-7 h-11 px-5 text-[13px]">
-              Book a demo
+            <Link
+              href="/signup"
+              className={`${PRIMARY_LINK} mt-7 h-11 px-5 text-[13px]`}
+            >
+              Start your pilot
               <ArrowRight size={16} strokeWidth={2} />
-            </Button>
+            </Link>
           </div>
         </div>
       </section>
