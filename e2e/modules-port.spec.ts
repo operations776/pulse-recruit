@@ -59,6 +59,10 @@ test("the application link mints, takes an application, and revokes", async ({
   page,
   browser,
 }) => {
+  // This test walks a mint, two submissions, a board check, a delete and a
+  // revoke against the shared server while seven other workers hammer it. The
+  // default 30s is a contention timeout, not a behaviour signal.
+  test.setTimeout(90_000);
   await signIn(page);
   await page.goto("/pipeline");
   await page.waitForURL(/\/pipeline\/.+/, { timeout: 30_000 });

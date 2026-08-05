@@ -44,7 +44,15 @@ export async function getWorkspace() {
   const supabase = await createClient();
 
   const [jobs, credits, members] = await Promise.all([
-    supabase.from("jobs").select("*").order("created_at", { ascending: true }),
+    // ref as the tiebreak: seeded rows share one created_at, and without a
+    // total order jobs[0] is decided by heap order, which any UPDATE moves.
+    // The pipeline index redirects to jobs[0], so this was a different first
+    // board depending on which row was touched last.
+    supabase
+      .from("jobs")
+      .select("*")
+      .order("created_at", { ascending: true })
+      .order("ref", { ascending: true }),
     supabase.from("credit_ledger").select("*").maybeSingle(),
     supabase.from("org_memberships").select("*"),
   ]);

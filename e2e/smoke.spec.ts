@@ -24,9 +24,15 @@ test("marketing home renders without a session", async ({ page }) => {
 
 test("signing in lands on real pipeline data", async ({ page }) => {
   await signIn(page);
-  // Seeded by the database, not by a fixture in this repo.
-  await expect(page.getByText("Senior Product Designer").first()).toBeVisible();
-  await expect(page.getByText("Clementine Spencer")).toBeVisible();
+  // Seeded by the database, not by a fixture in this repo. Generous timeouts:
+  // other specs in the run revalidate the pipeline layout while this one is
+  // rendering it, and a rebuild under eight workers is slow, not wrong.
+  await expect(page.getByText("Senior Product Designer").first()).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByText("Clementine Spencer")).toBeVisible({
+    timeout: 15_000,
+  });
 });
 
 test("every module renders for a signed in user", async ({ page }) => {
