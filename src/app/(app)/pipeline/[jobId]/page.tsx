@@ -42,6 +42,7 @@ export default async function PipelinePage({
         openCandidate={open}
         notes={detail.notes}
         activity={detail.activity}
+        fieldDefs={board.fieldDefs}
       />
     </>
   );

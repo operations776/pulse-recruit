@@ -116,6 +116,22 @@ export type CandidateRow = {
   archived_at: string | null;
   last_activity_at: string;
   created_at: string;
+  // Values for the admin-defined columns in person_field_defs, keyed by def
+  // key. Adding a field is a defs row, never a migration.
+  custom_fields: Record<string, string>;
+};
+
+export type CustomFieldType = "text" | "long_text" | "select" | "url";
+
+export type PersonFieldDefRow = {
+  id: string;
+  org_id: string;
+  key: string;
+  label: string;
+  field_type: CustomFieldType;
+  options: string[];
+  sort: number;
+  created_at: string;
 };
 
 export type NoteRow = {

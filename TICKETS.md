@@ -160,9 +160,9 @@ PLS-45, so the port is the parts Pulse did not have yet.
 | --- | --- | --- |
 | PLS-73 | Tasks: status and priority enums, task_assignees join table, replace_task_assignees RPC with in-transaction notifications, org_members directory, Mine and Everyone views, always-mounted add row, inline dropdowns, sortable columns, due colouring, a truthful bell | done |
 | PLS-74 | Content: author filter (Mine, Everyone, per teammate), quick-add row on the backlog, Ideas and All-posts tabs with due and A-Z sort | done |
-| PLS-75 | Talent: pools as stageless rosters, one-way job-into-pool filing, Add-to-job bulk action | todo |
-| PLS-76 | Talent: CSV export, whole job or the selection | todo |
-| PLS-77 | Talent: custom fields, defs table plus jsonb values with inline editors | todo |
+| PLS-75 | Talent: pools as stageless rosters, one-way job-into-pool filing, Add-to-job bulk action | blocked: the board still renders the old candidates table while the person and candidacy cutover is in flight in the AI session's branch. A roster UI built on a table scheduled for deletion is orphaned work. Build pools on candidacies once the cutover lands |
+| PLS-76 | Talent: CSV export, whole job or the selection, Excel formula defusal and a UTF-8 BOM | done |
+| PLS-77 | Talent: custom fields, defs table plus jsonb values on both candidates and people, atomic per-key merge in SQL, inline editors in the drawer, admin manage dialog | done |
 | PLS-78 | Talent: public application link per job, find-or-create by email, applied stage | todo |
 
 Flagged out of scope until their infrastructure exists: stage emails (no send

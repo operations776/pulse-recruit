@@ -11,12 +11,14 @@ import { CopyField, StatusChip } from "@/components/ui/misc";
 import { Drawer } from "@/components/ui/overlay";
 import { Activity, freshnessFor } from "@/components/ui/pulse-dot";
 import { useToast } from "@/components/ui/toast";
+import { CustomFieldsSection } from "@/components/ats/custom-fields";
 import { addNote, moveCandidate } from "@/lib/actions";
 import { ownerLabel } from "@/lib/people";
 import type {
   ActivityRow,
   CandidateRow,
   NoteRow,
+  PersonFieldDefRow,
   StageRow,
 } from "@/lib/supabase/types";
 import { formatDate, relativeTime } from "@/lib/time";
@@ -29,6 +31,8 @@ export function CandidateDrawer({
   notes,
   activity,
   viewerId,
+  fieldDefs = [],
+  isAdmin = false,
   onClose,
 }: {
   candidate: CandidateRow | null;
@@ -38,6 +42,8 @@ export function CandidateDrawer({
   // Only the person holding the session can be named, so authorship is shown
   // relative to them rather than with an invented display name.
   viewerId?: string;
+  fieldDefs?: PersonFieldDefRow[];
+  isAdmin?: boolean;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -208,6 +214,12 @@ export function CandidateDrawer({
                 ))}
               </dl>
             </section>
+
+            <CustomFieldsSection
+              candidate={candidate}
+              defs={fieldDefs}
+              isAdmin={isAdmin}
+            />
 
             <section>
               <h3 className="legend mb-2.5 text-ink-2">Move to stage</h3>

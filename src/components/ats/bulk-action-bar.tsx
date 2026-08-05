@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, MoveRight, Trash2, X } from "lucide-react";
+import { Archive, Download, MoveRight, Trash2, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/overlay";
@@ -23,10 +23,12 @@ export function BulkActionBar({
   ids,
   stages,
   onClear,
+  onExport,
 }: {
   ids: string[];
   stages: StageRow[];
   onClear: () => void;
+  onExport: () => void;
 }) {
   const { notify } = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -108,6 +110,15 @@ export function BulkActionBar({
           >
             <Archive size={16} strokeWidth={1.5} />
             Archive
+          </button>
+
+          <button
+            onClick={onExport}
+            disabled={busy}
+            className="flex h-7 items-center gap-1.5 rounded-control px-2.5 text-[12px] font-medium hover:bg-sheet/10 disabled:opacity-40"
+          >
+            <Download size={16} strokeWidth={1.5} />
+            Export CSV
           </button>
 
           <button

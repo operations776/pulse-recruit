@@ -11,6 +11,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import type {
   ContentSkill,
+  CustomFieldType,
   PostStatus,
   SequenceStatus,
   TaskPriority,
@@ -290,6 +291,91 @@ export async function createTask(
   if (error) return fail(readable(error.message));
 
   revalidatePath("/ops/tasks");
+  return { ok: true, data: undefined };
+}
+
+/* ---------------------------------------------------------------------------
+ * Custom fields (PLS-77)
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Patch one custom field on a candidate. The merge happens in SQL, so two
+ * people editing two different fields on the same person cannot eat each
+ * other's writes the way a client-side read-modify-write would.
+ */
+export async function setCandidateField(
+  candidateId: string,
+  key: string,
+  value: string,
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_candidate_field", {
+    target_candidate: candidateId,
+    field_key: key,
+    field_value: value,
+  });
+  if (error) return fail(readable(error.message));
+  // No revalidate: called on blur from inside the open drawer.
+  return { ok: true, data: undefined };
+}
+
+/** Define a new custom column. Admin only, enforced by RLS. */
+export async function createFieldDef(input: {
+  label: string;
+  fieldType: CustomFieldType;
+  options?: string[];
+}): Promise<Result> {
+  const label = input.label.trim();
+  if (!label) return fail("Give the field a name.");
+
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  // The key is derived once at creation and never changes, so renaming the
+  // label later cannot orphan every stored value.
+  const key = label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 40);
+  if (!key) return fail("That name has no usable characters.");
+
+  const { count } = await supabase
+    .from("person_field_defs")
+    .select("id", { count: "exact", head: true });
+
+  const { error } = await supabase.from("person_field_defs").insert({
+    org_id: session.org.id,
+    key,
+    label,
+    field_type: input.fieldType,
+    options: input.options ?? [],
+    sort: count ?? 0,
+  });
+  if (error) {
+    if (error.code === "23505") {
+      return fail("A field with that name already exists.");
+    }
+    if (error.code === "42501") {
+      return fail("Only an admin can define fields.");
+    }
+    return fail(readable(error.message));
+  }
+  return { ok: true, data: undefined };
+}
+
+/** Remove a custom column definition. The stored values become invisible. */
+export async function deleteFieldDef(defId: string): Promise<Result> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("person_field_defs")
+    .delete()
+    .eq("id", defId)
+    .select("id");
+  if (error) return fail(readable(error.message));
+  if (!data || data.length === 0) {
+    return fail("That field was not removed. Only an admin can manage fields.");
+  }
   return { ok: true, data: undefined };
 }
 

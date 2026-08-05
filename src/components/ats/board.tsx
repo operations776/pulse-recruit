@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { AddCandidateDialog } from "@/components/ats/add-candidate-dialog";
@@ -13,11 +13,13 @@ import { Breadcrumb } from "@/components/ui/misc";
 import { useToast } from "@/components/ui/toast";
 import { moveCandidate } from "@/lib/actions";
 import type { Session } from "@/lib/auth";
+import { buildCsv, downloadCsv } from "@/lib/csv";
 import type {
   ActivityRow,
   CandidateRow,
   JobRow,
   NoteRow,
+  PersonFieldDefRow,
   StageRow,
 } from "@/lib/supabase/types";
 import { formatShortDate } from "@/lib/time";
@@ -32,6 +34,7 @@ export function Board({
   openCandidate,
   notes,
   activity,
+  fieldDefs,
 }: {
   job: JobRow;
   stages: StageRow[];
@@ -40,6 +43,7 @@ export function Board({
   openCandidate: CandidateRow | null;
   notes: NoteRow[];
   activity: ActivityRow[];
+  fieldDefs: PersonFieldDefRow[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -131,6 +135,34 @@ export function Board({
       ? `${formatShortDate(job.opens_at)} to ${formatShortDate(job.closes_at)}`
       : "Not set";
 
+  // Serialise rows the board is already holding: an export can never disagree
+  // with the screen. No selection exports the whole role.
+  const exportCsv = (only?: string[]) => {
+    const wanted = only?.length
+      ? candidates.filter((c) => only.includes(c.id))
+      : candidates;
+    const stageName = new Map(stages.map((s) => [s.id, s.name]));
+    const csv = buildCsv(
+      [
+        "Ref", "Name", "Email", "Phone", "Title", "Company", "Location",
+        "LinkedIn", "Salary", "Source", "Stage", "Match", "Added",
+      ],
+      wanted.map((c) => [
+        c.ref, c.name, c.email, c.phone, c.title, c.company_name, c.location,
+        c.linkedin_url, c.salary, c.source,
+        stageName.get(stageOf(c)) ?? "", c.match,
+        c.created_at.slice(0, 10),
+      ]),
+    );
+    downloadCsv(
+      `${job.ref}-${only?.length ? "selection" : "candidates"}.csv`,
+      csv,
+    );
+    notify(
+      `Exported ${wanted.length} ${wanted.length === 1 ? "candidate" : "candidates"} to CSV.`,
+    );
+  };
+
   return (
     <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-paper">
       <div className="border-b border-rule px-6 py-5">
@@ -183,6 +215,14 @@ export function Board({
             aria-label="Search candidates"
             className="w-56"
           />
+          <Button
+            onClick={() => exportCsv()}
+            disabled={candidates.length === 0}
+            aria-label="Export every candidate on this role to CSV"
+          >
+            <Download size={16} strokeWidth={1.5} />
+            Export CSV
+          </Button>
           <Button variant="primary" onClick={() => setAddOpen(true)}>
             <Plus size={16} strokeWidth={1.5} />
             Add candidate
@@ -261,6 +301,7 @@ export function Board({
         ids={selection}
         stages={stages}
         onClear={() => setSelection([])}
+        onExport={() => exportCsv(selection)}
       />
 
       <CandidateDrawer
@@ -269,6 +310,8 @@ export function Board({
         notes={notes}
         activity={activity}
         viewerId={session.userId}
+        fieldDefs={fieldDefs}
+        isAdmin={session.role !== "member"}
         onClose={closeDrawer}
       />
 

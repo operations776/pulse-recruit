@@ -18,6 +18,7 @@ import type {
   NoteRow,
   NotificationRow,
   OrgMember,
+  PersonFieldDefRow,
   PostAsset,
   PostRow,
   TaskAssigneeRow,
@@ -60,7 +61,7 @@ export async function getBoard(jobId: string) {
   const session = await requireSession();
   const supabase = await createClient();
 
-  const [job, stages, candidates] = await Promise.all([
+  const [job, stages, candidates, fieldDefs] = await Promise.all([
     supabase.from("jobs").select("*").eq("id", jobId).maybeSingle(),
     supabase.from("stages").select("*").eq("job_id", jobId).order("position"),
     supabase
@@ -69,6 +70,7 @@ export async function getBoard(jobId: string) {
       .eq("job_id", jobId)
       .is("archived_at", null)
       .order("created_at", { ascending: true }),
+    supabase.from("person_field_defs").select("*").order("sort"),
   ]);
 
   return {
@@ -76,6 +78,7 @@ export async function getBoard(jobId: string) {
     job: job.data as JobRow | null,
     stages: (stages.data ?? []) as StageRow[],
     candidates: (candidates.data ?? []) as CandidateRow[],
+    fieldDefs: (fieldDefs.data ?? []) as PersonFieldDefRow[],
   };
 }
 
