@@ -28,6 +28,8 @@ export default async function ContentPlannerPage({
       posts={planner.posts}
       assets={planner.assets}
       timezone={planner.timezone}
+      meId={planner.meId}
+      members={planner.members}
       month={month}
       view={params.view === "board" ? "board" : "calendar"}
       // Today is read on the server inside the org zone and handed down. A

@@ -150,6 +150,25 @@ Unipile is a third kind of credential. Not a platform key, not a per-org Vault
 key, but an account broker: the key is RecruiterGTM's and the accounts are per
 org. That is why LinkedIn is not on the API keys screen.
 
+## Module specs port (outputs/module-specs-talent-content-tasks.md)
+
+The retainer dashboard's three module specs, rebuilt on Pulse's schema. What
+the spec calls candidates/candidacies already landed as people/candidacies in
+PLS-45, so the port is the parts Pulse did not have yet.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-73 | Tasks: status and priority enums, task_assignees join table, replace_task_assignees RPC with in-transaction notifications, org_members directory, Mine and Everyone views, always-mounted add row, inline dropdowns, sortable columns, due colouring, a truthful bell | done |
+| PLS-74 | Content: author filter (Mine, Everyone, per teammate), quick-add row on the backlog, Ideas and All-posts tabs with due and A-Z sort | done |
+| PLS-75 | Talent: pools as stageless rosters, one-way job-into-pool filing, Add-to-job bulk action | todo |
+| PLS-76 | Talent: CSV export, whole job or the selection | todo |
+| PLS-77 | Talent: custom fields, defs table plus jsonb values with inline editors | todo |
+| PLS-78 | Talent: public application link per job, find-or-create by email, applied stage | todo |
+
+Flagged out of scope until their infrastructure exists: stage emails (no send
+transport wired), interview scheduling and add-to-Google-Calendar (no per-user
+Google OAuth in Pulse).
+
 ## Found on the production deploy
 
 | ID | Ticket | Status |

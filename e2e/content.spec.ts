@@ -17,8 +17,10 @@ async function signIn(page: Page) {
 /** Add a backlog idea and return its hook. */
 async function addIdea(page: Page, hook: string) {
   await page.getByRole("button", { name: "New post" }).click();
-  await page.getByLabel("Hook").fill(hook);
-  await page.getByRole("button", { name: "Add", exact: true }).click();
+  // Scoped to the dialog: the quick-add row outside it also answers to a
+  // label containing "hook".
+  await page.getByRole("dialog").getByLabel("Hook").fill(hook);
+  await page.getByRole("dialog").getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.getByText(hook)).toBeVisible({ timeout: 15_000 });
 }
 
@@ -42,7 +44,35 @@ test("the planner opens on a calendar with a backlog under it", async ({
   // Monday first, and six rows so the grid never changes height between months.
   await expect(page.getByText("Mon", { exact: true })).toBeVisible();
   await expect(page.locator("[data-day]")).toHaveCount(42);
-  await expect(page.getByText(/ideas with no date yet/i)).toBeVisible();
+  await expect(page.getByText(/no date yet/i).first()).toBeVisible();
+});
+
+test("the quick-add row parks an idea without a dialog", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/content");
+
+  const hook = `Quick idea ${Date.now()}`;
+  await page.getByLabel("New idea hook").fill(hook);
+  await page.getByRole("button", { name: "Add idea" }).click();
+  await expect(page.getByText(hook)).toBeVisible({ timeout: 15_000 });
+
+  // Born undated, so it is in the backlog list, not on a square.
+  await expect(page.locator("li", { hasText: hook })).toHaveCount(1);
+
+  await deleteViaDrawer(page, hook);
+});
+
+test("the author filter narrows the calendar", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/content");
+
+  // Every seeded post belongs to the demo user, so Mine and Everyone agree,
+  // and both are one deliberate click. The assertion is that the control
+  // exists and flipping it does not lose the grid.
+  await page.getByRole("button", { name: "Everyone" }).click();
+  await expect(page.locator("[data-day]")).toHaveCount(42);
+  await page.getByRole("button", { name: "Mine", exact: true }).click();
+  await expect(page.locator("[data-day]")).toHaveCount(42);
 });
 
 test("an idea starts in the backlog and a date moves it onto the grid", async ({
@@ -129,8 +159,9 @@ test("the drawer copies the post and records that it went out", async ({
   await expect(page.getByText("The frame")).toBeVisible();
 
   const body = `Body written by the spec ${Date.now()}`;
-  await page.getByLabel("The post").fill(body);
-  await page.getByLabel("Hook").click(); // blur saves
+  const drawer = page.getByRole("complementary");
+  await drawer.getByLabel("The post").fill(body);
+  await drawer.getByLabel("Hook").click(); // blur saves
 
   await page.getByRole("button", { name: "Copy text" }).click();
   await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();

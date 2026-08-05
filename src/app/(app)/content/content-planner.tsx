@@ -15,7 +15,12 @@ import {
   schedulePost,
   setPostStatus,
 } from "@/lib/actions";
-import type { ContentSkill, PostAsset, PostRow } from "@/lib/supabase/types";
+import type {
+  ContentSkill,
+  OrgMember,
+  PostAsset,
+  PostRow,
+} from "@/lib/supabase/types";
 import {
   dayKey,
   instantAt,
@@ -43,6 +48,8 @@ export function ContentPlanner({
   month,
   today,
   view,
+  meId,
+  members,
 }: {
   posts: PostRow[];
   assets: Record<string, PostAsset[]>;
@@ -50,6 +57,8 @@ export function ContentPlanner({
   month: string;
   today: string;
   view: View;
+  meId: string;
+  members: OrgMember[];
 }) {
   const router = useRouter();
   const { notify } = useToast();
@@ -65,13 +74,24 @@ export function ContentPlanner({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropDay, setDropDay] = useState<string | null>(null);
 
+  // Whose calendar you are looking at: yours, everyone's, or one teammate's.
+  // Yours is the default, because this screen is each person planning their
+  // own posts, not an approval queue.
+  const [author, setAuthor] = useState<string>("mine");
+
   const open = posts.find((p) => p.id === openId) ?? null;
+
+  const visible = useMemo(() => {
+    if (author === "all") return posts;
+    const target = author === "mine" ? meId : author;
+    return posts.filter((p) => p.author_id === target);
+  }, [posts, author, meId]);
 
   // One pass over the posts, keyed by the day they fall on in the workspace
   // zone. Doing this per cell would walk the list forty two times.
   const byDay = useMemo(() => {
     const map = new Map<string, PostRow[]>();
-    for (const post of posts) {
+    for (const post of visible) {
       if (!post.scheduled_for) continue;
       const key = dayKey(post.scheduled_for, timezone);
       const list = map.get(key) ?? [];
@@ -86,18 +106,18 @@ export function ContentPlanner({
       );
     }
     return map;
-  }, [posts, timezone]);
+  }, [visible, timezone]);
 
   const backlog = useMemo(
-    () => posts.filter((p) => !p.scheduled_for),
-    [posts],
+    () => visible.filter((p) => !p.scheduled_for),
+    [visible],
   );
 
   const counts = {
-    published: posts.filter((p) => p.status === "published").length,
-    scheduled: posts.filter((p) => p.status === "scheduled").length,
-    drafted: posts.filter((p) => p.status === "drafted").length,
-    idea: posts.filter((p) => p.status === "idea").length,
+    published: visible.filter((p) => p.status === "published").length,
+    scheduled: visible.filter((p) => p.status === "scheduled").length,
+    drafted: visible.filter((p) => p.status === "drafted").length,
+    idea: visible.filter((p) => p.status === "idea").length,
   };
 
   const href = (next: { month?: string; view?: View }) =>
@@ -139,6 +159,27 @@ export function ContentPlanner({
         day
           ? `${name} added and set for ${day} at ${DEFAULT_TIME}. Pulse does not post it for you yet, so this records the plan.`
           : `${name} added to the backlog.`,
+      );
+      router.refresh();
+    });
+  };
+
+  // The backlog's always-mounted capture row. Same write as the dialog, no
+  // layer to close first.
+  const quickAdd = (skill: ContentSkill, hook: string, day: string) => {
+    const name = SKILL_BY_KEY[skill].name;
+    startTransition(async () => {
+      const created = await createPost(
+        skill,
+        hook,
+        day ? instantAt(day, DEFAULT_TIME, timezone) : null,
+      );
+      if (!created.ok) {
+        notify(`${created.error} The idea was not added.`, "danger");
+        return;
+      }
+      notify(
+        day ? `${name} added and set for ${day}.` : `${name} parked in the backlog.`,
       );
       router.refresh();
     });
@@ -265,6 +306,31 @@ export function ContentPlanner({
             ))}
           </div>
 
+          {/* Whose posts. Chips rather than a select, because with a small
+              team every option deserves to be one click, not two. */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {[
+              ["mine", "Mine"] as const,
+              ["all", "Everyone"] as const,
+              ...members
+                .filter((m) => m.user_id !== meId)
+                .map((m) => [m.user_id, m.display_name] as const),
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setAuthor(key)}
+                aria-pressed={author === key}
+                className={`legend flex h-7 items-center rounded-control px-2.5 ${
+                  author === key
+                    ? "bg-well text-ink"
+                    : "text-ink-3 hover:text-ink"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           {view === "calendar" ? (
             <div className="flex items-center gap-2">
               <Link
@@ -319,19 +385,23 @@ export function ContentPlanner({
 
             <Backlog
               posts={backlog}
+              allPosts={visible}
+              timezone={timezone}
               draggingId={draggingId}
               onOpen={(post) => setOpenId(post.id)}
               onSchedule={(postId, day) => schedule(postId, day)}
+              onQuickAdd={quickAdd}
               onDragStart={setDraggingId}
               onDragEnd={() => {
                 setDraggingId(null);
                 setDropDay(null);
               }}
+              adding={pending}
             />
           </>
         ) : (
           <StatusBoard
-            posts={posts}
+            posts={visible}
             timezone={timezone}
             onOpen={(post) => setOpenId(post.id)}
           />

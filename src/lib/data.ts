@@ -298,12 +298,13 @@ export async function getPlanner(month: string) {
   const session = await requireSession();
   const supabase = await createClient();
 
-  const [postsResult, assetsResult] = await Promise.all([
+  const [postsResult, assetsResult, membersResult] = await Promise.all([
     supabase
       .from("content_posts")
       .select("*")
       .order("created_at", { ascending: false }),
     supabase.from("content_assets").select("*").order("sort"),
+    supabase.rpc("org_members", { target_org: session.org.id }),
   ]);
 
   const posts = (postsResult.data ?? []) as PostRow[];
@@ -346,6 +347,8 @@ export async function getPlanner(month: string) {
     posts,
     assets: Object.fromEntries(byPost) as Record<string, PostAsset[]>,
     timezone: tz,
+    meId: session.userId,
+    members: (membersResult.data ?? []) as OrgMember[],
   };
 }
 
