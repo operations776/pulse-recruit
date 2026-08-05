@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { ModuleRail } from "@/components/shell/module-rail";
 import { NotificationsBell } from "@/components/shell/notifications-bell";
+import { RailAside } from "@/components/shell/rail-aside";
 import { TopBar } from "@/components/shell/top-bar";
 import { ToastProvider } from "@/components/ui/toast";
 import { requireSession } from "@/lib/auth";
@@ -38,7 +39,16 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           }
         />
         <div className="flex min-h-0 flex-1">
-          <ModuleRail />
+          {/* The rail's lower half carries live data for the active module.
+              Streamed, so a slow query there can never hold up the page: the
+              nav renders instantly and the panel fills in. */}
+          <ModuleRail
+            aside={
+              <Suspense fallback={null}>
+                <RailAside />
+              </Suspense>
+            }
+          />
           {children}
         </div>
       </div>

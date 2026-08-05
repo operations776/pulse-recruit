@@ -3,11 +3,16 @@
 import { Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 import { MODULES, moduleForPath } from "@/config/modules";
 
 // Two levels, always in the same place. Modules on the left rail, the sections
 // of the active module beside them. DESIGN.md: nothing moves between screens.
-export function ModuleRail() {
+//
+// `aside` is whatever live data the active module wants under its nav. It is a
+// node rather than data because the rail should not know what a scheduled post
+// is; the layout composes it and streams it.
+export function ModuleRail({ aside }: { aside?: ReactNode }) {
   const pathname = usePathname();
   const active = moduleForPath(pathname);
 
@@ -108,9 +113,14 @@ export function ModuleRail() {
           })}
         </ul>
 
-        <p className="mt-auto border-t border-rule p-3 text-[12px] leading-[1.4] text-ink-3">
-          {active.blurb}
-        </p>
+        {/*
+          What used to live here was `active.blurb`, a static marketing
+          sentence pinned to the floor with mt-auto. It never changed, it was
+          read once, and the mt-auto was what actively manufactured ~700px of
+          void between the nav and it. The rail now carries whatever the
+          active module has that is live, and nothing when it has nothing.
+        */}
+        {aside ? <div className="min-h-0 flex-1 overflow-y-auto">{aside}</div> : null}
       </nav>
     </>
   );

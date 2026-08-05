@@ -28,7 +28,8 @@ export function StatusBoard({
   onOpen: (post: PostRow) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-shell border border-rule bg-sheet">
+    // Section inside the planner shell, not a shell of its own.
+    <div>
       <div className="flex">
         {COLUMNS.map((column) => {
           const inColumn = posts.filter((p) => p.status === column.status);

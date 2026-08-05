@@ -38,12 +38,14 @@ export default async function ContentPlannerPage({
         (planner.persona?.voice_profile as { summary?: string } | null)?.summary,
       )}
       generationConfigured={hasModelKey()}
+      pendingLessons={planner.pendingLessons}
       month={month}
       view={params.view === "board" ? "board" : "calendar"}
       // Today is read on the server inside the org zone and handed down. A
       // client-side clock read would disagree with the server render and move
       // the highlight after hydration.
       today={dayKey(new Date(), planner.timezone)}
+      todayInstant={new Date().toISOString()}
     />
   );
 }

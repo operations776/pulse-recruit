@@ -79,8 +79,11 @@ export function Backlog({
   );
 
   return (
-    <section className="overflow-hidden rounded-shell border border-rule bg-sheet">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-rule px-4 py-2.5">
+    // A section of the planner shell now, not a shell of its own. DESIGN.md
+    // section 7: sections inside a shell meet on a 1px rule with no gap and no
+    // radius, and only the shell's outer corners are rounded.
+    <section className="border-t border-rule">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-rule px-4 py-2">
         <div className="well flex gap-1 rounded-control p-1">
           {tab("ideas", "Ideas", posts.length)}
           {tab("all", "All posts", allPosts.length)}
@@ -116,7 +119,9 @@ export function Backlog({
       <QuickAddRow onAdd={onQuickAdd} adding={adding} />
 
       {listed.length === 0 ? (
-        <p className="px-4 py-8 text-center text-[12px] text-ink-3">
+        // One line on the shared rule, not 32px of centred padding around a
+        // sentence. Same shape as the empty states in /ops/tasks.
+        <p className="px-4 py-3 text-[12px] text-ink-3">
           {view === "ideas"
             ? "Nothing waiting. Park the next idea above before it escapes."
             : "No posts yet this month."}

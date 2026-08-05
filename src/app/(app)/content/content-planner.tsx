@@ -37,11 +37,11 @@ import {
 import { Backlog } from "./backlog";
 import { CalendarGrid } from "./calendar-grid";
 import { GenerateDialog } from "./generate-dialog";
+import { StatStrip, type Stat } from "./stat-strip";
 import { PostDialog } from "./post-dialog";
 import { SkillsDialog } from "./skills-dialog";
 import { StatusBoard } from "./content-board";
 
-const pad2 = (n: number) => String(n).padStart(2, "0");
 
 // The Button primitive renders a real button and this control navigates, so it
 // wears Button's classes on a Link. Same keycap edge, same radius.
@@ -66,6 +66,8 @@ export function ContentPlanner({
   shapes,
   hasPersona,
   generationConfigured,
+  todayInstant,
+  pendingLessons,
 }: {
   posts: PostRow[];
   assets: Record<string, PostAsset[]>;
@@ -78,6 +80,9 @@ export function ContentPlanner({
   shapes: Shape[];
   hasPersona: boolean;
   generationConfigured: boolean;
+  /** Fixed on the server so the stat strip agrees across hydration. */
+  todayInstant: string;
+  pendingLessons: number;
 }) {
   const router = useRouter();
   const { notify } = useToast();
@@ -130,12 +135,37 @@ export function ContentPlanner({
     [visible],
   );
 
-  const counts = {
-    published: visible.filter((p) => p.status === "published").length,
-    scheduled: visible.filter((p) => p.status === "scheduled").length,
-    drafted: visible.filter((p) => p.status === "drafted").length,
-    idea: visible.filter((p) => p.status === "idea").length,
-  };
+  /**
+   * The stat strip. Deliberately not the four status counts it replaced:
+   * "Drafted 01" answers a question nobody asks, while "nothing planned for
+   * the next 7 days" is the one thing a content calendar exists to tell you.
+   */
+  const stats = useMemo((): Stat[] => {
+    const now = new Date(todayInstant);
+    const weekEnd = new Date(now.getTime() + 7 * 86_400_000);
+
+    const dated = visible.filter((p) => p.scheduled_for);
+    const upcoming = dated.filter((p) => {
+      const at = new Date(p.scheduled_for!);
+      return at >= now && at <= weekEnd && p.status !== "published";
+    });
+    const overdue = dated.filter(
+      (p) => p.status === "scheduled" && new Date(p.scheduled_for!) < now,
+    );
+
+    return [
+      { label: "next 7 days", value: upcoming.length },
+      // Past its slot and still not marked published: the calendar is lying
+      // about that post until someone acts on it.
+      { label: "overdue", value: overdue.length, attention: true },
+      { label: "ideas", value: visible.filter((p) => !p.scheduled_for).length },
+      {
+        label: "published",
+        value: visible.filter((p) => p.status === "published").length,
+      },
+      { label: "lessons", value: pendingLessons, attention: true },
+    ];
+  }, [visible, todayInstant, pendingLessons]);
 
   const href = (next: { month?: string; view?: View }) =>
     `/content?month=${next.month ?? month}&view=${next.view ?? view}`;
@@ -260,141 +290,133 @@ export function ContentPlanner({
   };
 
   return (
-    <main className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-paper">
-      <header className="border-b border-rule px-6 py-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="legend text-ink-3">Pillar 5 / content</p>
-            <h1 className="display mt-2 text-[18px]">Content planner</h1>
-            <p className="mt-2 max-w-[62ch] text-[12px] text-ink-2">
-              Thirty posts a quarter is the target. Plan the week here instead
-              of starting from zero every Monday.
-            </p>
-          </div>
+    // The shell does not scroll; the body does. Previously `main` scrolled as
+    // one column, so 180px of header pushed the calendar down and the sixth
+    // week sat below the fold. Same shape as /ops/tasks.
+    <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-paper">
+      {/*
+        The header was an eyebrow that repeated the sidebar 208px to its left,
+        a title, a two-sentence explainer nobody rereads, and four two-digit
+        numbers spread across 40px gaps in a row that was a quarter full. It is
+        now one 48px band: identity on the left, the work on the right.
+      */}
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-rule px-6 py-3">
+        <h1 className="display shrink-0 text-[18px]">Content</h1>
 
-          {/* Skills is reference material, so it sits on top of the work
-              rather than replacing it. One vermilion verb per view, and New
-              post spends it. */}
-          <div className="flex items-center gap-2">
-            {/* An unbuilt voice is the one thing that makes every draft
-                generic, so it is stated here rather than discovered later. */}
-            <Link
-              href="/content/persona"
-              className={
-                hasPersona
-                  ? LINK_BUTTON
-                  : `${LINK_BUTTON} border-amber bg-amber-bg text-amber-text [--edge:var(--color-amber)]`
-              }
-            >
-              <UserRound size={16} strokeWidth={1.5} />
-              {hasPersona ? "Your voice" : "Build your voice"}
-            </Link>
-            <Button onClick={() => setSkillsOpen(true)}>
-              <Sparkles size={16} strokeWidth={1.5} />
-              Skills
-            </Button>
-            <Button variant="primary" onClick={() => setAddOpen(true)}>
-              <Plus size={16} strokeWidth={2} />
-              New post
-            </Button>
-          </div>
+        <StatStrip stats={stats} />
+
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {/* An unbuilt voice is the one thing that makes every draft
+              generic, so it is stated here rather than discovered later. */}
+          <Link
+            href="/content/persona"
+            className={
+              hasPersona
+                ? LINK_BUTTON
+                : `${LINK_BUTTON} border-amber bg-amber-bg text-amber-text [--edge:var(--color-amber)]`
+            }
+          >
+            <UserRound size={16} strokeWidth={1.5} />
+            {hasPersona ? "Your voice" : "Build your voice"}
+          </Link>
+          <Button onClick={() => setSkillsOpen(true)}>
+            <Sparkles size={16} strokeWidth={1.5} />
+            Skills
+          </Button>
+          <Button variant="primary" onClick={() => setAddOpen(true)}>
+            <Plus size={16} strokeWidth={2} />
+            New post
+          </Button>
         </div>
-
-        <dl className="mt-4 flex flex-wrap gap-x-10 gap-y-3">
-          {[
-            ["Published", counts.published],
-            ["Scheduled", counts.scheduled],
-            ["Drafted", counts.drafted],
-            ["Ideas", counts.idea],
-          ].map(([label, value]) => (
-            <div key={label as string} className="flex flex-col gap-1">
-              <dt className="legend text-ink-3">{label as string}</dt>
-              <dd className="display text-[21px] leading-none">
-                {pad2(value as number)}
-              </dd>
-            </div>
-          ))}
-        </dl>
       </header>
 
-      <div className="flex flex-col gap-5 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* DESIGN.md section 9: a toggle group is an inset well holding caps,
-              and the active cap is teal because teal means on. */}
-          <div className="well flex gap-1 rounded-control p-1">
-            {(
-              [
-                ["calendar", "Calendar"],
-                ["board", "Board"],
-              ] as [View, string][]
-            ).map(([key, label]) => (
-              <Link
-                key={key}
-                href={href({ view: key })}
-                aria-current={view === key ? "true" : undefined}
-                className={[
-                  "legend flex h-7 items-center rounded-control px-3",
-                  view === key
-                    ? "cap bg-teal text-sheet [--edge:var(--color-teal-edge)]"
-                    : "text-ink-2 hover:text-ink",
-                ].join(" ")}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-5">
+        {/*
+          One shell, not three. The toolbar used to float naked above a
+          calendar shell and a backlog shell with 20px of paper showing
+          between them. DESIGN.md section 7: sections inside a shell meet on a
+          1px rule with no gap, and gaps exist only between shells.
+        */}
+        <div className="overflow-hidden rounded-shell border border-rule bg-sheet">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-rule px-4 py-2">
+            {/* DESIGN.md section 9: a toggle group is an inset well holding
+                caps, and the active cap is teal because teal means on. */}
+            <div className="well flex gap-1 rounded-control p-1">
+              {(
+                [
+                  ["calendar", "Calendar"],
+                  ["board", "Board"],
+                ] as [View, string][]
+              ).map(([key, label]) => (
+                <Link
+                  key={key}
+                  href={href({ view: key })}
+                  aria-current={view === key ? "true" : undefined}
+                  className={[
+                    "legend flex h-7 items-center rounded-control px-3",
+                    view === key
+                      ? "cap bg-teal text-sheet [--edge:var(--color-teal-edge)]"
+                      : "text-ink-2 hover:text-ink",
+                  ].join(" ")}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
 
-          {/* Whose posts. Chips rather than a select, because with a small
-              team every option deserves to be one click, not two. */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {[
-              ["mine", "Mine"] as const,
-              ["all", "Everyone"] as const,
-              ...members
-                .filter((m) => m.user_id !== meId)
-                .map((m) => [m.user_id, m.display_name] as const),
-            ].map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setAuthor(key)}
-                aria-pressed={author === key}
-                className={`legend flex h-7 items-center rounded-control px-2.5 ${
-                  author === key
-                    ? "bg-well text-ink"
-                    : "text-ink-3 hover:text-ink"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            {/* Whose posts. Chips rather than a select, because with a small
+                team every option deserves to be one click, not two. */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[
+                ["mine", "Mine"] as const,
+                ["all", "Everyone"] as const,
+                ...members
+                  .filter((m) => m.user_id !== meId)
+                  .map((m) => [m.user_id, m.display_name] as const),
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setAuthor(key)}
+                  aria-pressed={author === key}
+                  className={`legend flex h-7 items-center rounded-control px-2.5 ${
+                    author === key
+                      ? "bg-well text-ink"
+                      : "text-ink-3 hover:text-ink"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {view === "calendar" ? (
+              <div className="ml-auto flex items-center gap-2">
+                <Link
+                  href={href({ month: shiftMonth(month, -1) })}
+                  aria-label="Previous month"
+                  className="cap flex size-7 items-center justify-center rounded-control border border-ink text-ink hover:bg-well [--edge:var(--color-ink)]"
+                >
+                  <ChevronLeft size={16} strokeWidth={1.5} />
+                </Link>
+                {/* min-w-[10rem] reserved 160px for a string needing ~90px.
+                    The label sizes to its content now. */}
+                <span className="display text-center text-[13px]">
+                  {monthLabel(month)}
+                </span>
+                <Link
+                  href={href({ month: shiftMonth(month, 1) })}
+                  aria-label="Next month"
+                  className="cap flex size-7 items-center justify-center rounded-control border border-ink text-ink hover:bg-well [--edge:var(--color-ink)]"
+                >
+                  <ChevronRight size={16} strokeWidth={1.5} />
+                </Link>
+              </div>
+            ) : null}
           </div>
 
           {view === "calendar" ? (
-            <div className="flex items-center gap-2">
-              <Link
-                href={href({ month: shiftMonth(month, -1) })}
-                aria-label="Previous month"
-                className="cap flex size-7 items-center justify-center rounded-control border border-ink text-ink hover:bg-well [--edge:var(--color-ink)]"
-              >
-                <ChevronLeft size={16} strokeWidth={1.5} />
-              </Link>
-              <span className="display min-w-[10rem] text-center text-[13px]">
-                {monthLabel(month)}
-              </span>
-              <Link
-                href={href({ month: shiftMonth(month, 1) })}
-                aria-label="Next month"
-                className="cap flex size-7 items-center justify-center rounded-control border border-ink text-ink hover:bg-well [--edge:var(--color-ink)]"
-              >
-                <ChevronRight size={16} strokeWidth={1.5} />
-              </Link>
-            </div>
-          ) : null}
-        </div>
-
-        {view === "calendar" ? (
-          <>
-            <CalendarGrid
+            <>
+              <CalendarGrid
               month={month}
               today={today}
               timezone={timezone}
@@ -439,13 +461,14 @@ export function ContentPlanner({
               adding={pending}
             />
           </>
-        ) : (
-          <StatusBoard
-            posts={visible}
-            timezone={timezone}
-            onOpen={(post) => setOpenId(post.id)}
-          />
-        )}
+          ) : (
+            <StatusBoard
+              posts={visible}
+              timezone={timezone}
+              onOpen={(post) => setOpenId(post.id)}
+            />
+          )}
+        </div>
       </div>
 
       <GenerateDialog

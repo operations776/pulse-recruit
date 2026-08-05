@@ -338,8 +338,14 @@ export async function getPlanner(month: string) {
   const session = await requireSession();
   const supabase = await createClient();
 
-  const [postsResult, assetsResult, membersResult, shapesResult, personaResult] =
-    await Promise.all([
+  const [
+    postsResult,
+    assetsResult,
+    membersResult,
+    shapesResult,
+    personaResult,
+    lessonsResult,
+  ] = await Promise.all([
       supabase
         .from("content_posts")
         .select("*")
@@ -355,6 +361,13 @@ export async function getPlanner(month: string) {
         .select("*")
         .eq("user_id", session.userId)
         .maybeSingle(),
+      // Count only. The planner shows the number in the stat strip and links
+      // to the persona screen for the detail, so pulling the rows here would
+      // ship a payload nothing on this page renders.
+      supabase
+        .from("persona_lessons")
+        .select("id", { count: "exact", head: true })
+        .is("applied_at", null),
     ]);
 
   const posts = (postsResult.data ?? []) as PostRow[];
@@ -401,6 +414,7 @@ export async function getPlanner(month: string) {
     members: (membersResult.data ?? []) as OrgMember[],
     shapes: allShapes((shapesResult.data ?? []) as ContentShapeRow[]),
     persona: (personaResult.data ?? null) as PersonaRow | null,
+    pendingLessons: lessonsResult.count ?? 0,
   };
 }
 

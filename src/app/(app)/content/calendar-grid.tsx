@@ -48,7 +48,9 @@ export function CalendarGrid({
   const weeks = monthGrid(month);
 
   return (
-    <div className="overflow-hidden rounded-shell border border-rule bg-sheet">
+    // No shell of its own: the planner owns the shell and this is a section
+    // inside it, joined on the toolbar's bottom rule.
+    <div>
       <div className="flex border-b border-rule">
         {WEEKDAYS.map((label) => (
           <div
@@ -89,7 +91,10 @@ export function CalendarGrid({
                   onDropOn(cell.day, event.dataTransfer.getData("text/plain"));
                 }}
                 className={[
-                  "-ml-px flex min-h-[104px] w-0 flex-1 flex-col gap-1.5 border-l border-rule p-2 first:ml-0 first:border-l-0",
+                  // 88px, not the old 104px: an empty cell held ~86px of air
+                  // to show one date digit, and a month has ~30 of them. 88 is
+                  // on the 8px scale; 104 was not.
+                  "-ml-px flex min-h-[88px] w-0 flex-1 flex-col gap-1 border-l border-rule p-1.5 first:ml-0 first:border-l-0",
                   cell.inMonth ? "" : "bg-paper",
                   isDropTarget
                     ? "well outline outline-2 -outline-offset-2 outline-ink"
