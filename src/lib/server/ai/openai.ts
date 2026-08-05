@@ -90,6 +90,16 @@ function readableFailure(status: number, body: string): ProviderError {
       true,
     );
   }
+  // A 404 here is almost always the model name, not the endpoint: an account
+  // without access to the configured model gets one. PLS-94 moved the default
+  // to gpt-5, so name the variable and the fix rather than leaving somebody to
+  // read a raw provider string.
+  if (status === 404) {
+    return new ProviderError(
+      `Pulse is configured to use the model "${MODEL}", which this OpenAI account cannot reach. Set OPENAI_MODEL to a model the account has access to, and update MODEL_RATES to match. Nothing was charged.`,
+      false,
+    );
+  }
   if (status >= 500) {
     return new ProviderError(
       "The model provider is having trouble. Try again in a moment.",

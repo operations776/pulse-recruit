@@ -19,7 +19,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // must be runnable without building the app.
 const CREDITS_PER_USD = 100;
 const RATES = {
-  inputPerMillionUsd: 2.5,
+  // gpt-5, matching MODEL_RATES in pricing.ts. Both move together or this
+  // script reports a cost the product does not charge.
+  inputPerMillionUsd: 1.25,
   outputPerMillionUsd: 10,
   searchUsd: 0.005,
   pageReadUsd: 0.001,
@@ -46,7 +48,7 @@ const note = (msg) => console.log(`        ${msg}`);
 
 async function checkModel() {
   const key = process.env.OPENAI_API_KEY;
-  const model = process.env.OPENAI_MODEL ?? "gpt-4o";
+  const model = process.env.OPENAI_MODEL ?? "gpt-5";
 
   if (!key) {
     fail("OPENAI_API_KEY is not set. The BD engine and the ops manager cannot answer.");
