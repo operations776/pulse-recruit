@@ -3,18 +3,30 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { requireSession } from "@/lib/auth";
-import { buildVoiceProfile, distilLesson } from "@/lib/server/ai/content";
+import {
+  buildShape,
+  buildVoiceProfile,
+  distilLesson,
+} from "@/lib/server/ai/content";
 import { hasModelKey } from "@/lib/server/ai/openai";
 import { SURFACE_LIMITS } from "@/lib/server/ai/pricing";
 import {
+  type ConnectResult,
+  connectWithCookie,
+  connectWithCredentials,
   createHostedAuthLink,
   deleteAccount,
+  getAccount,
   hasUnipile,
+  resendCheckpoint,
+  solveCheckpoint,
 } from "@/lib/server/unipile";
 import { createClient } from "@/lib/supabase/server";
+import { MANUAL_STATUSES } from "@/lib/supabase/types";
 import type {
   ContentSkill,
   CustomFieldType,
+  ManualPostStatus,
   PostStatus,
   SequenceStatus,
   TaskPriority,
@@ -476,6 +488,72 @@ export async function applyLesson(
   return { ok: true, data: undefined };
 }
 
+/**
+ * Draft a shape from a sentence. Does not save: the caller edits it first.
+ *
+ * Metered like every other provider call, on the content surface, so a shape
+ * that costs money to draft is a shape the ledger knows about.
+ */
+export async function draftShape(
+  description: string,
+): Promise<Result<{ name: string; blurb: string; prompt: string }>> {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  if (!hasModelKey()) {
+    return fail(
+      "This deployment has no model key, so nothing can be drafted. You can still write the frame by hand.",
+    );
+  }
+
+  const limits = SURFACE_LIMITS.content;
+  const { data: claim, error: claimError } = await supabase.rpc("begin_ask", {
+    target_org: session.org.id,
+    target_surface: "content",
+    question: `Design a shape: ${description}`,
+    reserve: limits.reserveCredits,
+  });
+  if (claimError) return fail(readable(claimError.message));
+  if (!claim) {
+    return fail(
+      "Your credit allowance for this week is spent, so nothing was drafted and nothing was charged.",
+    );
+  }
+
+  const messageId = (claim as { message_id: string }).message_id;
+
+  try {
+    const outcome = await buildShape({ description });
+
+    await supabase.rpc("finish_ask", {
+      message: messageId,
+      answer_body: outcome.shape.name,
+      answer_sources: [],
+      actual_cost: outcome.credits,
+      run_status: "complete",
+      answer_meta: outcome.meta,
+      error_text: null,
+    });
+
+    return { ok: true, data: outcome.shape };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "The shape could not be drafted. Nothing was charged.";
+    await supabase.rpc("finish_ask", {
+      message: messageId,
+      answer_body: "",
+      answer_sources: [],
+      actual_cost: 0,
+      run_status: "failed",
+      answer_meta: {},
+      error_text: message,
+    });
+    return fail(message);
+  }
+}
+
 /** Add a post shape this org can write through. */
 export async function createShape(input: {
   name: string;
@@ -838,8 +916,15 @@ export async function createWrittenPost(input: {
 
 export async function setPostStatus(
   postId: string,
-  status: PostStatus,
+  status: ManualPostStatus,
 ): Promise<Result> {
+  // `publishing` and `failed` belong to the cron. Accepting either from a
+  // client would let a stray call mark a post as in flight, which the claim
+  // would then skip forever.
+  if (!MANUAL_STATUSES.includes(status)) {
+    return fail("That is not a status a post can be moved to by hand.");
+  }
+
   const supabase = await createClient();
   const patch: {
     status: PostStatus;
@@ -859,11 +944,23 @@ export async function setPostStatus(
     patch.published_at = null;
   }
 
-  const { error } = await supabase
+  // `neq status publishing` is the race guard. Between a claim and LinkedIn
+  // answering there is a window where the post is already on its way out;
+  // moving it back to a draft in that window would leave the row lying about
+  // something that has already been published.
+  const { data: moved, error } = await supabase
     .from("content_posts")
     .update(patch)
-    .eq("id", postId);
+    .eq("id", postId)
+    .neq("status", "publishing")
+    .select("id");
   if (error) return fail(readable(error.message));
+
+  if (!moved || moved.length === 0) {
+    return fail(
+      "That post is being published right now, so it cannot be changed. Give it a moment and reload.",
+    );
+  }
 
   // Publishing a post that was generated and then edited is the moment the
   // persona has something real to learn from. Deliberately after the status
@@ -953,6 +1050,12 @@ export async function schedulePost(
   if (readError) return fail(readable(readError.message));
   if (!existing) return fail("That post no longer exists.");
 
+  if (existing.status === "publishing") {
+    return fail(
+      "That post is being published right now, so it cannot be moved. Give it a moment and reload.",
+    );
+  }
+
   const status: PostStatus =
     existing.status === "published"
       ? "published"
@@ -962,11 +1065,64 @@ export async function schedulePost(
           ? "drafted"
           : "idea";
 
-  const { error } = await supabase
+  const { data: moved, error } = await supabase
     .from("content_posts")
-    .update({ scheduled_for: when, status })
-    .eq("id", postId);
+    .update({
+      scheduled_for: when,
+      status,
+      // Giving a failed post a new date is how you retry it. The error came
+      // from the last attempt and would be a lie on the next one, and the
+      // attempt count resets or three old failures would block the claim.
+      ...(existing.status === "failed"
+        ? { publish_error: null, publish_attempts: 0 }
+        : {}),
+    })
+    .eq("id", postId)
+    .neq("status", "publishing")
+    .select("id");
   if (error) return fail(readable(error.message));
+
+  if (!moved || moved.length === 0) {
+    return fail(
+      "That post started publishing while you were moving it. Reload to see where it landed.",
+    );
+  }
+
+  revalidatePath("/content");
+  return { ok: true, data: undefined };
+}
+
+/**
+ * Put a failed post back in the queue.
+ *
+ * PLS-88. A failure is terminal on purpose: the publisher does not keep
+ * retrying something LinkedIn refused. This is the deliberate second go, and it
+ * clears the attempt count, because three old failures would otherwise make the
+ * claim skip the row no matter what was fixed.
+ *
+ * The new time is now, not the original one: a post whose slot passed while it
+ * was failing should go out when the person retrying it says so.
+ */
+export async function retryPost(postId: string): Promise<Result> {
+  const supabase = await createClient();
+
+  const { data: moved, error } = await supabase
+    .from("content_posts")
+    .update({
+      status: "scheduled" as const,
+      scheduled_for: new Date().toISOString(),
+      publish_error: null,
+      publish_attempts: 0,
+      auto_publish: true,
+    })
+    .eq("id", postId)
+    .eq("status", "failed")
+    .select("id");
+  if (error) return fail(readable(error.message));
+
+  if (!moved || moved.length === 0) {
+    return fail("Only a post that failed to publish can be retried.");
+  }
 
   revalidatePath("/content");
   return { ok: true, data: undefined };
@@ -1189,6 +1345,186 @@ export async function startLinkedInConnect(
   } catch (error) {
     return fail(
       error instanceof Error ? error.message : "Unipile could not be reached.",
+    );
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * PLS-89. Connecting from inside the app.
+ *
+ * The hosted wizard above stays the default and the recommendation: LinkedIn
+ * sees its own flow, and Pulse never touches a password. These exist because
+ * the wizard means leaving the app, and because some profiles refuse the
+ * hosted flow outright.
+ *
+ * There is no webhook on this path. The action gets the account id back on the
+ * response, so it records the row itself, through the caller's own session so
+ * RLS decides the org rather than a string we parsed.
+ * ------------------------------------------------------------------------- */
+
+export type ConnectStep =
+  | { step: "connected"; name: string }
+  | { step: "checkpoint"; accountId: string; checkpoint: string };
+
+/**
+ * Record a freshly connected account.
+ *
+ * Law 2: upsert on the unique index rather than check-then-insert. Connecting a
+ * profile that is already here, which is exactly what a reconnect after an
+ * expired session looks like, lands on the same row instead of a duplicate.
+ */
+async function recordAccount(accountId: string): Promise<Result<string>> {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  // Ask Unipile who this is rather than making the user type a label. Not
+  // fatal: the connection is real either way, and a blank name beats no row.
+  let displayName = "";
+  try {
+    const account = await getAccount(accountId);
+    displayName = account.name ?? "";
+  } catch {
+    displayName = "";
+  }
+
+  const { error } = await supabase.from("linkedin_accounts").upsert(
+    {
+      org_id: session.org.id,
+      unipile_account_id: accountId,
+      display_name: displayName,
+      status: "connected",
+      connected_by: session.userId,
+      last_error: "",
+    },
+    { onConflict: "unipile_account_id" },
+  );
+
+  if (error) {
+    // The profile IS connected on Unipile's side and is already being billed,
+    // so say that rather than implying nothing happened.
+    return fail(
+      `LinkedIn accepted the sign in, but the profile could not be saved here: ${readable(
+        error.message,
+      )}. It is connected on Unipile as ${accountId}.`,
+    );
+  }
+
+  revalidatePath("/settings/channels");
+  return { ok: true, data: displayName || "That profile" };
+}
+
+/** Turn a Unipile connect result into either a done step or a code prompt. */
+async function afterConnect(result: ConnectResult): Promise<Result<ConnectStep>> {
+  if (result.status === "checkpoint") {
+    return {
+      ok: true,
+      data: {
+        step: "checkpoint",
+        accountId: result.accountId,
+        checkpoint: result.checkpoint,
+      },
+    };
+  }
+  const saved = await recordAccount(result.accountId);
+  if (!saved.ok) return saved;
+  return { ok: true, data: { step: "connected", name: saved.data } };
+}
+
+/** Sign in with a LinkedIn email and password. */
+export async function connectLinkedInCredentials(
+  username: string,
+  password: string,
+): Promise<Result<ConnectStep>> {
+  await requireSession();
+
+  if (!hasUnipile()) {
+    return fail(
+      "LinkedIn posting is not configured on this deployment yet, so there is nothing to connect to.",
+    );
+  }
+  if (!username.trim() || !password) {
+    return fail("Both the email and the password are needed.");
+  }
+
+  try {
+    return await afterConnect(
+      await connectWithCredentials({ username, password }),
+    );
+  } catch (error) {
+    return fail(
+      error instanceof Error ? error.message : "Unipile could not be reached.",
+    );
+  }
+}
+
+/** Sign in with the `li_at` cookie from a browser already signed in. */
+export async function connectLinkedInCookie(
+  accessToken: string,
+  userAgent: string,
+): Promise<Result<ConnectStep>> {
+  await requireSession();
+
+  if (!hasUnipile()) {
+    return fail(
+      "LinkedIn posting is not configured on this deployment yet, so there is nothing to connect to.",
+    );
+  }
+  if (!accessToken.trim()) {
+    return fail("Paste the li_at cookie value first.");
+  }
+
+  try {
+    return await afterConnect(
+      await connectWithCookie({
+        accessToken,
+        userAgent: userAgent.trim() || undefined,
+      }),
+    );
+  } catch (error) {
+    return fail(
+      error instanceof Error ? error.message : "Unipile could not be reached.",
+    );
+  }
+}
+
+/**
+ * Answer the code LinkedIn sent.
+ *
+ * LinkedIn can ask twice, an app approval and then an SMS code for instance, so
+ * a checkpoint answer can itself return another checkpoint. The caller handles
+ * that by staying on the code screen rather than assuming success.
+ */
+export async function submitLinkedInCheckpoint(
+  accountId: string,
+  code: string,
+): Promise<Result<ConnectStep>> {
+  await requireSession();
+
+  if (!code.trim()) return fail("Enter the code LinkedIn sent you.");
+
+  try {
+    return await afterConnect(await solveCheckpoint({ accountId, code }));
+  } catch (error) {
+    return fail(
+      error instanceof Error ? error.message : "Unipile could not be reached.",
+    );
+  }
+}
+
+/** Ask LinkedIn to send the code again. */
+export async function resendLinkedInCheckpoint(
+  accountId: string,
+): Promise<Result> {
+  await requireSession();
+
+  try {
+    await resendCheckpoint(accountId);
+    return { ok: true, data: undefined };
+  } catch (error) {
+    return fail(
+      error instanceof Error
+        ? error.message
+        : "LinkedIn would not send another code.",
     );
   }
 }

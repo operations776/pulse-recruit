@@ -110,7 +110,8 @@ Two kinds of secret exist and they are stored in different places. Keep the dist
 | `UNIPILE_API_KEY` | LinkedIn posting. Central RecruiterGTM tenant, not per org | No | Pillar 5 only | PLS-67 |
 | `UNIPILE_DSN` | That tenant's API base, for example `https://api8.unipile.com:13843` | No | Pillar 5 only | PLS-67 |
 | `UNIPILE_WEBHOOK_SECRET` | Shared secret carried in the notify URL. Unipile does not sign callbacks | No | Pillar 5 only | PLS-67 |
-| `SUPABASE_SERVICE_ROLE_KEY` | The Unipile callback only. See the note below | No | Pillar 5 only | PLS-67 |
+| `SUPABASE_SERVICE_ROLE_KEY` | The Unipile callback and the publisher. See the note below | No | Pillar 5 only | PLS-67 |
+| `CRON_SECRET` | Authenticates pg_cron against `/api/cron/publish`. Unset means the route refuses every request | No | Pillar 5 only | PLS-88 |
 
 **Two kinds of key, and the difference is who pays.**
 
@@ -134,7 +135,12 @@ Two kinds of secret exist and they are stored in different places. Keep the dist
 
 **A third kind of credential, added in PLS-67: an account broker.** Unipile is neither a platform key nor a per-org key. RecruiterGTM holds one Unipile tenant, and each recruiter authorises their own LinkedIn profile through Unipile's hosted wizard, which makes their profile an account under that tenant. So the credential is ours and the *accounts* are per org, held in `linkedin_accounts`. A recruiter never pastes a Unipile key, which is why it does not appear on the API keys screen at all: that screen sends them to Settings, Channels instead. Unipile bills roughly 5 EUR per connected account per month on a 49 EUR minimum, charged on the peak count in a 30 day window, so disconnecting releases the account on Unipile's side too rather than only deleting our row.
 
-**The service-role key exists now, for exactly one caller.** It was absent until PLS-67 because nothing needed it. The Unipile callback does: it arrives from Unipile's servers with no user session, so there is nobody for an RLS policy to check, and it is precisely the case rule 4 above names. The alternative was granting the write to `anon`, which would let anyone on the internet attach a LinkedIn account id to any org. It lives in `src/lib/server/supabase-admin.ts`, is marked `server-only` so importing it into a client component is a build error, and has exactly one import site: `src/app/api/unipile/accounts/route.ts`. Everything else, including every AI tool, still runs on the caller's own session with RLS as the boundary. It never appears in a `NEXT_PUBLIC_` var.
+**The service-role key has exactly two callers, both sessionless.** It was absent until PLS-67 because nothing needed it. Rule 4 above names the two cases that justify it, webhooks and cross-org admin jobs, and there is now one of each:
+
+1. **The Unipile callback**, `src/app/api/unipile/accounts/route.ts`. It arrives from Unipile's servers with no user session, so there is nobody for an RLS policy to check. The alternative was granting the write to `anon`, which would let anyone on the internet attach a LinkedIn account id to any org.
+2. **The publisher**, `src/app/api/cron/publish/route.ts`, added in PLS-88. A scheduler has no user, and it claims due posts across every org in one pass. It authenticates with `CRON_SECRET`, compared in constant time, and its three RPCs (`claim_due_posts`, `finish_publish`, `sweep_stuck_publishes`) are granted to `service_role` only, revoked from `anon` and `authenticated` alike.
+
+The client lives in `src/lib/server/supabase-admin.ts` and is marked `server-only`, so importing it into a client component is a build error. Everything else, including every AI tool and every screen, still runs on the caller's own session with RLS as the boundary. It never appears in a `NEXT_PUBLIC_` var. **A third caller means changing this note, the note in `supabase-admin.ts`, and the instruction in `DEPLOY.md`, in the same commit as the code.**
 
 `linkedin_accounts` has no insert or update policy at all, on purpose. Rows only ever arrive through that one route, so a browser cannot claim an account id it was never given.
 

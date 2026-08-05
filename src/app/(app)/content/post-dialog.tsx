@@ -3,8 +3,10 @@
 import {
   Check,
   Copy,
+  ExternalLink,
   FileText,
   Paperclip,
+  RotateCw,
   Trash2,
   Undo2,
   X,
@@ -29,11 +31,14 @@ import { dayKey, formatDate, timeOfDay } from "@/lib/time";
 // 400MB upload run for two minutes and then fail.
 const MAX_BYTES = 200 * 1024 * 1024;
 
+// DESIGN.md rule: status is colour AND icon AND word, never colour alone.
 const STATUS_CHIP: Record<PostRow["status"], { tone: Tone; word: string }> = {
   idea: { tone: "off", word: "Idea" },
   drafted: { tone: "off", word: "Drafted" },
   scheduled: { tone: "attention", word: "Scheduled" },
+  publishing: { tone: "attention", word: "Publishing" },
   published: { tone: "on", word: "Published" },
+  failed: { tone: "danger", word: "Failed" },
 };
 
 type Local = PostAsset & { pending?: boolean };
@@ -60,7 +65,9 @@ export function PostDialog({
   onSchedule,
   onTogglePublished,
   onDelete,
+  onRetry,
   onError,
+  canPublish,
 }: {
   post: PostRow;
   assets: PostAsset[];
@@ -69,7 +76,10 @@ export function PostDialog({
   onSchedule: (postId: string, day: string, time: string) => void;
   onTogglePublished: (post: PostRow) => void;
   onDelete: (postId: string) => void;
+  onRetry: (postId: string) => void;
   onError: (message: string) => void;
+  /** A LinkedIn profile is connected, so a date actually means something. */
+  canPublish: boolean;
 }) {
   const skill = SKILL_BY_KEY[post.skill];
   const status = STATUS_CHIP[post.status];
@@ -100,10 +110,15 @@ export function PostDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount only
   }, []);
 
+  // Mid-flight the words are already on their way to LinkedIn. Editing them
+  // here would change the record of what was sent without changing what was
+  // sent, so the fields go read-only until the publisher settles the row.
+  const locked = post.status === "publishing";
+
   const dirty = hook !== post.hook || body !== post.body;
 
   const save = async () => {
-    if (!dirty) return;
+    if (!dirty || locked) return;
     const result = await updatePost(post.id, { hook, body });
     if (!result.ok) {
       onError(result.error);
@@ -231,7 +246,7 @@ export function PostDialog({
             {copied ? "Copied" : "Copy text"}
           </Button>
 
-          <Button onClick={() => onTogglePublished(post)}>
+          <Button onClick={() => onTogglePublished(post)} disabled={locked}>
             {post.status === "published" ? (
               <>
                 <Undo2 size={16} strokeWidth={1.5} />
@@ -277,6 +292,7 @@ export function PostDialog({
             <span className="legend text-ink-2">Hook</span>
             <Input
               value={hook}
+              readOnly={locked}
               placeholder="The first line. Everything else follows it."
               onChange={(event) => setHook(event.target.value)}
               onBlur={save}
@@ -288,6 +304,7 @@ export function PostDialog({
             <Textarea
               value={body}
               rows={18}
+              readOnly={locked}
               placeholder="Write it here. It saves when you click away."
               onChange={(event) => setBody(event.target.value)}
               onBlur={save}
@@ -324,13 +341,16 @@ export function PostDialog({
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
               <Button
-                disabled={!draftDay}
+                disabled={!draftDay || post.status === "publishing"}
                 onClick={() => onSchedule(post.id, draftDay, draftTime || "09:00")}
               >
                 {post.scheduled_for ? "Move" : "Schedule"}
               </Button>
               {post.scheduled_for ? (
-                <Button onClick={() => onSchedule(post.id, "", "")}>
+                <Button
+                  disabled={post.status === "publishing"}
+                  onClick={() => onSchedule(post.id, "", "")}
+                >
                   Back to backlog
                 </Button>
               ) : null}
@@ -338,6 +358,53 @@ export function PostDialog({
             <p className="mt-2 text-[12px] text-ink-2">
               Times are {timezone.replace("_", " ")}, your workspace zone.
             </p>
+
+            {/* What actually happens at that time. A scheduled post with
+                auto_publish off is the grandfathered case: it would sit there
+                looking scheduled and never go out, so it says so. */}
+            {post.status === "scheduled" ? (
+              <p className="mt-2 text-[12px] text-ink-2">
+                {!canPublish
+                  ? "No LinkedIn profile is connected, so this will not go out on its own. Connect one in Settings, Channels."
+                  : post.auto_publish
+                    ? "This publishes to LinkedIn on its own at that time."
+                    : "This one was scheduled before automatic publishing was switched on, so it stays put. Move it to a new time to send it."}
+              </p>
+            ) : null}
+
+            {post.status === "publishing" ? (
+              <p className="mt-2 rounded-control border border-amber bg-amber-bg px-3 py-2 text-[12px] text-amber-text">
+                Going out to LinkedIn now. It cannot be changed until that
+                finishes.
+              </p>
+            ) : null}
+
+            {post.status === "failed" ? (
+              <div className="mt-2 flex flex-col gap-2">
+                <p className="rounded-control border border-red bg-red-bg px-3 py-2 text-[12px] text-red">
+                  {post.publish_error ||
+                    "LinkedIn refused this post and it did not go out."}
+                </p>
+                <span>
+                  <Button onClick={() => onRetry(post.id)}>
+                    <RotateCw size={16} strokeWidth={1.5} />
+                    Try again now
+                  </Button>
+                </span>
+              </div>
+            ) : null}
+
+            {post.status === "published" && post.post_url ? (
+              <a
+                href={post.post_url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex items-center gap-1.5 text-[12px] text-ink-2 underline underline-offset-2 hover:text-ink"
+              >
+                <ExternalLink size={16} strokeWidth={1.5} />
+                See it on LinkedIn
+              </a>
+            ) : null}
           </section>
 
           <section>

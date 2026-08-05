@@ -345,6 +345,7 @@ export async function getPlanner(month: string) {
     shapesResult,
     personaResult,
     lessonsResult,
+    channelResult,
   ] = await Promise.all([
       supabase
         .from("content_posts")
@@ -368,6 +369,12 @@ export async function getPlanner(month: string) {
         .from("persona_lessons")
         .select("id", { count: "exact", head: true })
         .is("applied_at", null),
+      // Whether a date on the calendar actually means anything. Head count
+      // only: the planner needs the fact, not the profile.
+      supabase
+        .from("linkedin_accounts")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "connected"),
     ]);
 
   const posts = (postsResult.data ?? []) as PostRow[];
@@ -415,6 +422,7 @@ export async function getPlanner(month: string) {
     shapes: allShapes((shapesResult.data ?? []) as ContentShapeRow[]),
     persona: (personaResult.data ?? null) as PersonaRow | null,
     pendingLessons: lessonsResult.count ?? 0,
+    canPublish: (channelResult.count ?? 0) > 0,
   };
 }
 

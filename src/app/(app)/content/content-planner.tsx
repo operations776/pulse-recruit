@@ -17,6 +17,7 @@ import {
   createPost,
   createWrittenPost,
   deletePost,
+  retryPost,
   schedulePost,
   setPostStatus,
 } from "@/lib/actions";
@@ -68,6 +69,7 @@ export function ContentPlanner({
   generationConfigured,
   todayInstant,
   pendingLessons,
+  canPublish,
 }: {
   posts: PostRow[];
   assets: Record<string, PostAsset[]>;
@@ -83,6 +85,8 @@ export function ContentPlanner({
   /** Fixed on the server so the stat strip agrees across hydration. */
   todayInstant: string;
   pendingLessons: number;
+  /** A connected LinkedIn profile, so a scheduled post actually goes out. */
+  canPublish: boolean;
 }) {
   const router = useRouter();
   const { notify } = useToast();
@@ -149,15 +153,20 @@ export function ContentPlanner({
       const at = new Date(p.scheduled_for!);
       return at >= now && at <= weekEnd && p.status !== "published";
     });
+    // Past its slot and still sitting there. With publishing on, this only
+    // fills up when a post cannot go out at all: no profile connected, or the
+    // post was grandfathered off automatic publishing.
     const overdue = dated.filter(
       (p) => p.status === "scheduled" && new Date(p.scheduled_for!) < now,
     );
+    const failed = visible.filter((p) => p.status === "failed");
 
     return [
       { label: "next 7 days", value: upcoming.length },
-      // Past its slot and still not marked published: the calendar is lying
-      // about that post until someone acts on it.
       { label: "overdue", value: overdue.length, attention: true },
+      // LinkedIn refused these. Nothing retries them on its own, so they stay
+      // on the strip until someone opens one and sends it again.
+      { label: "failed", value: failed.length, attention: true },
       { label: "ideas", value: visible.filter((p) => !p.scheduled_for).length },
       {
         label: "published",
@@ -248,9 +257,31 @@ export function ContentPlanner({
       }
       notify(
         day
-          ? `${post?.ref ?? "Post"} is set for ${day} at ${time}. Pulse does not post it for you yet, so this records the plan.`
+          ? canPublish
+            ? `${post?.ref ?? "Post"} goes out ${day} at ${time}.`
+            : `${post?.ref ?? "Post"} is set for ${day} at ${time}. Connect a LinkedIn profile in Settings, Channels and it will go out on its own.`
           : `${post?.ref ?? "Post"} went back to the backlog.`,
       );
+      router.refresh();
+    });
+  };
+
+  /**
+   * Put a failed post back in the queue.
+   *
+   * A failure is terminal by design, so this is the deliberate second attempt.
+   * It goes out at the next sweep rather than at the old time, which has passed.
+   */
+  const retry = (postId: string) => {
+    const post = posts.find((p) => p.id === postId);
+    setOpenId(null);
+    startTransition(async () => {
+      const result = await retryPost(postId);
+      if (!result.ok) {
+        notify(result.error, "danger");
+        return;
+      }
+      notify(`${post?.ref ?? "The post"} is queued to go out again shortly.`);
       router.refresh();
     });
   };
@@ -269,7 +300,7 @@ export function ContentPlanner({
       notify(
         post.status === "published"
           ? `${post.ref} is no longer marked published.`
-          : `${post.ref} marked published. You still post it yourself, this records that you did.`,
+          : `${post.ref} marked published. This records a post you put up yourself, it does not send anything.`,
       );
       router.refresh();
     });
@@ -492,6 +523,8 @@ export function ContentPlanner({
         open={skillsOpen}
         onClose={() => setSkillsOpen(false)}
         posts={posts}
+        shapes={shapes}
+        configured={generationConfigured}
       />
 
       {open ? (
@@ -509,6 +542,8 @@ export function ContentPlanner({
           onSchedule={schedule}
           onTogglePublished={togglePublished}
           onDelete={remove}
+          onRetry={retry}
+          canPublish={canPublish}
           onError={(message) => notify(message, "danger")}
         />
       ) : null}

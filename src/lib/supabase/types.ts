@@ -37,7 +37,28 @@ export type MailboxProvider = "google" | "microsoft" | "smtp";
 export type MailboxStatus = "connected" | "warming" | "error";
 export type SequenceStatus = "running" | "paused" | "draft";
 export type StepChannel = "email" | "linkedin";
-export type PostStatus = "idea" | "drafted" | "scheduled" | "published";
+/**
+ * `publishing` and `failed` (PLS-87) belong to the publisher, not to a person.
+ * Nothing in the UI moves a post into either one: the cron claims into
+ * `publishing` and settles into `published` or `failed`. `MANUAL_STATUSES` is
+ * what a human is allowed to choose, and the setter checks against it.
+ */
+export type PostStatus =
+  | "idea"
+  | "drafted"
+  | "scheduled"
+  | "publishing"
+  | "published"
+  | "failed";
+
+export const MANUAL_STATUSES = [
+  "idea",
+  "drafted",
+  "scheduled",
+  "published",
+] as const satisfies readonly PostStatus[];
+
+export type ManualPostStatus = (typeof MANUAL_STATUSES)[number];
 export type ContentSkill =
   | "jd_post"
   | "personal_story"
@@ -337,6 +358,14 @@ export type PostRow = {
   // The body as generated, kept so a later edit can be diffed against it.
   // Null means a human wrote this from scratch and there is nothing to learn.
   generated_body: string | null;
+  // PLS-87 publishing. False on everything that was already dated when the
+  // publisher shipped, so old drafts could not fire the minute it started.
+  auto_publish: boolean;
+  post_url: string | null;
+  // The real reason LinkedIn refused, shown on the post. A post that just says
+  // "failed" tells a recruiter nothing they can act on.
+  publish_error: string | null;
+  publish_attempts: number;
 };
 
 /**

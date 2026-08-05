@@ -39,6 +39,7 @@ export default async function ContentPlannerPage({
       )}
       generationConfigured={hasModelKey()}
       pendingLessons={planner.pendingLessons}
+      canPublish={planner.canPublish}
       month={month}
       view={params.view === "board" ? "board" : "calendar"}
       // Today is read on the server inside the org zone and handed down. A

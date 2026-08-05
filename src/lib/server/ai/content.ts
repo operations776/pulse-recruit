@@ -224,6 +224,97 @@ export async function generatePost(input: {
 }
 
 /**
+ * Turn a sentence describing a kind of post into a reusable shape.
+ *
+ * The output has to match the five built-ins in `content-skills.ts`, because
+ * `generatePost` feeds a shape's prompt straight into the system message and a
+ * frame in a different format produces a differently-shaped post. Three beats,
+ * each a label and one instruction, is the contract.
+ */
+export async function buildShape(input: {
+  description: string;
+  signal?: AbortSignal;
+}): Promise<{ shape: { name: string; blurb: string; prompt: string } } & ContentOutcome> {
+  const description = input.description.trim();
+  if (!description) {
+    throw new ProviderError("Describe the kind of post first.", false);
+  }
+
+  const usage = empty();
+
+  const result = await streamCompletion({
+    signal: input.signal,
+    maxOutputTokens: 500,
+    messages: [
+      {
+        role: "system",
+        content: [
+          "You design reusable frames for LinkedIn posts. A frame is not a template with blanks: it is three instructions that tell a writer what each part of the post has to do.",
+          "",
+          "Return ONLY a JSON object, no prose around it:",
+          "  name: 2 to 4 words, plain and concrete. What a recruiter would call this kind of post.",
+          "  blurb: one sentence starting 'Use when', describing the moment this post is right for.",
+          "  prompt: exactly three lines separated by newlines. Each line is 'Label: one instruction.'",
+          "",
+          "The three beats must move: a setup, a turn, and a landing. Never three restatements of the topic.",
+          "Instructions must be specific enough to act on. 'Talk about the role' is useless; 'the city, the working pattern, and the top of the band, no coy salary' is useful.",
+          "",
+          "Here are two existing frames, for format and register:",
+          "",
+          "Hook: the role, the city, the working pattern, and the top of the band. No coy salary.",
+          "Edge: the one thing about this job a candidate cannot get at the obvious competitor.",
+          "Ask: invite a reply, not an application. A comment or a DM is enough to start.",
+          "",
+          "Moment: one specific thing that happened this week, with the detail that makes it real.",
+          "Cost: what it actually cost you. A placement, a client, a weekend.",
+          "Change: the rule you now work by because of it.",
+        ].join("\n"),
+      },
+      { role: "user", content: description },
+    ],
+  });
+
+  usage.inputTokens += result.inputTokens;
+  usage.outputTokens += result.outputTokens;
+
+  let shape: { name?: string; blurb?: string; prompt?: string };
+  try {
+    const cleaned = result.content
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/, "");
+    shape = JSON.parse(cleaned) as typeof shape;
+  } catch {
+    throw new ProviderError(
+      "The shape came back in a form we could not read. Nothing was saved. Try again.",
+      true,
+    );
+  }
+
+  if (!shape.name?.trim() || !shape.prompt?.trim()) {
+    throw new ProviderError(
+      "The shape came back incomplete, so nothing was saved. Try describing it in another sentence.",
+      true,
+    );
+  }
+
+  return {
+    shape: {
+      name: shape.name.trim(),
+      blurb: shape.blurb?.trim() ?? "",
+      prompt: shape.prompt.trim(),
+    },
+    usage,
+    credits: creditCost(usage),
+    meta: {
+      kind: "shape",
+      input_tokens: usage.inputTokens,
+      output_tokens: usage.outputTokens,
+    },
+  };
+}
+
+/**
  * Distil one line from the gap between what was generated and what was
  * published. Returns null when the edit was trivial, so the persona does not
  * fill up with "they fixed a typo".

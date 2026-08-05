@@ -27,14 +27,67 @@ test("channels explains itself and offers the connect action", async ({
   await expect(
     page.getByRole("heading", { name: /channels/i, level: 1 }),
   ).toBeVisible();
-  await expect(page.getByText(/no key to paste/i)).toBeVisible();
   await expect(
     page.getByRole("button", { name: /connect a profile/i }),
   ).toBeVisible();
 
-  // Honest about the state of the product: connecting a profile does not mean
-  // Pulse starts posting.
-  await expect(page.getByText(/does not post to linkedin yet/i)).toBeVisible();
+  // PLS-88 changed what this screen is allowed to claim. Publishing is real
+  // now, so the old "does not post to LinkedIn yet" line is gone and the copy
+  // says what actually happens at a scheduled time.
+  await expect(page.getByText(/does not post to linkedin yet/i)).toHaveCount(0);
+  await expect(page.getByText(/publishes on its own at the time you set/i))
+    .toBeVisible();
+});
+
+// PLS-89. The connect dialog.
+test("connect offers three methods and defaults to the hosted flow", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/settings/channels");
+  await page.getByRole("button", { name: /connect a profile/i }).click();
+
+  const dialog = page.getByRole("dialog", {
+    name: /connect a linkedin profile/i,
+  });
+  await expect(dialog).toBeVisible();
+
+  // The safest route is the default: no password reaches Pulse on it.
+  await expect(
+    dialog.getByRole("radio", { name: /linkedin sign in/i }),
+  ).toBeChecked();
+  await expect(dialog.getByRole("radio", { name: /email and password/i }))
+    .toBeVisible();
+  await expect(dialog.getByRole("radio", { name: /session cookie/i }))
+    .toBeVisible();
+
+  // Fields appear only for the method chosen, and the primary verb follows it.
+  await expect(dialog.getByLabel(/password/i)).toHaveCount(0);
+  await dialog.getByRole("radio", { name: /email and password/i }).click();
+  await expect(dialog.getByLabel("Password")).toBeVisible();
+  await expect(
+    dialog.getByRole("button", { name: /^sign in$/i }),
+  ).toBeDisabled();
+});
+
+test("the connect dialog will not submit an empty credential", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/settings/channels");
+  await page.getByRole("button", { name: /connect a profile/i }).click();
+
+  const dialog = page.getByRole("dialog", {
+    name: /connect a linkedin profile/i,
+  });
+  await dialog.getByRole("radio", { name: /email and password/i }).click();
+
+  const submit = dialog.getByRole("button", { name: /^sign in$/i });
+  await dialog.getByLabel(/linkedin email/i).fill("someone@example.com");
+  // Email alone is not enough. Never offer a control that cannot work.
+  await expect(submit).toBeDisabled();
+  await dialog.getByLabel("Password").fill("something");
+  await expect(submit).toBeEnabled();
 });
 
 test("channels is reachable from settings and from the api keys screen", async ({

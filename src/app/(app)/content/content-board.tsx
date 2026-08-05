@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader, XCircle } from "lucide-react";
 import { SKILL_BY_KEY } from "@/config/content-skills";
 import type { PostRow, PostStatus } from "@/lib/supabase/types";
 import { dayLabel, timeOfDay } from "@/lib/time";
@@ -9,11 +10,21 @@ import { dayLabel, timeOfDay } from "@/lib/time";
 // is the view you want when triaging a pile of ideas rather than planning a
 // week. All of the writing happens in the drawer the planner owns, so this file
 // is presentation only.
-const COLUMNS: { status: PostStatus; label: string }[] = [
-  { status: "idea", label: "Idea" },
-  { status: "drafted", label: "Drafted" },
-  { status: "scheduled", label: "Scheduled" },
-  { status: "published", label: "Published" },
+//
+// Four columns, six statuses. `publishing` and `failed` are moments inside the
+// Scheduled column rather than places of their own: a post being sent is still
+// scheduled from the planner's point of view, and a failed one is still waiting
+// to go out. Filtering by status alone would have dropped both off the board
+// entirely.
+const COLUMNS: { status: PostStatus; label: string; holds: PostStatus[] }[] = [
+  { status: "idea", label: "Idea", holds: ["idea"] },
+  { status: "drafted", label: "Drafted", holds: ["drafted"] },
+  {
+    status: "scheduled",
+    label: "Scheduled",
+    holds: ["scheduled", "publishing", "failed"],
+  },
+  { status: "published", label: "Published", holds: ["published"] },
 ];
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -32,7 +43,7 @@ export function StatusBoard({
     <div>
       <div className="flex">
         {COLUMNS.map((column) => {
-          const inColumn = posts.filter((p) => p.status === column.status);
+          const inColumn = posts.filter((p) => column.holds.includes(p.status));
 
           return (
             <section
@@ -50,10 +61,26 @@ export function StatusBoard({
                   <button
                     key={post.id}
                     onClick={() => onOpen(post)}
-                    className="flex flex-col gap-2 rounded-card border border-rule bg-sheet p-3 text-left hover:bg-well"
+                    className={`flex flex-col gap-2 rounded-card border p-3 text-left ${
+                      post.status === "failed"
+                        ? "border-red bg-red-bg hover:bg-red-bg"
+                        : "border-rule bg-sheet hover:bg-well"
+                    }`}
                   >
-                    <span className="legend text-ink-2">
+                    <span className="legend flex items-center gap-1.5 text-ink-2">
                       {SKILL_BY_KEY[post.skill].name}
+                      {post.status === "failed" ? (
+                        <span className="flex items-center gap-1 text-red">
+                          <XCircle size={11} strokeWidth={2} />
+                          Failed
+                        </span>
+                      ) : null}
+                      {post.status === "publishing" ? (
+                        <span className="flex items-center gap-1 text-amber-text">
+                          <Loader size={11} strokeWidth={2} />
+                          Sending
+                        </span>
+                      ) : null}
                     </span>
                     <span className="line-clamp-3 text-[13px] font-medium leading-[1.5]">
                       {post.hook}

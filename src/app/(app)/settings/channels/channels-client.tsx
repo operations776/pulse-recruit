@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/toast";
 import { disconnectLinkedIn, startLinkedInConnect } from "@/lib/actions";
 import type { LinkedInAccountRow } from "@/lib/supabase/types";
 import { formatDate } from "@/lib/time";
+import { ConnectDialog } from "./connect-dialog";
 
 const STATUS: Record<string, { tone: Tone; word: string }> = {
   connected: { tone: "on", word: "Connected" },
@@ -37,7 +38,11 @@ export function ChannelsClient({
   const { notify } = useToast();
   const [pending, startTransition] = useTransition();
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
 
+  // Reconnecting an existing profile stays on the hosted wizard. Unipile's
+  // reconnect flow is bound to an account id it already holds, so there is
+  // nothing for the credentials form to do here.
   const connect = (reconnectAccountId?: string) => {
     startTransition(async () => {
       const result = await startLinkedInConnect(reconnectAccountId);
@@ -73,9 +78,9 @@ export function ChannelsClient({
         <p className="legend text-ink-3">Settings</p>
         <h1 className="display mt-2 text-[18px]">Channels</h1>
         <p className="mt-2 max-w-[62ch] text-[12px] text-ink-2">
-          Connect the LinkedIn profile your posts go out as. You authorise it
-          once through LinkedIn itself, so there is no key to paste and no
-          password for Pulse to hold.
+          Connect the LinkedIn profile your posts go out as. Once one is here,
+          anything you schedule on the content calendar publishes on its own at
+          the time you set.
         </p>
       </header>
 
@@ -111,7 +116,7 @@ export function ChannelsClient({
             <Button
               variant="primary"
               disabled={!configured || pending}
-              onClick={() => connect()}
+              onClick={() => setConnecting(true)}
             >
               <Plus size={16} strokeWidth={2} />
               Connect a profile
@@ -126,8 +131,8 @@ export function ChannelsClient({
             <div className="px-4 py-10 text-center">
               <p className="display text-[15px]">No profile connected</p>
               <p className="mx-auto mt-2 max-w-[46ch] text-[12px] text-ink-2">
-                Pulse can plan your posts without this. Connecting a profile is
-                what will let it publish them for you.
+                Pulse can plan your posts without this. Nothing publishes until
+                a profile is connected: scheduled posts wait here instead.
               </p>
             </div>
           ) : (
@@ -205,10 +210,17 @@ export function ChannelsClient({
         </section>
 
         <p className="max-w-[62ch] text-[12px] text-ink-2">
-          Pulse does not post to LinkedIn yet. Connecting a profile now is what
-          makes that possible when scheduled posts start going out on their own.
+          A scheduled post goes out as the profile connected here, at the time
+          on the calendar. If LinkedIn refuses one, the post is marked failed on
+          the calendar with the reason rather than retried silently.
         </p>
       </div>
+
+      <ConnectDialog
+        open={connecting}
+        onClose={() => setConnecting(false)}
+        configured={configured}
+      />
     </main>
   );
 }

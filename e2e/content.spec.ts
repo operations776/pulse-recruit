@@ -168,8 +168,10 @@ test("the drawer copies the post and records that it went out", async ({
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(body);
 
   await page.getByRole("button", { name: "Mark published" }).click();
-  // The toast says what actually happened. Pulse did not post anything.
-  await expect(page.getByText(/you still post it yourself/i)).toBeVisible({
+  // The toast says what actually happened. Marking a post published records
+  // one you put up yourself; it is not the button that sends anything, and
+  // after PLS-88 that distinction matters more, not less.
+  await expect(page.getByText(/it does not send anything/i)).toBeVisible({
     timeout: 15_000,
   });
 

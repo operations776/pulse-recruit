@@ -1,13 +1,26 @@
 "use client";
 
-import { AlertTriangle, Check, CircleDot, Copy, MinusCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  CircleDot,
+  Copy,
+  MinusCircle,
+  XCircle,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 // DESIGN.md rule 9: status is colour PLUS icon PLUS word, always all three.
 // Never colour alone, because lens yellowing after 50 compresses discrimination.
+//
+// `danger` is for a thing that tried and did not work, as against `attention`,
+// which is a thing that still might. A failed publish is the first state in the
+// app that is genuinely finished and wrong, so it gets its own icon rather than
+// borrowing the warning triangle.
 const tones = {
   on: { cls: "bg-teal-bg border-teal text-teal-text", icon: CircleDot },
   attention: { cls: "bg-amber-bg border-amber text-amber-text", icon: AlertTriangle },
+  danger: { cls: "bg-red-bg border-red text-red", icon: XCircle },
   off: { cls: "bg-well border-rule text-ink-2", icon: MinusCircle },
 } as const;
 

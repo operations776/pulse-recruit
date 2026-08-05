@@ -145,6 +145,162 @@ export type UnipileAccount = {
   sources?: { status?: string }[];
 };
 
+/* ---------------------------------------------------------------------------
+ * Publishing
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Publish a post to LinkedIn, now.
+ *
+ * Unipile has no scheduling of its own: this sends immediately, which is why
+ * Pulse holds the timer and only calls here once a post is claimed.
+ *
+ * Text only. `call<T>` sends JSON, and LinkedIn media through Unipile needs
+ * multipart/form-data, which is a different transport and a separate piece of
+ * work. A post with images attached still publishes its text rather than
+ * silently dropping the whole thing, and the caller says so.
+ */
+export async function publishPost(input: {
+  accountId: string;
+  text: string;
+}): Promise<{ postId: string | null; url: string | null }> {
+  const text = input.text.trim();
+  if (!text) {
+    throw new UnipileError("There is nothing to publish.", 400);
+  }
+
+  const result = await call<{ post_id?: string; id?: string; url?: string }>(
+    "/posts",
+    {
+      method: "POST",
+      body: { account_id: input.accountId, text },
+    },
+  );
+
+  // Unipile has used both spellings across versions. Take either rather than
+  // failing a post that actually went out.
+  return {
+    postId: result.post_id ?? result.id ?? null,
+    url: result.url ?? null,
+  };
+}
+
+/* ---------------------------------------------------------------------------
+ * Connecting an account from inside Pulse
+ *
+ * The hosted wizard is still the default and the safest path. These two exist
+ * because Daniyal asked to connect without leaving the app, and because a
+ * recruiter whose LinkedIn is already open in a browser can hand over a cookie
+ * without typing a password anywhere.
+ * ------------------------------------------------------------------------- */
+
+export type ConnectResult =
+  | { status: "connected"; accountId: string }
+  | { status: "checkpoint"; accountId: string; checkpoint: string };
+
+type RawConnect = {
+  object?: string;
+  account_id?: string;
+  checkpoint?: { type?: string };
+};
+
+function readConnect(raw: RawConnect): ConnectResult {
+  const accountId = raw.account_id;
+  if (!accountId) {
+    throw new UnipileError("Unipile did not return an account id.", 502);
+  }
+  // A 202 with a Checkpoint object means LinkedIn wants a code. Unipile gives
+  // five minutes before the authentication intent self-destructs, so the UI
+  // has to ask for it immediately rather than queue it.
+  if (raw.object === "Checkpoint" || raw.checkpoint) {
+    return {
+      status: "checkpoint",
+      accountId,
+      checkpoint: raw.checkpoint?.type ?? "2FA",
+    };
+  }
+  return { status: "connected", accountId };
+}
+
+/** Connect with a LinkedIn email and password. */
+export async function connectWithCredentials(input: {
+  username: string;
+  password: string;
+}): Promise<ConnectResult> {
+  const raw = await call<RawConnect>("/accounts", {
+    method: "POST",
+    body: {
+      provider: "LINKEDIN",
+      username: input.username.trim(),
+      password: input.password,
+    },
+  });
+  return readConnect(raw);
+}
+
+/**
+ * Connect with the `li_at` cookie from an already signed-in browser.
+ *
+ * Unipile recommends sending the same user agent the cookie was issued to:
+ * LinkedIn treats a session that suddenly changes browser as suspicious, and
+ * matching it is the difference between a connection that lasts and one that
+ * is challenged within a day.
+ */
+export async function connectWithCookie(input: {
+  accessToken: string;
+  userAgent?: string;
+}): Promise<ConnectResult> {
+  const raw = await call<RawConnect>("/accounts", {
+    method: "POST",
+    body: {
+      provider: "LINKEDIN",
+      access_token: input.accessToken.trim(),
+      ...(input.userAgent ? { user_agent: input.userAgent } : {}),
+    },
+  });
+  return readConnect(raw);
+}
+
+/**
+ * Answer a checkpoint: 2FA, OTP, in-app validation, captcha.
+ *
+ * `TRY_ANOTHER_WAY` is a valid code and asks LinkedIn for a different method.
+ * Past five minutes Unipile answers 408 and then 400, so a stale code gets a
+ * real explanation rather than a generic failure.
+ */
+export async function solveCheckpoint(input: {
+  accountId: string;
+  code: string;
+}): Promise<ConnectResult> {
+  try {
+    const raw = await call<RawConnect>("/accounts/checkpoint", {
+      method: "POST",
+      body: {
+        provider: "LINKEDIN",
+        account_id: input.accountId,
+        code: input.code.trim(),
+      },
+    });
+    return readConnect(raw);
+  } catch (error) {
+    if (error instanceof UnipileError && (error.status === 408 || error.status === 400)) {
+      throw new UnipileError(
+        "That code arrived too late. LinkedIn only holds the request open for five minutes, so start the connection again.",
+        error.status,
+      );
+    }
+    throw error;
+  }
+}
+
+/** Ask LinkedIn to send the code again. */
+export async function resendCheckpoint(accountId: string): Promise<void> {
+  await call("/accounts/checkpoint/resend", {
+    method: "POST",
+    body: { provider: "LINKEDIN", account_id: accountId },
+  });
+}
+
 export async function getAccount(accountId: string): Promise<UnipileAccount> {
   return call<UnipileAccount>(`/accounts/${encodeURIComponent(accountId)}`, {
     method: "GET",

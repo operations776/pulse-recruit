@@ -2,13 +2,19 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 
 /**
- * The service-role client. One caller only: the Unipile webhook.
+ * The service-role client. Two callers, both sessionless, both named here.
+ *
+ * 1. The Unipile webhook (`/api/unipile/accounts`). Unipile posts an account
+ *    connection from its own servers, so there is nobody for a policy to
+ *    check. The alternative was granting the write to `anon`, which would let
+ *    anyone on the internet attach a LinkedIn account id to any org.
+ * 2. The publisher (`/api/cron/publish`), added in PLS-88. A scheduler has no
+ *    user either, and it works across every org at once, which is the second
+ *    case ARCHITECTURE.md rule 4 names: "webhooks, cross-org admin jobs".
  *
  * ARCHITECTURE.md rule 4 allows this exactly where RLS genuinely cannot express
- * the operation, and names webhooks as the case. Unipile posts an account
- * connection from its own servers with no user session, so there is nobody for
- * a policy to check. The alternative was granting the write to `anon`, which
- * would let anyone on the internet attach a LinkedIn account id to any org.
+ * the operation. Adding a third caller means changing this note, the
+ * ARCHITECTURE.md note, and the DEPLOY.md instruction, in the same commit.
  *
  * Rules for this module:
  * - It is never imported by a client component. `server-only` makes that a

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Paperclip } from "lucide-react";
+import { Check, Loader, Paperclip, XCircle } from "lucide-react";
 import { SKILL_BY_KEY } from "@/config/content-skills";
 import type { PostRow } from "@/lib/supabase/types";
 import { monthGrid, timeOfDay } from "@/lib/time";
@@ -10,7 +10,12 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 // A published post is done, a scheduled one is still yours to change. The
 // distinction is carried by weight and a rule, not by colour, because colour is
 // spoken for by roles and a calendar full of tinted chips reads as noise.
+//
+// A failure is the exception that earns colour: it is the one card on the
+// calendar that needs someone to do something, and it is rare enough that it
+// cannot become noise.
 function cardTone(post: PostRow): string {
+  if (post.status === "failed") return "border-red bg-red-bg text-red";
   return post.status === "published"
     ? "border-rule bg-well text-ink-2"
     : "border-rule bg-sheet text-ink";
@@ -122,7 +127,9 @@ export function CalendarGrid({
                     return (
                       <button
                         key={post.id}
-                        draggable
+                        // A post already on its way to LinkedIn cannot be
+                        // rescheduled, so it does not offer to be dragged.
+                        draggable={post.status !== "publishing"}
                         onDragStart={(event) => {
                           event.dataTransfer.effectAllowed = "move";
                           event.dataTransfer.setData("text/plain", post.id);
@@ -132,7 +139,10 @@ export function CalendarGrid({
                         onClick={() => onOpen(post)}
                         title={SKILL_BY_KEY[post.skill].name}
                         className={[
-                          "flex cursor-grab flex-col gap-1 rounded-card border p-2 text-left active:cursor-grabbing",
+                          "flex flex-col gap-1 rounded-card border p-2 text-left",
+                          post.status === "publishing"
+                            ? "cursor-default"
+                            : "cursor-grab active:cursor-grabbing",
                           cardTone(post),
                           draggingId === post.id ? "opacity-40" : "",
                         ].join(" ")}
@@ -146,6 +156,16 @@ export function CalendarGrid({
                             <span className="meta flex items-center gap-1 text-teal-text">
                               <Check size={11} strokeWidth={2} />
                               Posted
+                            </span>
+                          ) : post.status === "failed" ? (
+                            <span className="meta flex items-center gap-1">
+                              <XCircle size={11} strokeWidth={2} />
+                              Failed
+                            </span>
+                          ) : post.status === "publishing" ? (
+                            <span className="meta flex items-center gap-1 text-amber-text">
+                              <Loader size={11} strokeWidth={2} />
+                              Sending
                             </span>
                           ) : (
                             <span className="meta text-ink-3">

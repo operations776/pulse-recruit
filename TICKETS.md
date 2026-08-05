@@ -201,6 +201,43 @@ Flagged: the persona can only learn from what happens inside Pulse. Once
 Unipile posting is live, published posts become a better training signal than
 pasted samples and the intake can shrink.
 
+## Dense planner, skill builder, and posts that actually go out
+
+Daniyal, on the shipped product: "I hate empty space, every part of the app
+should have a purpose." Measured, the complaint was exact. The 208px rail was
+about 70% blank, held open by a marketing blurb pinned to the floor with
+`mt-auto`; the header spent 180px on an eyebrow that repeated the rail; the
+backlog spent 172px to say "Nothing waiting".
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-85 | The planner rebuilt. Three shells collapse into one continuous sheet on shared 1px rules, the header goes from ~180px to a 48px band, the shell stops scrolling and the body scrolls instead, the four status counts become a dense stat strip that answers the question a calendar exists to answer, and the rail's static blurb becomes live data: next posts, overdue, lessons waiting | done |
+| PLS-86 | Describe a skill and Pulse builds it. `buildShape` returns name, blurb and a prompt in the same three-beat frame the five built-ins use, metered on the content surface like every other generation. Generated then edited before saving, per Daniyal's call: the fields land filled, not locked | done |
+| PLS-87 | Publishing schema. `publishing` and `failed` enum values in their own migration, then the columns, `claim_due_posts` with `FOR UPDATE SKIP LOCKED`, `finish_publish`, and `sweep_stuck_publishes`. Grandfather line: everything already dated is `auto_publish = false`, so switching the publisher on cannot fire a post scheduled during the build | done |
+| PLS-88 | The publisher. `publishPost` on the existing `call<T>`, and `/api/cron/publish` claiming a batch, publishing each, settling each, returning honest counts. Second sanctioned caller of the service-role client, so `supabase-admin.ts`, `ARCHITECTURE.md` and `DEPLOY.md` all changed in this commit. `CRON_SECRET` is new and lands in the env table with it | done |
+| PLS-89 | Connect a LinkedIn profile without leaving the app: hosted wizard, email and password, or the `li_at` cookie, with the 2FA checkpoint answered in place. Unipile holds a checkpoint open for five minutes, so the code screen says so rather than letting someone find out by timing out | done |
+
+The publishing chain was verified against the live database inside a rolled
+back transaction before any of it shipped: the claim flips a row to
+`publishing` and stamps it before anything reaches LinkedIn, a second worker
+claims nothing, a failure records the real reason, three attempts stops the
+retry, and the sweep fails a stuck row rather than resending a post that may
+already be up.
+
+`publishing` and `failed` are the publisher's, not a person's. `PostStatus`
+gained both, `MANUAL_STATUSES` is what a human may choose, and the two actions
+that move a post carry `neq status publishing` as a race guard so an edit
+cannot land on a post that is already on its way out.
+
+**Not enabled yet, deliberately.** pg_cron is scheduled by hand, last, after a
+real post has been watched going out. The steps are in DEPLOY.md. A scheduler
+pointed at unproven code publishes mistakes once a minute.
+
+Flagged, not built: media on published posts needs `multipart/form-data` and
+`call<T>` is JSON only, so a post with images attached publishes its text. And
+there is no per-post opt-out: everything scheduled sends, so the only brake is
+unscheduling.
+
 ## Found on the production deploy
 
 | ID | Ticket | Status |
@@ -218,4 +255,5 @@ schema: leaked password protection is disabled on the Supabase project.
 
 Week 2: enrichment credits end to end (waterfall email and phone, per-plan caps), signals feed v1 (open jobs).
 Week 3: Claude in Pulse (chat, tasks, morning workflow), scheduling port with routing questions.
-Week 4 (phase C): actual publishing through Unipile. `POST /api/v1/posts` publishes immediately and has no scheduling of its own, so every scheduled post is our scheduler holding it: a `claim_due_posts` RPC using `FOR UPDATE SKIP LOCKED` that flips state before the call (law 3), pg_cron every minute, a reconciliation sweep (law 6), and billing on at the $50 founding price.
+Week 4 (phase C): publishing through Unipile is built, see PLS-87 to PLS-89
+above. What is left of this line is billing on at the $50 founding price.
