@@ -1,22 +1,24 @@
 "use client";
 
 import { ChevronDown, CircleHelp } from "lucide-react";
-import { NotificationsBell } from "@/components/shell/notifications-bell";
+import type { ReactNode } from "react";
 import { UserMenu } from "@/components/shell/user-menu";
 import { brand } from "@/config/brand";
-import type { NotificationRow } from "@/lib/supabase/types";
 
 // The org and the signed in email come from requireSession in the layout, not
 // from client state, so the bar can never show a workspace the session does not
 // actually have.
+//
+// The bell arrives as a node rather than as rows, so the layout can stream it
+// behind Suspense: a navigation should never wait on an unread count.
 export function TopBar({
   orgName,
   email,
-  notifications,
+  bell,
 }: {
   orgName: string;
   email: string;
-  notifications: NotificationRow[];
+  bell: ReactNode;
 }) {
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b border-rule bg-ink px-0 text-sheet">
@@ -38,7 +40,7 @@ export function TopBar({
           <CircleHelp size={14} strokeWidth={1.75} />
           Help
         </button>
-        <NotificationsBell notifications={notifications} />
+        {bell}
         <UserMenu email={email} />
       </div>
     </header>

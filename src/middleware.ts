@@ -79,5 +79,17 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg)).*)"],
+  // Every path this matches costs a getUser round trip to Supabase Auth before
+  // anything renders, so the matcher is an exclusion list and every entry is
+  // load-bearing.
+  //
+  // `_next/data` and the RSC payload requests that client-side navigation
+  // fires were both being matched, which meant a single link click paid for
+  // the auth check twice: once for the payload and once for the page. The
+  // routes behind them still call requireSession, and RLS is the real
+  // boundary underneath that, so skipping the middleware check here costs no
+  // safety.
+  matcher: [
+    "/((?!_next/static|_next/image|_next/data|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|webmanifest)).*)",
+  ],
 };

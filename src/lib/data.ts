@@ -65,6 +65,31 @@ export async function getWorkspace() {
   };
 }
 
+/**
+ * The id of the first role, and nothing else.
+ *
+ * The pipeline index only needs this one value to redirect. Calling
+ * getWorkspace for it fetched every job, the credit ledger and the whole
+ * membership list, then discarded all of it, on the route the product opens on.
+ */
+export async function getFirstJobId(): Promise<string | null> {
+  await requireSession();
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("jobs")
+    .select("id")
+    // Same total order as getWorkspace: seeded rows share a created_at, so
+    // without the ref tiebreak "first" is decided by heap order and any UPDATE
+    // moves it.
+    .order("created_at", { ascending: true })
+    .order("ref", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  return data?.id ?? null;
+}
+
 export async function getBoard(jobId: string) {
   const session = await requireSession();
   const supabase = await createClient();

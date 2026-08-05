@@ -24,6 +24,11 @@ export function ModuleRail() {
             <Link
               key={m.key}
               href={m.href}
+              // Every route here is dynamic, and Next does not prefetch those
+              // by default, so a click paid the whole server round trip with
+              // nothing on screen. Prefetching on hover spends the wait during
+              // the moment the pointer is already travelling.
+              prefetch
               title={`${m.wordmark}, pillar ${m.pillar}`}
               aria-label={`${m.wordmark} module`}
               aria-current={isActive ? "page" : undefined}
@@ -87,6 +92,7 @@ export function ModuleRail() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  prefetch
                   aria-current={isActive ? "page" : undefined}
                   className={`flex h-8 items-center gap-2.5 rounded-control px-2.5 text-[13px] ${
                     isActive
