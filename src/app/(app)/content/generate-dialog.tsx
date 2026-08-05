@@ -276,9 +276,30 @@ export function GenerateDialog({
               </Select>
             </label>
 
-            <Button onClick={generate} disabled={busy || !configured || !hasPersona}>
+            {/* A disabled control must say why on itself. The reason used to
+                live in a box off to the side, which reads as the button being
+                broken rather than waiting on something. */}
+            <Button
+              onClick={generate}
+              disabled={busy || !configured || !hasPersona}
+              title={
+                !configured
+                  ? "No model key is configured on this deployment."
+                  : !hasPersona
+                    ? "Build your voice first."
+                    : undefined
+              }
+            >
               <Sparkles size={16} strokeWidth={1.5} />
-              {busy ? "Writing" : draft ? "Write it again" : "Write it"}
+              {busy
+                ? "Writing"
+                : !configured
+                  ? "Writing is not switched on"
+                  : !hasPersona
+                    ? "Build your voice first"
+                    : draft
+                      ? "Write it again"
+                      : "Write it"}
             </Button>
           </div>
 
@@ -301,19 +322,28 @@ export function GenerateDialog({
         </div>
 
         <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[280px]">
+          {/* Two different reasons writing cannot run, deliberately worded so
+              they cannot be mistaken for each other. The first is our problem
+              and the recruiter can do nothing about it; the second is one
+              minute of their time and has a button attached. */}
           {!configured ? (
             <p className="rounded-control border border-amber bg-amber-bg px-3 py-2 text-[12px] text-amber-text">
-              Generation is not switched on for this deployment yet. You can
-              still write a post by hand and add it.
+              This deployment has no model key, so Pulse cannot write anything
+              for anyone. That is a Pulse configuration problem, not something
+              you did. You can still write a post by hand and add it.
             </p>
           ) : !hasPersona ? (
             <div className="rounded-control border border-amber bg-amber-bg px-3 py-2.5">
-              <p className="text-[12px] text-amber-text">
-                Build your voice first, or every draft comes back sounding like
-                nobody. It takes a minute.
+              <p className="text-[12px] font-medium text-amber-text">
+                Writing works. Your voice is the missing piece.
+              </p>
+              <p className="mt-1 text-[12px] text-amber-text">
+                Pulse writes as you, not as a generic recruiter, so it needs a
+                minute of your writing first. Until then every draft would come
+                back sounding like nobody.
               </p>
               <Link href="/content/persona" className={`${LINK_BUTTON} mt-2.5`}>
-                Build my persona
+                Build my voice
               </Link>
             </div>
           ) : null}

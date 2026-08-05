@@ -102,9 +102,10 @@ export function PersonaScreen({
       <div className="flex flex-col gap-5 p-6">
         {!configured ? (
           <p className="rounded-control border border-amber bg-amber-bg px-3 py-2 text-[12px] text-amber-text">
-            Post generation is not switched on for this deployment yet, so there
-            is no model to read your voice with. What you paste will be saved,
-            but nothing will be distilled from it until OPENAI_API_KEY is set.
+            This deployment has no model key, so there is nothing to read your
+            voice with. What you paste is still saved, and building it will
+            work the moment the key is set. That is a Pulse configuration
+            problem, not something you did.
           </p>
         ) : null}
 
