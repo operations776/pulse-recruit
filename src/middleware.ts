@@ -8,11 +8,19 @@ import { NextResponse, type NextRequest } from "next/server";
 // session, and the anon-granted RPC behind it is the whole boundary.
 const PUBLIC_PATHS = ["/", "/signin", "/signup", "/auth", "/apply"];
 
-// Provider callbacks arrive from another company's servers and have no session,
-// so the session gate would answer 401 and the connection would silently never
-// be recorded. These routes are not unprotected: each one verifies a shared
-// secret it minted itself, in constant time, before it writes anything.
-const CALLBACK_PATHS = ["/api/unipile"];
+// Machine callers have no session, so the session gate would answer 401 and the
+// work would silently never happen. These routes are not unprotected: each one
+// verifies a shared secret it minted itself, in constant time, before it writes
+// anything.
+//
+// /api/unipile   arrives from Unipile's servers, checks UNIPILE_WEBHOOK_SECRET
+// /api/cron      arrives from pg_cron via pg_net, checks CRON_SECRET
+//
+// PLS-88 shipped without the second entry and the deployed publisher answered
+// 401 to its own scheduler: a job that would have looked healthy in pg_cron
+// while nothing was ever published. Anything sessionless added here needs its
+// path in this list and a secret of its own.
+const CALLBACK_PATHS = ["/api/unipile", "/api/cron"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

@@ -35,19 +35,27 @@ test("a wrong secret of the right length is still refused", async ({
   expect(response.status()).toBe(401);
 });
 
-test("the publisher is not behind the sign-in redirect", async ({ request }) => {
-  // A cron cannot follow a redirect to /signin. If the middleware ever starts
-  // matching this path, the job silently stops publishing and nothing says so.
+test("the publisher is not behind the session gate", async ({ request }) => {
+  // This one caught a real bug on the first deploy. `/api/cron` was missing
+  // from CALLBACK_PATHS, so the middleware answered every request with its own
+  // 401 and the route never ran. pg_cron would have looked healthy while
+  // nothing was ever published.
+  //
+  // Both refusals are 401, so the status alone proves nothing. The BODY is the
+  // discriminator: the middleware says "Sign in to continue", the route says
+  // "unauthorised".
   const response = await request.post("/api/cron/publish", {
     maxRedirects: 0,
   });
   expect(response.status()).toBe(401);
   expect(response.headers().location).toBeUndefined();
+  expect((await response.json()).error).toBe("unauthorised");
 });
 
 test("a browser GET gets an explanation, not a redirect", async ({
   request,
 }) => {
+  // Also proves the route is reached: only the route knows about POST.
   const response = await request.get("/api/cron/publish");
   expect(response.status()).toBe(405);
   expect((await response.json()).error).toMatch(/only accepts post/i);
