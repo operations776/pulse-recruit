@@ -4,6 +4,7 @@ import { Download, Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { AddCandidateDialog } from "@/components/ats/add-candidate-dialog";
+import { ApplicationLink } from "@/components/ats/application-link";
 import { BulkActionBar } from "@/components/ats/bulk-action-bar";
 import { CandidateCard } from "@/components/ats/candidate-card";
 import { CandidateDrawer } from "@/components/ats/candidate-drawer";
@@ -215,6 +216,7 @@ export function Board({
             aria-label="Search candidates"
             className="w-56"
           />
+          <ApplicationLink job={job} />
           <Button
             onClick={() => exportCsv()}
             disabled={candidates.length === 0}

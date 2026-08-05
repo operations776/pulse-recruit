@@ -85,6 +85,9 @@ export type JobRow = {
   target: number;
   opens_at: string | null;
   closes_at: string | null;
+  // The public application link's capability. Null means no link exists;
+  // nulling it revokes every copy that was ever shared.
+  application_slug: string | null;
   created_at: string;
 };
 

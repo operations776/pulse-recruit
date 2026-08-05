@@ -163,7 +163,7 @@ PLS-45, so the port is the parts Pulse did not have yet.
 | PLS-75 | Talent: pools as stageless rosters, one-way job-into-pool filing, Add-to-job bulk action | blocked: the board still renders the old candidates table while the person and candidacy cutover is in flight in the AI session's branch. A roster UI built on a table scheduled for deletion is orphaned work. Build pools on candidacies once the cutover lands |
 | PLS-76 | Talent: CSV export, whole job or the selection, Excel formula defusal and a UTF-8 BOM | done |
 | PLS-77 | Talent: custom fields, defs table plus jsonb values on both candidates and people, atomic per-key merge in SQL, inline editors in the drawer, admin manage dialog | done |
-| PLS-78 | Talent: public application link per job, find-or-create by email, applied stage | todo |
+| PLS-78 | Talent: public application link per job. Slug as the capability, anon-granted RPC as the boundary, idempotent repeat applications, revocation kills every shared copy | done |
 
 Flagged out of scope until their infrastructure exists: stage emails (no send
 transport wired), interview scheduling and add-to-Google-Calendar (no per-user

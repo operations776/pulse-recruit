@@ -295,6 +295,76 @@ export async function createTask(
 }
 
 /* ---------------------------------------------------------------------------
+ * Public application links (PLS-78)
+ * ------------------------------------------------------------------------- */
+
+/** Mint the public application link for a job. The slug is the capability. */
+export async function enableApplications(
+  jobId: string,
+): Promise<Result<string>> {
+  const supabase = await createClient();
+
+  // 24 random bytes of URL-safe alphabet. Unguessable is the security model.
+  const slug = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+    .map((b) => "abcdefghijklmnopqrstuvwxyz0123456789"[b % 36])
+    .join("");
+
+  const { data, error } = await supabase
+    .from("jobs")
+    .update({ application_slug: slug })
+    .eq("id", jobId)
+    .select("application_slug");
+  if (error) return fail(readable(error.message));
+  if (!data || data.length === 0) return fail("That role was not updated.");
+
+  revalidatePath("/pipeline", "layout");
+  return { ok: true, data: slug };
+}
+
+/** Revoke the link. Every copy ever shared stops working at once. */
+export async function disableApplications(jobId: string): Promise<Result> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("jobs")
+    .update({ application_slug: null })
+    .eq("id", jobId)
+    .select("id");
+  if (error) return fail(readable(error.message));
+  if (!data || data.length === 0) return fail("That role was not updated.");
+
+  revalidatePath("/pipeline", "layout");
+  return { ok: true, data: undefined };
+}
+
+/**
+ * The public submission. The caller has no session, so the server client runs
+ * as anon and the RPC's own validation is the whole boundary. Nothing here
+ * may leak whether an email already applied: a repeat is a quiet success.
+ */
+export async function submitApplication(input: {
+  slug: string;
+  name: string;
+  email: string;
+  phone?: string;
+  title?: string;
+  company?: string;
+  linkedin?: string;
+}): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("apply_to_job", {
+    slug: input.slug,
+    applicant_name: input.name,
+    applicant_email: input.email,
+    applicant_phone: input.phone ?? "",
+    applicant_title: input.title ?? "",
+    applicant_company: input.company ?? "",
+    applicant_linkedin: input.linkedin ?? "",
+  });
+  if (error) return fail(readable(error.message));
+  return { ok: true, data: undefined };
+}
+
+/* ---------------------------------------------------------------------------
  * Custom fields (PLS-77)
  * ------------------------------------------------------------------------- */
 

@@ -4,7 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 // Refreshes the Supabase session on every request and gates the app routes.
 // Auth is checked here AND enforced by RLS in the database, because a
 // middleware redirect is a convenience, not a security boundary.
-const PUBLIC_PATHS = ["/", "/signin", "/signup", "/auth"];
+// /apply is the public application form: an applicant holds a slug, not a
+// session, and the anon-granted RPC behind it is the whole boundary.
+const PUBLIC_PATHS = ["/", "/signin", "/signup", "/auth", "/apply"];
 
 // Provider callbacks arrive from another company's servers and have no session,
 // so the session gate would answer 401 and the connection would silently never
