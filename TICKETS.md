@@ -254,6 +254,33 @@ section 10 (the motion envelope), section 3 (the skill accents and the three
 constraints that stop them eroding the colour roles), and contract rules 9 and
 11.
 
+## Pillar 1: the BD Strategist
+
+The `/market` screen was a correctly metered research chat with four product
+gaps: it defaulted to `gpt-4o` for work that needs frontier reasoning, it had
+no durable memory beyond a short chat history, it rendered a generic
+transcript, and it repeated live research for identical recent queries.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-92 | `bd_agent_memories` and `bd_research_cache`, both tenant-scoped with RLS from birth. Agency strategy is owner-or-admin, personal coaching is gated on `user_id = auth.uid()`, and a partial unique index stops one recruiter filing two feedback records for one answer | done |
+| PLS-93 | Memory actions: save, edit, delete, and feedback that replaces rather than contradicts. No model call, no credits: a row, not a run | done |
+| PLS-94 | `gpt-5` replaces `gpt-4o`, with `MODEL_RATES` moved in the same change per the pricing rule. Confirmed against OpenAI's pricing page: 1.25 in, 10.00 out, so input is cheaper than gpt-4o. `streamCompletion` retries once without `temperature` if the model rejects it, because OpenAI documents that parameter support differs on reasoning models and one 400 must not take the surface down | done |
+| PLS-95 | Freshness-aware Exa cache, 24h searches and 12h pages, per org. A hit costs no search or page-read unit and does not touch the run budget, the run log says "Using recent research" with an age rather than "Searching", and a search asking for results newer than the entry bypasses it | done |
+| PLS-96 | The briefing. Four labelled sections (what changed, why it matters, best next move, evidence) parsed from plain text rather than requested as JSON, because a model that must close a JSON object truncates and renders nothing. An answer without the labels falls back to exactly what was written | done |
+| PLS-97 | Coaching. Useful or off target under every settled answer, off target requiring a reason on both the client and the server, written to visible personal memory and read by the next run | done |
+| PLS-98 | The three-region workspace: strategy rail (what it knows, editable and deletable), briefing centre, evidence rail (freshness, coaching taken, next move). The old 140px page header is gone; it repeated the module rail and explained the product to somebody already using it | done |
+
+Verified against the live database before shipping: the RLS policies isolate a
+personal memory from a teammate in the same org, and the advisor reports no new
+anon-callable surface. The one new entry, `sweep_bd_research_cache`, is
+authenticated-only and bounded to an org the caller belongs to.
+
+**Memory is strategy, never evidence.** It shapes how the strategist advises
+and may never support a claim about a company, person, role, funding event or
+date. Those still require a tool result every time. AI.md section 5 states the
+rule and the system prompt enforces it.
+
 ## Found on the production deploy
 
 | ID | Ticket | Status |

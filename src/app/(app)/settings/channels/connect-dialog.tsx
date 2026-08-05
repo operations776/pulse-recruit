@@ -301,7 +301,7 @@ export function ConnectDialog({
                 className={`mt-1 h-3 w-3 shrink-0 rounded-full border ${
                   method === option.id
                     ? "border-[5px] border-ink"
-                    : "border-rule-strong"
+                    : "border-ink-3"
                 }`}
               />
               <span className="min-w-0">

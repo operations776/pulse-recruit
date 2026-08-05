@@ -7,9 +7,18 @@ import "server-only";
 const ENDPOINT = "https://api.openai.com/v1/chat/completions";
 
 // Changing model is changing this env var, and the token rates in pricing.ts in
-// the same commit. The default is a widely available model, not a
-// recommendation: confirm the one you want against the provider's model list.
-export const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o";
+// the same commit. Both moved together in PLS-94.
+//
+// gpt-5, because the BD Strategist has to reason across live research results
+// rather than retrieve a fact: it weighs several sources, decides which
+// opportunity is worth a recruiter's next hour, and defends the choice. That
+// is the work a frontier model earns its price on. It keeps the same Chat
+// Completions, streaming and tool-calling surface this file already speaks, so
+// nothing below changed.
+//
+// Still an env var, deliberately. A later model may be a better cost-quality
+// trade, and this should be one variable and two rates, not a code change.
+export const MODEL = process.env.OPENAI_MODEL ?? "gpt-5";
 
 export type ToolCall = {
   id: string;
@@ -123,25 +132,49 @@ export async function streamCompletion({
   onDelta?: (text: string) => void;
   maxOutputTokens?: number;
 }): Promise<CompletionResult> {
-  const response = await fetch(ENDPOINT, {
-    method: "POST",
-    signal,
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${requireKey()}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      ...(tools?.length ? { tools, tool_choice: "auto" } : {}),
-      stream: true,
-      // Without this the final chunk carries no usage block and the meter has
-      // nothing real to bill from.
-      stream_options: { include_usage: true },
-      max_completion_tokens: maxOutputTokens,
-      temperature: 0.2,
-    }),
+  const payload = (withTemperature: boolean) => ({
+    model: MODEL,
+    messages,
+    ...(tools?.length ? { tools, tool_choice: "auto" } : {}),
+    stream: true,
+    // Without this the final chunk carries no usage block and the meter has
+    // nothing real to bill from.
+    stream_options: { include_usage: true },
+    max_completion_tokens: maxOutputTokens,
+    // Low temperature is right for research: we want the same evidence to
+    // produce the same reading twice. But OpenAI documents that parameter
+    // support differs on reasoning models, and some accept only the default,
+    // so this is sent as a preference rather than a requirement. See the
+    // retry below.
+    ...(withTemperature ? { temperature: 0.2 } : {}),
   });
+
+  const send = (withTemperature: boolean) =>
+    fetch(ENDPOINT, {
+      method: "POST",
+      signal,
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${requireKey()}`,
+      },
+      body: JSON.stringify(payload(withTemperature)),
+    });
+
+  let response = await send(true);
+
+  // A model that refuses `temperature` must not take the whole surface down
+  // with it. This is the one documented way an otherwise valid request can
+  // fail purely on a parameter we do not need, so it costs one retry rather
+  // than an outage. Nothing has streamed yet and no credits have been spent
+  // beyond the reservation, so retrying here is free and invisible.
+  if (response.status === 400) {
+    const body = await response.text().catch(() => "");
+    if (/temperature/i.test(body)) {
+      response = await send(false);
+    } else {
+      throw readableFailure(400, body);
+    }
+  }
 
   if (!response.ok || !response.body) {
     const body = await response.text().catch(() => "");

@@ -11,8 +11,18 @@ export const CREDITS_PER_USD = 100;
 
 // USD per 1,000,000 tokens. Override the model with OPENAI_MODEL and update
 // these two numbers in the same change, or the meter silently lies.
+//
+// gpt-5, confirmed against OpenAI's pricing page on 2026-08-05: $1.25 in,
+// $10.00 out. PLS-94 moved the default off gpt-4o ($2.50 in) because the BD
+// Strategist reasons across research results, which is exactly the work a
+// frontier model is worth paying for. Input got CHEAPER in the process, so a
+// typical research run costs less than it did on gpt-4o, not more.
+//
+// Cached input is billed at $0.125 per million, a tenth of the standard rate.
+// We do not model that discount: it would make the meter optimistic, and
+// under-charging our own ledger is the safer direction to be wrong in.
 export const MODEL_RATES = {
-  inputPerMillionUsd: 2.5,
+  inputPerMillionUsd: 1.25,
   outputPerMillionUsd: 10,
 } as const;
 

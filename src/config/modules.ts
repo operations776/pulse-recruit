@@ -50,8 +50,8 @@ export const MODULES: ModuleDef[] = [
     href: "/market",
     icon: Sparkles,
     blurb:
-      "The BD engine. Ask what the market is doing and get an answer built from live research, with every source listed.",
-    nav: [{ href: "/market", label: "BD engine", icon: MessageSquare }],
+      "The BD Strategist. It researches your market, remembers your strategy, and names the one move worth making, with every source listed.",
+    nav: [{ href: "/market", label: "BD Strategist", icon: MessageSquare }],
   },
   {
     key: "ops",

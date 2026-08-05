@@ -49,6 +49,8 @@ export function ChatPanel({
   emptyTitle,
   emptyBody,
   headerRight,
+  renderAnswer,
+  answerFooter,
 }: {
   surface: ChatSurface;
   messages: ChatRow[];
@@ -65,6 +67,13 @@ export function ChatPanel({
   emptyTitle: string;
   emptyBody: string;
   headerRight?: ReactNode;
+  /**
+   * Render a settled assistant turn. Omitted, the answer is a plain paragraph.
+   * MARKET passes a briefing renderer; OPS deliberately does not.
+   */
+  renderAnswer?: (message: ChatRow) => ReactNode;
+  /** Controls under a settled answer, such as BD coaching feedback. */
+  answerFooter?: (message: ChatRow) => ReactNode;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
@@ -264,14 +273,27 @@ export function ChatPanel({
 
           return (
             <div key={m.id} className="flex justify-start">
-              <div className="max-w-[80%] rounded-card border border-rule bg-sheet px-3 py-2.5">
-                <p className="whitespace-pre-line text-[13px] leading-[1.5]">
-                  {m.body}
-                </p>
+              {/* Wider than the 80% a chat bubble wants: a BD briefing has
+                  four labelled sections and reads badly in a narrow column. */}
+              <div
+                className={`rounded-card border border-rule bg-sheet px-3 py-2.5 ${
+                  renderAnswer ? "w-full" : "max-w-[80%]"
+                }`}
+              >
+                {/* The surface decides how an answer looks. MARKET renders a
+                    briefing; OPS keeps the plain paragraph it has always had. */}
+                {renderAnswer ? (
+                  renderAnswer(m)
+                ) : (
+                  <p className="whitespace-pre-line text-[13px] leading-[1.5]">
+                    {m.body}
+                  </p>
+                )}
                 <SourceList sources={sources} />
                 {m.credits_spent > 0 ? (
                   <AnswerCost credits={m.credits_spent} meta={meta} />
                 ) : null}
+                {answerFooter?.(m)}
               </div>
             </div>
           );

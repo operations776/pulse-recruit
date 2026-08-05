@@ -44,9 +44,9 @@ const LINK_BUTTON =
   "cap inline-flex h-7 shrink-0 items-center justify-center gap-2 rounded-control border border-ink bg-transparent px-2.5 text-[12px] font-medium text-ink hover:bg-well [--edge:var(--color-ink)]";
 
 const PLATFORM_NOTE: Record<string, string> = {
-  openai: "Answers on the BD engine and the ops manager",
+  openai: "Answers on the BD Strategist and the ops manager",
   anthropic: "Held for a second model provider",
-  exa: "Live web research behind the BD engine",
+  exa: "Live web research behind the BD Strategist",
 };
 
 // DESIGN.md rule 9: colour plus icon plus word. StatusChip supplies the icon.

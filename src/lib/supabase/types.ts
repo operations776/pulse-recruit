@@ -251,6 +251,62 @@ export type CreditEventRow = {
   created_at: string;
 };
 
+// Pillar 1 keeps commercial context explicit. Agency rows are shared strategy;
+// personal rows are one recruiter's coaching preferences. Neither is a source
+// for a market claim, which still has to come from Exa.
+export type BDMemoryScope = "agency" | "personal";
+export type BDMemoryKind =
+  | "positioning"
+  | "ideal_client"
+  | "buyer"
+  | "territory"
+  | "offer"
+  | "qualification"
+  | "preference"
+  | "feedback";
+export type BDMemorySource = "manual" | "feedback";
+
+/**
+ * The two titles a feedback memory carries.
+ *
+ * The write side sets them and the read side maps them back to the rating, so
+ * they live here rather than as string literals in two files that would drift
+ * the first time somebody reworded one. `actions.ts` is "use server" and can
+ * only export async functions, which is why this is not there.
+ */
+export const BD_FEEDBACK_TITLE = {
+  useful: "Useful coaching",
+  off_target: "Coaching correction",
+} as const;
+
+export type BDFeedbackRating = keyof typeof BD_FEEDBACK_TITLE;
+
+export type BDAgentMemoryRow = {
+  id: string;
+  org_id: string;
+  scope: BDMemoryScope;
+  user_id: string | null;
+  kind: BDMemoryKind;
+  title: string;
+  body: string;
+  source: BDMemorySource;
+  answer_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// An Exa response we already paid to fetch. Its expiry determines whether it
+// is still useful, and its org_id means no agency ever shares a query trail.
+export type BDResearchCacheRow = {
+  id: string;
+  org_id: string;
+  cache_key: string;
+  kind: "search" | "page";
+  payload: unknown;
+  created_at: string;
+  expires_at: string;
+};
+
 export type TaskStatus =
   | "todo"
   | "in_progress"
@@ -561,4 +617,3 @@ export type ShortlistRow = {
   revoked_at: string | null;
   created_at: string;
 };
-

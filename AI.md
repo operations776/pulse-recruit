@@ -6,7 +6,7 @@ Two surfaces run on one engine.
 
 | Surface | Reads | Costs credits | Pillar |
 | --- | --- | --- | --- |
-| MARKET, the BD engine | The open web, via Exa | Yes | 1 |
+| MARKET, the BD Strategist | The open web, via Exa | Yes | 1 |
 | OPS, the ops manager | The org's own Postgres rows | Yes, at a much lower rate | 2 |
 
 The difference between them is the tool set, not the component. Nothing else about them may diverge.
@@ -39,8 +39,14 @@ Rates live in exactly one file, `src/lib/server/ai/pricing.ts`. They are configu
 Cost is metered from what actually happened, never estimated after the fact:
 
 - Model spend from the `usage` block the provider returns on the final chunk, input and output priced separately.
-- Exa spend counted per search issued and per page read.
+- Exa spend counted per search **issued** and per page **fetched**. A cache hit issued nothing, so it costs nothing (section 8).
 - Total rounded up to the next whole credit, so we never undercharge ourselves into a loss.
+
+**The model is `gpt-5`** as of PLS-94, overridable with `OPENAI_MODEL`. It replaced `gpt-4o` because the BD Strategist reasons across research results rather than retrieving a fact. Rates confirmed against OpenAI's pricing page on 2026-08-05: 1.25 USD per million input tokens, 10.00 USD per million output. Input is CHEAPER than gpt-4o was, so a typical research run costs less than before, not more.
+
+OpenAI bills cached input at a tenth of the standard rate. We deliberately do not model that discount: it would make the meter optimistic, and under-charging our own ledger is the safer direction to be wrong in.
+
+Changing `OPENAI_MODEL` means changing `MODEL_RATES` in the same commit, or the meter lies.
 
 ## 3. Claim before the call, settle after it
 
@@ -72,7 +78,11 @@ The model is never the last word on whether something happened. Tool results are
 
 **OPS may not read the open web.** It has no search tool at all, so the boundary is structural rather than instructed. Its tools are scoped reads against the caller's own Supabase session, so RLS is the backstop: a tool cannot return another org's rows even if the model asks for them.
 
-Both surfaces run with the user's session client, never a service role. There is no service-role key in this codebase and the AI engine does not introduce one.
+Both surfaces run with the user's session client, never a service role. The service-role key exists for two sessionless callers (ARCHITECTURE.md), and the AI engine is not one of them.
+
+**Memory is strategy, never evidence.** The BD Strategist is given the agency's visible context, agency strategy first and then the recruiter's own coaching, ahead of the recent conversation. That context shapes how it advises: what they sell, who they sell to, what makes them walk away. It may never be cited as a source, repeated back as a finding, or used to support a claim about a company, person, role, funding event, or date. Those still require a tool result, every time.
+
+The memory is visible by construction. Every record has a title, an owner, an edit control and a delete control on `/market`, and nothing is inferred from behaviour. A recruiter can read exactly what the agent knows and take any of it back. There is no hidden profile.
 
 ## 6. OPS can act, within one boundary
 
@@ -86,6 +96,19 @@ A research run takes 20 to 60 seconds. A screen that shows nothing for a minute 
 
 `POST /api/ask` streams server-sent events: `status` for the phase, `source` as each one is found, `delta` for answer text, `done` with the settled credit cost, `error` with a real reason. The transcript shows the searches as they are issued, so the work is visible while it happens and auditable after it.
 
-## 8. Adding a provider
+## 8. Research is cached, and a cache hit is free
+
+Two recruiters at one agency researching the same market in the same afternoon should not pay twice for the same answer. Exa results are cached per org: searches for 24 hours, page reads for 12.
+
+Four rules make it safe:
+
+1. **Never across orgs.** The key is scoped by `org_id`, the RLS policy is scoped by `org_id`, and every read and write runs on the caller's own session.
+2. **A hit costs nothing.** No provider call happened, so no search or page-read unit is counted and the run's research budget is untouched. Charging for a cache hit would be charging for work we did not do.
+3. **A hit is labelled.** The run log says `Using recent research` with its age, never `Searching`, and the model is told the age so it can hedge a time-sensitive claim instead of asserting it. A recruiter about to call a client needs to know whether the evidence is an hour or a day old.
+4. **Freshness wins over the cache.** A search asking for results published after a date the entry predates bypasses it: that entry was built before those results existed, and serving it would present an old search as a new one.
+
+An empty result is never cached: on this surface an empty search is a failed run that gets refunded, and caching it would refuse the same question for a day. A cache read failure degrades to a live provider call, and a cache write failure is silent, because by then the answer is already in hand and the credits are already settled honestly.
+
+## 9. Adding a provider
 
 Perplexity is next, and the shape is fixed so it stays a small change: a provider module under `src/lib/server/ai/providers/` exposing the same search interface as `exa.ts`, a rate added to `pricing.ts`, and a line in the table in section 1. No screen changes, no schema changes. If adding a provider needs anything else, the boundary is wrong.

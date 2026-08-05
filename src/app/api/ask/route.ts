@@ -2,6 +2,10 @@ import { encodeEvent, type AskEvent } from "@/lib/ai-events";
 import { sessionOrNull } from "@/lib/auth";
 import { ProviderError } from "@/lib/server/ai/openai";
 import { SURFACE_LIMITS } from "@/lib/server/ai/pricing";
+import {
+  loadBDAgentMemories,
+  memoryForPrompt,
+} from "@/lib/server/ai/bd-memory";
 import { runAsk } from "@/lib/server/ai/run";
 import { createClient } from "@/lib/supabase/server";
 import type { ChatRow, ChatSurface } from "@/lib/supabase/types";
@@ -43,15 +47,24 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const limits = SURFACE_LIMITS[surface];
 
-  // History for continuity, read before the claim so a failed read cannot leave
-  // a reservation stranded.
-  const { data: priorRows } = await supabase
-    .from("chat_messages")
-    .select("*")
-    .eq("surface", surface)
-    .order("created_at", { ascending: false })
-    .limit(12);
-  const history = ((priorRows ?? []) as ChatRow[]).reverse();
+  // History for continuity and durable BD context, both read before the claim
+  // so a failed read cannot leave a reservation stranded. In parallel: they do
+  // not depend on each other and this is on the path to a streamed answer.
+  const [priorResult, memories] = await Promise.all([
+    supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("surface", surface)
+      .order("created_at", { ascending: false })
+      .limit(12),
+    // MARKET only. The ops manager reads the agency's own rows and has no use
+    // for BD positioning, so loading it there would be spend with no effect.
+    surface === "market"
+      ? loadBDAgentMemories(supabase, session.org.id, session.userId)
+      : Promise.resolve([]),
+  ]);
+  const history = ((priorResult.data ?? []) as ChatRow[]).reverse();
+  const memory = memoryForPrompt(memories);
 
   // Claim. Nothing above this line has cost us anything; nothing below it runs
   // without the credits already banked (ARCHITECTURE.md law 3).
@@ -96,6 +109,7 @@ export async function POST(request: Request) {
           question,
           history,
           orgName: session.org.name,
+          memory,
           ctx: {
             supabase,
             orgId: session.org.id,

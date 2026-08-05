@@ -22,8 +22,11 @@ import {
   solveCheckpoint,
 } from "@/lib/server/unipile";
 import { createClient } from "@/lib/supabase/server";
-import { MANUAL_STATUSES } from "@/lib/supabase/types";
+import { BD_FEEDBACK_TITLE, MANUAL_STATUSES } from "@/lib/supabase/types";
 import type {
+  BDAgentMemoryRow,
+  BDMemoryKind,
+  BDMemoryScope,
   ContentSkill,
   CustomFieldType,
   ManualPostStatus,
@@ -47,6 +50,21 @@ export type Result<T = void> =
 
 function fail(message: string): { ok: false; error: string } {
   return { ok: false, error: message };
+}
+
+const BD_MEMORY_KINDS = new Set<BDMemoryKind>([
+  "positioning",
+  "ideal_client",
+  "buyer",
+  "territory",
+  "offer",
+  "qualification",
+  "preference",
+  "feedback",
+]);
+
+function canManageAgencyStrategy(role: "owner" | "admin" | "member") {
+  return role === "owner" || role === "admin";
 }
 
 // Postgres errors are not user copy. Translate the ones we deliberately caused.
@@ -189,6 +207,232 @@ export async function sweepStalledAsks(): Promise<Result<number>> {
   revalidatePath("/market");
   revalidatePath("/ops");
   return { ok: true, data: (data as number) ?? 0 };
+}
+
+/* ---------------------------------------------------------------------------
+ * BD Strategist memory (PLS-92, PLS-93)
+ * ------------------------------------------------------------------------- */
+
+export type SaveBDMemoryInput = {
+  id?: string;
+  scope: BDMemoryScope;
+  kind: BDMemoryKind;
+  title: string;
+  body: string;
+};
+
+export type SaveBDFeedbackInput = {
+  answerId: string;
+  rating: "useful" | "off_target";
+  note: string;
+};
+
+// Explicitly discriminated. Returning `{error?} | {title, body}` inferred a
+// union where `error` was `string | undefined`, so the caller could not narrow
+// it and every branch had to re-check.
+type BDMemoryCheck =
+  | { ok: false; error: string }
+  | { ok: true; title: string; body: string };
+
+function validateBDMemory(input: SaveBDMemoryInput): BDMemoryCheck {
+  const title = input.title.trim();
+  const body = input.body.trim();
+  if (input.scope !== "agency" && input.scope !== "personal") {
+    return { ok: false, error: "Choose whether this is agency strategy or your personal coaching." };
+  }
+  if (!BD_MEMORY_KINDS.has(input.kind)) {
+    return { ok: false, error: "Choose a recognised type of BD context." };
+  }
+  if (title.length < 1 || title.length > 80) {
+    return { ok: false, error: "Give this context a title of up to 80 characters." };
+  }
+  if (body.length < 1 || body.length > 2000) {
+    return { ok: false, error: "Context needs between 1 and 2,000 characters." };
+  }
+  return { ok: true, title, body };
+}
+
+/** Save a visible piece of agency strategy or personal coaching context. */
+export async function saveBDMemory(
+  input: SaveBDMemoryInput,
+): Promise<Result<BDAgentMemoryRow>> {
+  const checked = validateBDMemory(input);
+  if (!checked.ok) return fail(checked.error);
+
+  const session = await requireSession();
+  if (input.scope === "agency" && !canManageAgencyStrategy(session.role)) {
+    return fail("Only an owner or admin can change agency strategy.");
+  }
+
+  const supabase = await createClient();
+
+  if (input.id) {
+    const { data: existing, error: readError } = await supabase
+      .from("bd_agent_memories")
+      .select("*")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (readError) return fail(readable(readError.message));
+    if (!existing) return fail("That context is no longer available.");
+
+    const memory = existing as BDAgentMemoryRow;
+    if (memory.scope !== input.scope) {
+      return fail("Keep agency strategy and personal coaching as separate records.");
+    }
+    if (
+      (memory.scope === "agency" && !canManageAgencyStrategy(session.role)) ||
+      (memory.scope === "personal" && memory.user_id !== session.userId)
+    ) {
+      return fail("You cannot change that context.");
+    }
+
+    const { data, error } = await supabase
+      .from("bd_agent_memories")
+      .update({ kind: input.kind, title: checked.title, body: checked.body })
+      .eq("id", input.id)
+      .select("*")
+      .maybeSingle();
+    if (error) return fail(readable(error.message));
+    if (!data) return fail("That context was not saved.");
+    return { ok: true, data: data as BDAgentMemoryRow };
+  }
+
+  const { data, error } = await supabase
+    .from("bd_agent_memories")
+    .insert({
+      org_id: session.org.id,
+      scope: input.scope,
+      user_id: input.scope === "personal" ? session.userId : null,
+      kind: input.kind,
+      title: checked.title,
+      body: checked.body,
+      source: "manual",
+    })
+    .select("*")
+    .single();
+  if (error) return fail(readable(error.message));
+  return { ok: true, data: data as BDAgentMemoryRow };
+}
+
+/** Delete context only when the visible row still belongs to the caller. */
+export async function deleteBDMemory(memoryId: string): Promise<Result> {
+  const session = await requireSession();
+  const supabase = await createClient();
+  const { data: existing, error: readError } = await supabase
+    .from("bd_agent_memories")
+    .select("id, scope, user_id")
+    .eq("id", memoryId)
+    .maybeSingle();
+  if (readError) return fail(readable(readError.message));
+  if (!existing) return fail("That context is already gone.");
+  if (
+    (existing.scope === "agency" && !canManageAgencyStrategy(session.role)) ||
+    (existing.scope === "personal" && existing.user_id !== session.userId)
+  ) {
+    return fail("You cannot delete that context.");
+  }
+
+  const { data, error } = await supabase
+    .from("bd_agent_memories")
+    .delete()
+    .eq("id", memoryId)
+    .select("id");
+  if (error) return fail(readable(error.message));
+  if (!data?.length) return fail("That context was not deleted.");
+  return { ok: true, data: undefined };
+}
+
+/**
+ * A rating becomes visible personal coaching only when the recruiter explains
+ * it. It is a unique per-answer correction so a repeated click refines rather
+ * than contradicts the previous signal.
+ */
+export async function saveBDFeedback(
+  input: SaveBDFeedbackInput,
+): Promise<Result<BDAgentMemoryRow>> {
+  const note = input.note.trim();
+  if (input.rating !== "useful" && input.rating !== "off_target") {
+    return fail("Choose whether the advice was useful or off target.");
+  }
+  if (input.rating === "off_target" && !note) {
+    return fail("Say what the strategist should do differently next time.");
+  }
+  if (note.length > 1900) return fail("Keep feedback under 1,900 characters.");
+
+  const session = await requireSession();
+  const supabase = await createClient();
+  const { data: answer, error: answerError } = await supabase
+    .from("chat_messages")
+    .select("id")
+    .eq("id", input.answerId)
+    .eq("org_id", session.org.id)
+    .eq("surface", "market")
+    .eq("role", "assistant")
+    .eq("status", "complete")
+    .maybeSingle();
+  if (answerError) return fail(readable(answerError.message));
+  if (!answer) return fail("That answer cannot be used for coaching feedback.");
+
+  const title = BD_FEEDBACK_TITLE[input.rating];
+  const body = note || "Keep this kind of grounded commercial advice coming.";
+  const { data: existing, error: existingError } = await supabase
+    .from("bd_agent_memories")
+    .select("id")
+    .eq("org_id", session.org.id)
+    .eq("user_id", session.userId)
+    .eq("answer_id", input.answerId)
+    .eq("source", "feedback")
+    .maybeSingle();
+  if (existingError) return fail(readable(existingError.message));
+
+  const write = existing
+    ? supabase
+        .from("bd_agent_memories")
+        .update({ title, body })
+        .eq("id", existing.id)
+        .select("*")
+        .single()
+    : supabase
+        .from("bd_agent_memories")
+        .insert({
+          org_id: session.org.id,
+          scope: "personal",
+          user_id: session.userId,
+          kind: "feedback",
+          title,
+          body,
+          source: "feedback",
+          answer_id: input.answerId,
+        })
+        .select("*")
+        .single();
+  const { data, error } = await write;
+  if (error) {
+    // The partial unique index is the race guard. One retry turns a double
+    // click into an update without weakening the constraint.
+    if (error.code === "23505") {
+      const { data: raced } = await supabase
+        .from("bd_agent_memories")
+        .select("id")
+        .eq("org_id", session.org.id)
+        .eq("user_id", session.userId)
+        .eq("answer_id", input.answerId)
+        .eq("source", "feedback")
+        .maybeSingle();
+      if (raced) {
+        const retry = await supabase
+          .from("bd_agent_memories")
+          .update({ title, body })
+          .eq("id", raced.id)
+          .select("*")
+          .single();
+        if (!retry.error) return { ok: true, data: retry.data as BDAgentMemoryRow };
+      }
+    }
+    return fail(readable(error.message));
+  }
+
+  return { ok: true, data: data as BDAgentMemoryRow };
 }
 
 export async function toggleTask(

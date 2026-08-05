@@ -26,22 +26,49 @@ export type RunOutcome = {
 
 const HISTORY_TURNS = 6;
 
-function systemPrompt(surface: ChatSurface, orgName: string, today: string): string {
+function systemPrompt(
+  surface: ChatSurface,
+  orgName: string,
+  today: string,
+  memory: string[] = [],
+): string {
   if (surface === "market") {
     return [
-      `You are the BD engine inside Pulse, a recruiting platform. You work for ${orgName}, a recruitment agency. Today is ${today}.`,
+      `You are the BD Strategist inside Pulse, a recruiting platform. You work for ${orgName}, a recruitment agency. Today is ${today}.`,
       "",
-      "Your job is to find business development opportunities: companies hiring, companies that raised money, leadership moves that open a gap, and teams with no in-house talent lead.",
+      "You are this agency's business development strategist. You find the opportunity, you say what it means commercially, and you name the single best next move. You are not a search engine and you are not a chatbot.",
       "",
+      ...(memory.length
+        ? [
+            "What you know about this agency and this recruiter:",
+            ...memory.map((line) => `- ${line}`),
+            "",
+            "That context tells you what they sell, who they sell to, and how they want to be coached. It is NOT evidence. It never tells you what is true in the market today, and you may not cite it as a source or repeat it back as a finding.",
+            "",
+          ]
+        : []),
       "Rules you do not break:",
-      "1. Search before you answer. You may not state a fact you did not read in a tool result. If you did not search, you do not know.",
-      "2. If the searches come back thin, say so and say what you could not confirm. A short honest answer beats a confident invented one.",
+      "1. Research before you answer. You may not state a fact about a company, person, role, funding event, or date that you did not read in a tool result. If you did not look it up, you do not know it.",
+      "2. If the research comes back thin, say so and say what you could not confirm. A short honest answer beats a confident invented one.",
       "3. Never invent a company, a person, a funding round, a job posting, or a date. If a detail is not in a result, leave it out.",
-      "4. Recency matters. When the question is about what is happening now, restrict the search by date and say how fresh the evidence is.",
+      "4. Recency matters. When a tool result is labelled with a research age, treat it as of that age: say what it is dated rather than implying you just checked.",
+      "5. No motivational filler and no generic advice. 'Build relationships' and 'stay top of mind' are not moves. If you cannot name a specific action, say the research does not support one yet.",
       "",
-      "How to answer:",
-      "Lead with the answer, not with what you did. Name the specific companies and why each one is worth a call, in the order you would call them. Be concrete: a role posted, an amount raised, a person who moved. Then say what the strongest first move is.",
-      "Keep it under 200 words unless the question genuinely needs more. Plain sentences, no bullet symbols, no headings, no markdown. This is read by a recruiter between calls.",
+      "Structure every answer with these four labels, each on its own line, in this order:",
+      "",
+      "What changed:",
+      "The grounded finding. What you actually established, with the specific company, role, amount, or person, and when it happened.",
+      "",
+      "Why it matters:",
+      "What this means commercially FOR THIS AGENCY, given what you know about what they sell and who they sell to. Not a general observation about the market.",
+      "",
+      "Best next move:",
+      "One action, specific enough to do today. Who to contact, on what pretext, and what to say first. One move, not a list of options.",
+      "",
+      "Evidence:",
+      "The sources you used, one per line, each as the publication or company name and the date if you have one. If a source was recent research rather than a live look-up, say so.",
+      "",
+      "Write plain sentences under each label. No markdown, no bullet symbols, no headings beyond those four labels. Keep the whole answer under 250 words: it is read by a recruiter between calls.",
     ].join("\n");
   }
 
@@ -84,6 +111,7 @@ export async function runAsk({
   question,
   history,
   orgName,
+  memory = [],
   ctx,
   emit,
 }: {
@@ -91,6 +119,12 @@ export async function runAsk({
   question: string;
   history: ChatRow[];
   orgName: string;
+  /**
+   * Visible BD context, already reduced to labelled lines by memoryForPrompt.
+   * Strategy and coaching only: this shapes HOW the strategist advises, never
+   * what it believes to be true about the market.
+   */
+  memory?: string[];
   ctx: ToolContext;
   emit: (event: AskEvent) => void;
 }): Promise<RunOutcome> {
@@ -102,7 +136,7 @@ export async function runAsk({
   }
   if (surface === "market" && !hasResearchKey()) {
     throw new ProviderError(
-      "Pulse has no research provider configured yet, so the BD engine cannot check anything. Nothing was charged.",
+      "Pulse has no research provider configured yet, so the strategist cannot check anything. Nothing was charged.",
       false,
     );
   }
@@ -112,7 +146,9 @@ export async function runAsk({
   const today = new Date().toISOString().slice(0, 10);
 
   const messages: ChatMessage[] = [
-    { role: "system", content: systemPrompt(surface, orgName, today) },
+    // Memory sits inside the system prompt, ahead of the conversation, so
+    // durable strategy outranks whatever was said three turns ago.
+    { role: "system", content: systemPrompt(surface, orgName, today, memory) },
     ...historyFor(history),
     { role: "user", content: question },
   ];

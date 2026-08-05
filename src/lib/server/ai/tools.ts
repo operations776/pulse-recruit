@@ -2,7 +2,15 @@ import "server-only";
 import type { createClient } from "@/lib/supabase/server";
 import type { ChatSource } from "@/lib/supabase/types";
 import * as research from "@/lib/server/ai/exa";
+import type { ResearchHit } from "@/lib/server/ai/exa";
 import type { ToolSchema } from "@/lib/server/ai/openai";
+import {
+  describeAge,
+  pageKey,
+  readCache,
+  searchKey,
+  writeCache,
+} from "@/lib/server/ai/research-cache";
 
 // The tool sets are the only difference between the two surfaces (AI.md
 // section 5). MARKET can reach the web and cannot touch the database. OPS can
@@ -120,6 +128,53 @@ async function runMarketTool(
   if (name === "search_web") {
     const query = str(args, "query");
     if (!query) return empty(JSON.stringify({ error: "A query is required." }));
+
+    const category = str(args, "category") || undefined;
+    const publishedAfter = str(args, "published_after") || undefined;
+    const numResults = 6;
+
+    // PLS-95. The cache is checked BEFORE the budget, deliberately. A hit is
+    // not a search: no provider call happens, nothing is spent, and refusing
+    // it because the search budget is gone would make a run fail over work it
+    // was not about to do.
+    const key = searchKey({ query, numResults, category, publishedAfter });
+    const cached = await readCache(ctx.supabase, ctx.orgId, key, publishedAfter);
+
+    if (cached) {
+      return {
+        result: JSON.stringify({
+          query,
+          // The model is told the evidence is recent rather than live, so it
+          // can hedge a time-sensitive claim rather than assert it.
+          research_age: describeAge(cached.ageMs),
+          results: cached.hits.map((h) => ({
+            title: h.title,
+            url: h.url,
+            published: h.publishedDate,
+            text: h.text,
+          })),
+        }),
+        steps: [
+          {
+            // Never "Searched". A recruiter reading the run log must be able
+            // to tell a live look-up from a repeat of one.
+            label: "Using recent research",
+            detail: `${query}, from ${describeAge(cached.ageMs)}`,
+          },
+        ],
+        sources: cached.hits.map((h) => ({
+          label: h.title,
+          detail:
+            hostOf(h.url) +
+            (h.publishedDate ? `, ${h.publishedDate.slice(0, 10)}` : ""),
+          url: h.url,
+        })),
+        // Zero. This is the credit rule: we did not call Exa, so we do not
+        // bill for Exa, and the budget is untouched for real searches.
+        spent: { searches: 0, pageReads: 0 },
+      };
+    }
+
     if (ctx.budget.searches <= 0) {
       return empty(
         JSON.stringify({
@@ -131,10 +186,13 @@ async function runMarketTool(
 
     const hits = await research.search({
       query,
-      category: str(args, "category") || undefined,
-      publishedAfter: str(args, "published_after") || undefined,
+      numResults,
+      category,
+      publishedAfter,
       signal: ctx.signal,
     });
+
+    await writeCache(ctx.supabase, ctx.orgId, key, "search", hits);
 
     return {
       result: JSON.stringify({
@@ -169,7 +227,25 @@ async function runMarketTool(
     if (urls.length === 0) {
       return empty(JSON.stringify({ error: "No readable URLs were given." }));
     }
-    if (ctx.budget.pageReads < urls.length) {
+    // Page reads cache per URL, so a batch is usually part cached and part
+    // live. Resolve the cached ones first, then charge only for the rest.
+    const cachedPages: { hit: ResearchHit; ageMs: number }[] = [];
+    const misses: string[] = [];
+
+    for (const url of urls) {
+      const entry = await readCache(ctx.supabase, ctx.orgId, pageKey(url));
+      const first = entry?.hits[0];
+      if (entry && first) {
+        cachedPages.push({ hit: first, ageMs: entry.ageMs });
+      } else {
+        misses.push(url);
+      }
+    }
+
+    // Budget covers the misses only. Previously a batch of five pages already
+    // read this morning would refuse on a spent budget despite costing
+    // nothing.
+    if (misses.length > 0 && ctx.budget.pageReads < misses.length) {
       return empty(
         JSON.stringify({
           error:
@@ -178,19 +254,37 @@ async function runMarketTool(
       );
     }
 
-    const pages = await research.readPages({ urls, signal: ctx.signal });
+    const fetched =
+      misses.length > 0
+        ? await research.readPages({ urls: misses, signal: ctx.signal })
+        : [];
+
+    for (const page of fetched) {
+      await writeCache(ctx.supabase, ctx.orgId, pageKey(page.url), "page", [
+        page,
+      ]);
+    }
+
+    const pages = [...cachedPages.map((c) => c.hit), ...fetched];
 
     return {
       result: JSON.stringify({
         pages: pages.map((p) => ({ url: p.url, title: p.title, text: p.text })),
       }),
-      steps: pages.map((p) => ({ label: "Read", detail: hostOf(p.url) })),
+      steps: [
+        ...cachedPages.map((c) => ({
+          label: "Using recent research",
+          detail: `${hostOf(c.hit.url)}, from ${describeAge(c.ageMs)}`,
+        })),
+        ...fetched.map((p) => ({ label: "Read", detail: hostOf(p.url) })),
+      ],
       sources: pages.map((p) => ({
         label: p.title,
         detail: hostOf(p.url),
         url: p.url,
       })),
-      spent: { searches: 0, pageReads: pages.length },
+      // Only what was actually fetched.
+      spent: { searches: 0, pageReads: fetched.length },
     };
   }
 

@@ -1,10 +1,13 @@
 import "server-only";
 import { requireSession } from "@/lib/auth";
+import { loadBDAgentMemories } from "@/lib/server/ai/bd-memory";
 import { createClient } from "@/lib/supabase/server";
 import { allShapes } from "@/lib/shapes";
+import { BD_FEEDBACK_TITLE } from "@/lib/supabase/types";
 import { dayKey } from "@/lib/time";
 import type {
   ActivityRow,
+  BDFeedbackRating,
   AssetRow,
   CandidateRow,
   ContentShapeRow,
@@ -229,6 +232,63 @@ export async function getChat(surface: ChatSurface) {
     session,
     messages: rows,
     credits: (credits.data ?? null) as CreditRow | null,
+  };
+}
+
+/**
+ * Everything the BD Strategist needs on first paint.
+ *
+ * A MARKET transcript used to grow forever, which made the agent slower the
+ * more faithfully somebody used it. The strategist renders a useful recent
+ * window and reads visible durable context separately, so old conversation is
+ * not mistaken for memory and is not shipped on every visit.
+ */
+export async function getBDWorkspace() {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const [messages, credits, memories] = await Promise.all([
+    supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("surface", "market")
+      .order("created_at", { ascending: false })
+      .limit(60),
+    supabase.from("credit_ledger").select("*").maybeSingle(),
+    loadBDAgentMemories(supabase, session.org.id, session.userId),
+  ]);
+
+  const stalledBefore = Date.now() - 10 * 60_000;
+  const rows = ((messages.data ?? []) as ChatRow[])
+    .reverse()
+    .map((message) =>
+      message.status === "running" &&
+      new Date(message.created_at).getTime() < stalledBefore
+        ? {
+            ...message,
+            status: "failed" as const,
+            error:
+              message.error ??
+              "This run stopped before it finished. The credits it reserved have been given back.",
+          }
+        : message,
+    );
+
+  // Which answers this recruiter has already rated, so the controls under a
+  // briefing show the state rather than inviting the same feedback twice.
+  const feedbackByAnswer: Record<string, BDFeedbackRating> = {};
+  for (const memory of memories) {
+    if (memory.source !== "feedback" || !memory.answer_id) continue;
+    feedbackByAnswer[memory.answer_id] =
+      memory.title === BD_FEEDBACK_TITLE.useful ? "useful" : "off_target";
+  }
+
+  return {
+    session,
+    messages: rows,
+    credits: (credits.data ?? null) as CreditRow | null,
+    memories,
+    feedbackByAnswer,
   };
 }
 
