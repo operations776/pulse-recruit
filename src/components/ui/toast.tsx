@@ -55,7 +55,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <div
               key={t.id}
               role="status"
-              className={`floating pointer-events-auto flex items-start gap-3 rounded-shell border p-4 ${
+              className={`floating toast-in pointer-events-auto flex items-start gap-3 rounded-shell border p-4 ${
                 danger ? "border-red" : "border-rule"
               }`}
             >

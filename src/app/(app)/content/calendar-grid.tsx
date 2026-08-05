@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Loader, Paperclip, XCircle } from "lucide-react";
-import { SKILL_BY_KEY } from "@/config/content-skills";
+import { SKILL_BY_KEY, skillColour } from "@/config/content-skills";
 import type { PostRow } from "@/lib/supabase/types";
 import { monthGrid, timeOfDay } from "@/lib/time";
 
@@ -19,6 +19,20 @@ function cardTone(post: PostRow): string {
   return post.status === "published"
     ? "border-rule bg-well text-ink-2"
     : "border-rule bg-sheet text-ink";
+}
+
+/**
+ * The skill's colour, as a left edge.
+ *
+ * Status wins. A failed post is red and a published one is spent, regardless
+ * of what shape it is: what you need to know about those is the state, not the
+ * category. Everything still in play carries its skill colour, which is what
+ * turns a month of identical cream rectangles into a readable mix.
+ */
+function cardAccent(post: PostRow): string {
+  if (post.status === "failed") return "border-l-red";
+  if (post.status === "published") return "border-l-teal";
+  return skillColour(post.skill).edge;
 }
 
 export function CalendarGrid({
@@ -99,10 +113,17 @@ export function CalendarGrid({
                   // 88px, not the old 104px: an empty cell held ~86px of air
                   // to show one date digit, and a month has ~30 of them. 88 is
                   // on the 8px scale; 104 was not.
-                  "-ml-px flex min-h-[88px] w-0 flex-1 flex-col gap-1 border-l border-rule p-1.5 first:ml-0 first:border-l-0",
+                  "settle -ml-px flex min-h-[88px] w-0 flex-1 flex-col gap-1 border-l border-rule p-1.5 first:ml-0 first:border-l-0",
                   cell.inMonth ? "" : "bg-paper",
+                  // Today is the one cell you look for first, so it gets a
+                  // wash rather than only a ring on its date digit.
+                  isToday && cell.inMonth ? "bg-[#fdf6ec]" : "",
+                  // Weekends recede. Most recruiters do not post on them, and
+                  // dimming two columns makes the working week read as a
+                  // block instead of seven identical stripes.
+                  cell.weekend && cell.inMonth && !isToday ? "bg-paper/60" : "",
                   isDropTarget
-                    ? "well outline outline-2 -outline-offset-2 outline-ink"
+                    ? "bg-teal-bg outline outline-2 -outline-offset-2 outline-teal"
                     : "",
                 ].join(" ")}
               >
@@ -124,6 +145,7 @@ export function CalendarGrid({
                 <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
                   {posts.map((post) => {
                     const files = assetCount(post.id);
+                    const SkillIcon = SKILL_BY_KEY[post.skill].icon;
                     return (
                       <button
                         key={post.id}
@@ -139,15 +161,33 @@ export function CalendarGrid({
                         onClick={() => onOpen(post)}
                         title={SKILL_BY_KEY[post.skill].name}
                         className={[
-                          "flex flex-col gap-1 rounded-card border p-2 text-left",
+                          // border-l-[3px] is the skill accent. It reads at a
+                          // glance across a month without tinting the whole
+                          // card, which at this size becomes noise.
+                          "settle lift flex flex-col gap-1 rounded-card border border-l-[3px] p-2 text-left hover:shadow-[0_2px_8px_rgb(23_22_15_/_0.09)]",
                           post.status === "publishing"
                             ? "cursor-default"
                             : "cursor-grab active:cursor-grabbing",
                           cardTone(post),
+                          cardAccent(post),
                           draggingId === post.id ? "opacity-40" : "",
                         ].join(" ")}
                       >
                         <span className="flex items-center gap-1.5">
+                          {/* The shape, in its own colour. Two posts on the
+                              same day are now told apart without opening
+                              either one. */}
+                          <SkillIcon
+                            size={11}
+                            strokeWidth={2}
+                            className={
+                              post.status === "published" ||
+                              post.status === "failed"
+                                ? "shrink-0 text-ink-3"
+                                : `shrink-0 ${skillColour(post.skill).text}`
+                            }
+                            aria-hidden
+                          />
                           {post.status === "published" ? (
                             // DESIGN.md rule 9: status is colour plus icon plus
                             // word. The strike through the hook is the shape

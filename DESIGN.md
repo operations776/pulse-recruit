@@ -90,6 +90,27 @@ This is the rule that keeps four products in one shell from turning into noise:
 
 Modules are **not** colour-coded. Colour roles are fully spoken for. Module identity runs through the masthead and the record ID prefix instead (section 8).
 
+### Content skill accents
+
+One narrow exception, added in PLS-90. On the content calendar every card was the same cream, so a month told you how many posts you had and nothing about what they were. Each skill carries a hue, applied as a **3px left edge and a tinted icon only**, never as a card fill.
+
+| Skill | Edge |
+|---|---|
+| Role post | `#2F6FB8` blue |
+| Personal story | `#A8579B` magenta |
+| Market insight | `#0F6E56` teal |
+| Candidate story | `#BA7517` amber |
+| Hiring advice | `#4A5BBF` indigo |
+| Org-defined shapes | `--ink-3`, neutral |
+
+Three constraints keep this from eroding the roles above:
+
+- **Status always wins.** A failed post is red and a published one is spent, whatever shape it is. The skill accent applies only to posts still in play.
+- **Accent, never fill.** A tinted card at calendar size is noise; a left edge is readable at a glance and stays out of the way.
+- **Rule 9 still holds.** These hues carry a *category*, never a state. Every state also has an icon and a word.
+
+The palette lives in `src/config/content-skills.ts` beside the icons. Colour for a skill is defined once, there.
+
 ---
 
 ## 4. Type
@@ -172,15 +193,24 @@ Toggle groups, segmented controls, search fields, and text inputs are recessed i
 
 ### 6c. Floating layer
 
-Dialog, drawer, and bulk-action bar. These are the only elements permitted backdrop blur, because glass on a flat surface is decoration.
+Dialog, drawer, toast, and bulk-action bar. **Opaque, always.** Elevation comes from the shadow; the panel itself never lets the page through.
+
+This rule was the opposite until PLS-90. The layer was 86% over an 18px blur, and on the deployed build Daniyal called it out: a calendar full of post cards showed through every dialog and every toast. Text over moving content is harder to read and buys nothing, and the shadow was already doing the work of saying "in front".
+
+Blur survives in exactly one place, the scrim, because there is no text to read through it.
 
 ```css
 .floating {
   border-radius: var(--r-shell);
-  background: rgba(255, 253, 247, 0.86);
-  backdrop-filter: blur(18px) saturate(1.2);
-  box-shadow: 0 12px 32px rgba(23, 22, 15, 0.16),
-              0 2px 6px rgba(23, 22, 15, 0.08);
+  background: var(--sheet); /* opaque */
+  box-shadow: 0 16px 40px rgba(23, 22, 15, 0.22),
+              0 4px 10px rgba(23, 22, 15, 0.12),
+              0 0 0 1px rgba(23, 22, 15, 0.06);
+}
+
+.scrim {
+  background: rgba(23, 22, 15, 0.46);
+  backdrop-filter: blur(10px) saturate(0.9);
 }
 ```
 
@@ -195,7 +225,7 @@ body {
 }
 ```
 
-Respect `prefers-reduced-transparency` by dropping backdrop blur to a solid `--sheet` fill.
+Respect `prefers-reduced-transparency` by dropping the scrim's blur to a flat dim. The floating layer is already opaque for everyone, so there is nothing left there to reduce.
 
 ---
 
@@ -272,10 +302,14 @@ The prefix does the wayfinding that colour tabs would have done, and it survives
 
 ## 10. Motion
 
-- Duration: 90ms for control feedback, 160ms for layer entry.
-- Easing: `ease-out` only.
-- Properties: `transform` and `opacity` only.
-- No decorative animation anywhere. Respect `prefers-reduced-motion` by reducing all durations to 0 and keeping opacity changes instant.
+Revised in PLS-90. Daniyal, on the deployed build: "I need more animations, I need more smoothness." The old rule was 90/160ms `ease-out` on transform and opacity only, which is why the product felt like it snapped between states rather than moving between them. Widened deliberately, and still bounded.
+
+- **Duration:** 90ms control feedback, 140ms state settle, 180ms layer entry, 220ms toast entry. Nothing over 220ms; past that an interface feels slow rather than smooth.
+- **Easing:** `ease-out` for feedback and fades. `cubic-bezier(0.16, 1, 0.3, 1)` for anything entering or lifting: it decelerates hard, which is what reads as weight rather than as bounce. No overshoot, no springs that pass their target.
+- **Properties:** `transform` and `opacity` freely, both compositor-cheap. `background-color`, `border-color` and `box-shadow` are allowed **only** on the 140ms settle, and only on solid fills.
+- **Movement is small.** 8px rise for a dialog, 10px for a toast, 24px slide for a drawer, 1px lift on hover. Motion that travels far reads as an effect.
+- **Still no decorative animation.** Everything here is tied to a state change: a layer opening, a row responding, a value changing. The one ambient exception remains the live pulse dot.
+- **`prefers-reduced-motion` collapses all of it.** Durations to 0, opacity instant. The global rule at the bottom of `globals.css` handles this, so a new animation is covered automatically.
 
 ---
 
@@ -288,8 +322,9 @@ Enforceable rules. If a component violates one of these, it is wrong regardless 
 3. Panels inside a shell share 1px rules. Writing `gap` between two sections of one shell breaks the sheet.
 4. Grain lives on the page ground only. Never on sheets, cards, or controls.
 5. Vermilion is a verb. If it is not clickable, it is not vermilion.
-6. Backdrop blur only on dialog, drawer, and bulk bar.
+6. Backdrop blur only on the scrim. Floating layers are opaque.
 7. Archivo Black appears on titles, section heads, metric numbers, and the masthead. Nowhere else.
 8. Uppercase appears on the display face and mono legends only.
-9. Status is colour plus icon plus word, always all three.
+9. Status is colour plus icon plus word, always all three. A hue that carries a category rather than a state (content skill accents, section 3) is an accent edge, never a fill, and never the only thing saying what a state is.
 10. No body text below 11px, no font weight below 400, no hit target below 28px.
+11. Motion is bounded: nothing over 220ms, nothing travelling more than 24px, and every animation tied to a state change.

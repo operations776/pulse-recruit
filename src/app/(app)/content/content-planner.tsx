@@ -162,17 +162,23 @@ export function ContentPlanner({
     const failed = visible.filter((p) => p.status === "failed");
 
     return [
-      { label: "next 7 days", value: upcoming.length },
-      { label: "overdue", value: overdue.length, attention: true },
+      { label: "next 7 days", value: upcoming.length, tone: "neutral" },
+      { label: "overdue", value: overdue.length, tone: "warn" },
       // LinkedIn refused these. Nothing retries them on its own, so they stay
-      // on the strip until someone opens one and sends it again.
-      { label: "failed", value: failed.length, attention: true },
-      { label: "ideas", value: visible.filter((p) => !p.scheduled_for).length },
+      // on the strip until someone opens one and sends it again. Red, not
+      // amber: this is broken, not merely waiting.
+      { label: "failed", value: failed.length, tone: "bad" },
+      {
+        label: "ideas",
+        value: visible.filter((p) => !p.scheduled_for).length,
+        tone: "neutral",
+      },
       {
         label: "published",
         value: visible.filter((p) => p.status === "published").length,
+        tone: "good",
       },
-      { label: "lessons", value: pendingLessons, attention: true },
+      { label: "lessons", value: pendingLessons, tone: "warn" },
     ];
   }, [visible, todayInstant, pendingLessons]);
 

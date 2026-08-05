@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  CalendarCheck,
+  CalendarX,
   Check,
   Copy,
   ExternalLink,
@@ -98,6 +100,10 @@ export function PostDialog({
   const [draftDay, setDraftDay] = useState(day);
   const [draftTime, setDraftTime] = useState(time);
 
+  // The date fields have been touched away from what is stored, so the user is
+  // mid-reschedule and the primary verb must be Move rather than Unschedule.
+  const dateChanged = draftDay !== day || draftTime !== time;
+
   // Object URLs are held only for the life of this layer. Revoking them on
   // unmount keeps a long editing session from pinning several hundred MB of
   // video in memory.
@@ -126,6 +132,25 @@ export function PostDialog({
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 900);
+  };
+
+  /**
+   * Closing is what tells the persona an edit is finished.
+   *
+   * The body saves on every blur, so by here the words are usually already
+   * stored and `dirty` is false. The write still has to happen, with
+   * `settled`, because that flag is the only signal that this version is the
+   * one to learn from rather than a pause mid-sentence.
+   *
+   * Only for a post that came from generation. Hand-written posts have no
+   * generated body to diff against, so there is nothing to learn and no reason
+   * to spend the call.
+   */
+  const closeAndLearn = () => {
+    if (!locked && post.generated_body) {
+      void updatePost(post.id, { hook, body }, true);
+    }
+    onClose();
   };
 
   const copy = async () => {
@@ -231,7 +256,7 @@ export function PostDialog({
     <Dialog
       open
       size="wide"
-      onClose={onClose}
+      onClose={closeAndLearn}
       title={skill.name}
       description={`${post.ref} added ${formatDate(post.created_at)}`}
       headerRight={<StatusChip tone={status.tone}>{status.word}</StatusChip>}
@@ -339,21 +364,34 @@ export function PostDialog({
                 className="w-28"
               />
             </div>
+            {/*
+              One control that alternates, which is what Daniyal asked for.
+              Scheduled becomes Unschedule; unscheduled becomes Schedule. The
+              third state is real though: once the date fields are changed on a
+              post that already has a date, the primary verb is Move, because
+              unscheduling would throw away the date just typed.
+            */}
             <div className="mt-2 flex flex-wrap gap-2">
-              <Button
-                disabled={!draftDay || post.status === "publishing"}
-                onClick={() => onSchedule(post.id, draftDay, draftTime || "09:00")}
-              >
-                {post.scheduled_for ? "Move" : "Schedule"}
-              </Button>
-              {post.scheduled_for ? (
+              {post.scheduled_for && !dateChanged ? (
                 <Button
-                  disabled={post.status === "publishing"}
+                  disabled={locked}
                   onClick={() => onSchedule(post.id, "", "")}
                 >
-                  Back to backlog
+                  <CalendarX size={16} strokeWidth={1.5} />
+                  Unschedule
                 </Button>
-              ) : null}
+              ) : (
+                <Button
+                  variant={post.scheduled_for ? "secondary" : "primary"}
+                  disabled={!draftDay || locked}
+                  onClick={() =>
+                    onSchedule(post.id, draftDay, draftTime || "09:00")
+                  }
+                >
+                  <CalendarCheck size={16} strokeWidth={1.5} />
+                  {post.scheduled_for ? "Move" : "Schedule"}
+                </Button>
+              )}
             </div>
             <p className="mt-2 text-[12px] text-ink-2">
               Times are {timezone.replace("_", " ")}, your workspace zone.

@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader, XCircle } from "lucide-react";
-import { SKILL_BY_KEY } from "@/config/content-skills";
+import { SKILL_BY_KEY, skillColour } from "@/config/content-skills";
 import type { PostRow, PostStatus } from "@/lib/supabase/types";
 import { dayLabel, timeOfDay } from "@/lib/time";
 
@@ -61,13 +61,21 @@ export function StatusBoard({
                   <button
                     key={post.id}
                     onClick={() => onOpen(post)}
-                    className={`flex flex-col gap-2 rounded-card border p-3 text-left ${
+                    className={`settle lift flex flex-col gap-2 rounded-card border border-l-[3px] p-3 text-left hover:shadow-[0_2px_8px_rgb(23_22_15_/_0.09)] ${
                       post.status === "failed"
-                        ? "border-red bg-red-bg hover:bg-red-bg"
-                        : "border-rule bg-sheet hover:bg-well"
+                        ? "border-red border-l-red bg-red-bg"
+                        : post.status === "published"
+                          ? "border-rule border-l-teal bg-sheet hover:bg-well"
+                          : `border-rule bg-sheet hover:bg-well ${skillColour(post.skill).edge}`
                     }`}
                   >
-                    <span className="legend flex items-center gap-1.5 text-ink-2">
+                    <span
+                      className={`legend flex items-center gap-1.5 ${
+                        post.status === "failed" || post.status === "published"
+                          ? "text-ink-2"
+                          : skillColour(post.skill).text
+                      }`}
+                    >
                       {SKILL_BY_KEY[post.skill].name}
                       {post.status === "failed" ? (
                         <span className="flex items-center gap-1 text-red">

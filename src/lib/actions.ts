@@ -996,6 +996,25 @@ async function recordLesson(postId: string): Promise<void> {
     if (!post?.generated_body || post.author_id !== session.userId) return;
     if (post.body.trim() === post.generated_body.trim()) return;
 
+    // One lesson per post. Closing the dialog is now what captures a lesson,
+    // and a post can be opened and closed all day: without this, one edited
+    // post would file a near-identical lesson every time and burn a model call
+    // on each. A later edit that is worth learning from replaces this row
+    // rather than joining it, see the upsert below.
+    // Newest first with a limit rather than maybeSingle: there is no unique
+    // index on post_id, and maybeSingle throws on more than one row, which
+    // would silently kill learning for any post that already has two.
+    const { data: seenRows } = await supabase
+      .from("persona_lessons")
+      .select("id, applied_at")
+      .eq("post_id", post.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const seen = seenRows?.[0];
+    // Already reviewed and applied: the voice has moved on and re-teaching it
+    // from the same post would drag it backwards.
+    if (seen?.applied_at) return;
+
     const { data: persona } = await supabase
       .from("content_personas")
       .select("id")
@@ -1013,14 +1032,27 @@ async function recordLesson(postId: string): Promise<void> {
     // how someone stops reading it.
     if (!outcome.lesson) return;
 
-    await supabase.from("persona_lessons").insert({
+    const row = {
       org_id: post.org_id,
       persona_id: persona.id,
       post_id: post.id,
       generated: post.generated_body,
       published: post.body,
       lesson: outcome.lesson,
-    });
+    };
+
+    // Replace the pending lesson rather than adding a second one. Someone who
+    // edits, closes, reopens and edits again should teach the persona what
+    // they settled on, not both drafts.
+    if (seen) {
+      await supabase
+        .from("persona_lessons")
+        .update({ ...row, created_at: new Date().toISOString() })
+        .eq("id", seen.id);
+      return;
+    }
+
+    await supabase.from("persona_lessons").insert(row);
   } catch {
     // Learning is opportunistic. A failure here is invisible on purpose:
     // nothing the user did has gone wrong.
@@ -1128,10 +1160,19 @@ export async function retryPost(postId: string): Promise<Result> {
   return { ok: true, data: undefined };
 }
 
-/** Edit the words. Single table, so no RPC is owed. */
+/**
+ * Edit the words. Single table, so no RPC is owed.
+ *
+ * `settled` says the user has finished with this post rather than paused
+ * mid-sentence: the dialog is closing. The body saves on every blur, and
+ * distilling a lesson costs a model call, so learning on each one would spend
+ * credits on half-written text and fill the review list with noise. Passing it
+ * captures the lesson once, from the version they actually left behind.
+ */
 export async function updatePost(
   postId: string,
   patch: { hook?: string; body?: string; skill?: ContentSkill },
+  settled = false,
 ): Promise<Result> {
   if (patch.hook !== undefined && !patch.hook.trim()) {
     return fail("A post still needs a hook.");
@@ -1148,7 +1189,18 @@ export async function updatePost(
     .eq("id", postId);
   if (error) return fail(readable(error.message));
 
-  // No revalidate. This is called from an open drawer, and revalidating under
+  // The edit IS the lesson, so this is the moment to read it. Previously the
+  // only caller was "Mark published", which meant editing a generated post and
+  // letting the publisher send it taught the persona nothing at all.
+  //
+  // Deliberately not awaited: a lesson is a bonus, and it must never be the
+  // reason saving an edit is slow or fails. recordLesson refuses a post that
+  // matches what was generated, so an unchanged draft costs nothing.
+  if (settled && patch.body !== undefined) {
+    void recordLesson(postId);
+  }
+
+  // No revalidate. This is called from an open dialog, and revalidating under
   // an open layer remounts it and drops what the user is typing.
   return { ok: true, data: undefined };
 }

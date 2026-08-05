@@ -122,7 +122,9 @@ function zonedUtc(instant: number, tz: string): number {
 }
 
 /** The Monday-first weeks covering `month` ("YYYY-MM"), as day keys. */
-export function monthGrid(month: string): { day: string; inMonth: boolean }[][] {
+export type GridCell = { day: string; inMonth: boolean; weekend: boolean };
+
+export function monthGrid(month: string): GridCell[][] {
   const [y, m] = month.split("-").map(Number);
   const first = new Date(Date.UTC(y, m - 1, 1));
   // Monday is column 0. getUTCDay puts Sunday at 0, so rotate by 6.
@@ -131,15 +133,18 @@ export function monthGrid(month: string): { day: string; inMonth: boolean }[][] 
   const cursor = new Date(first);
   cursor.setUTCDate(cursor.getUTCDate() - lead);
 
-  const weeks: { day: string; inMonth: boolean }[][] = [];
+  const weeks: GridCell[][] = [];
   // Six rows always. A grid that changes height as you page months makes the
   // whole screen jump, and the empty row costs nothing.
   for (let w = 0; w < 6; w++) {
-    const week: { day: string; inMonth: boolean }[] = [];
+    const week: GridCell[] = [];
     for (let i = 0; i < 7; i++) {
       week.push({
         day: cursor.toISOString().slice(0, 10),
         inMonth: cursor.getUTCMonth() === m - 1,
+        // Columns 5 and 6, because Monday is column 0. Taken from the position
+        // rather than the date so it cannot disagree with the header labels.
+        weekend: i >= 5,
       });
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }

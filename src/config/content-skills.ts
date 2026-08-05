@@ -86,3 +86,62 @@ export const SKILLS: ContentSkillDef[] = [
 export const SKILL_BY_KEY = Object.fromEntries(
   SKILLS.map((skill) => [skill.key, skill]),
 ) as Record<ContentSkill, (typeof SKILLS)[number]>;
+
+/**
+ * A colour per skill, for the calendar.
+ *
+ * Daniyal, on the shipped planner: "very bland, just orange, white, gray."
+ * True, and it was a deliberate choice that went too far: every card was the
+ * same cream, so a month of posts told you how many you had written and
+ * nothing about what they were.
+ *
+ * These are accents, not fills. A card gets a 3px left edge and a tinted icon,
+ * which is enough to read the mix of a month at a glance without turning the
+ * grid into confetti. DESIGN.md rule 9 still holds: colour never carries
+ * status on its own, every state also has an icon and a word, and status
+ * colours (teal published, red failed) still override these.
+ *
+ * `tint` is the wash used behind an accent; `edge` is the left rule; `text`
+ * colours the icon. All six sit at 4.5:1 or better on cream.
+ */
+export type SkillPalette = { edge: string; tint: string; text: string };
+
+export const SKILL_COLOURS: Record<string, SkillPalette> = {
+  jd_post: {
+    edge: "border-l-[#2f6fb8]",
+    tint: "bg-[#eaf2fb]",
+    text: "text-[#245a97]",
+  },
+  personal_story: {
+    edge: "border-l-[#a8579b]",
+    tint: "bg-[#f9edf7]",
+    text: "text-[#8a4380]",
+  },
+  market_insight: {
+    edge: "border-l-[#0f6e56]",
+    tint: "bg-[#e1f5ee]",
+    text: "text-[#085041]",
+  },
+  candidate_story: {
+    edge: "border-l-[#ba7517]",
+    tint: "bg-[#faeeda]",
+    text: "text-[#854f0b]",
+  },
+  hiring_advice: {
+    edge: "border-l-[#4a5bbf]",
+    tint: "bg-[#eeeffc]",
+    text: "text-[#3a4899]",
+  },
+};
+
+// Anything org-defined, and any built-in that ever gets added without a colour
+// here. Neutral rather than a random hue: an unnamed shape should not shout.
+const SKILL_COLOUR_FALLBACK: SkillPalette = {
+  edge: "border-l-[#9a9284]",
+  tint: "bg-well",
+  text: "text-ink-2",
+};
+
+export function skillColour(key: string): SkillPalette {
+  return SKILL_COLOURS[key] ?? SKILL_COLOUR_FALLBACK;
+}

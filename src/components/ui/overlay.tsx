@@ -133,7 +133,7 @@ export function Dialog({
         aria-label={title}
         // max-h plus a flex column so a tall dialog scrolls its body rather
         // than growing past the viewport and stranding its own footer.
-        className={`floating relative flex max-h-[calc(100vh-2rem)] w-full flex-col rounded-shell ${DIALOG_WIDTH[size]}`}
+        className={`floating layer-rise relative flex max-h-[calc(100vh-2rem)] w-full flex-col rounded-shell ${DIALOG_WIDTH[size]}`}
       >
         <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-5">
           <div className="min-w-0">
@@ -198,7 +198,7 @@ export function Drawer({
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="floating absolute right-0 top-0 flex h-full w-[480px] flex-col rounded-none"
+        className="floating drawer-in absolute right-0 top-0 flex h-full w-[480px] flex-col rounded-none"
       >
         {children}
       </aside>

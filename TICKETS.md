@@ -238,6 +238,22 @@ Flagged, not built: media on published posts needs `multipart/form-data` and
 there is no per-post opt-out: everything scheduled sends, so the only brake is
 unscheduling.
 
+## Found by using it
+
+Daniyal, on the deployed build: one control that alternates, opaque layers,
+the edit should teach the persona, and "very bland, just orange, white, gray,
+I need more color, more animations, more smoothness."
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-90 | Schedule and Unschedule become one alternating control, with Move kept as the third state because unscheduling would throw away a date just typed. Dialogs, drawers and toasts go fully opaque: they were 86% over an 18px blur, so a calendar showed through every one of them. Motion widened from the old 90/160ms transform-only rule to a bounded set, and colour arrives as a per-skill accent edge so a month of posts reads as a mix rather than 30 identical cream rectangles | done |
+| PLS-91 | The persona never learned from an edit. `recordLesson` had exactly one caller, "Mark published", so editing a generated post and letting the publisher send it taught it nothing. Confirmed against the live database: one post with a real edit, a persona present, zero lessons ever stored. Closing the dialog now captures the lesson, once, deduped per post and replaced rather than duplicated on a later edit | done |
+
+DESIGN.md changed with the code, not after it: section 6c (opaque layers),
+section 10 (the motion envelope), section 3 (the skill accents and the three
+constraints that stop them eroding the colour roles), and contract rules 9 and
+11.
+
 ## Found on the production deploy
 
 | ID | Ticket | Status |

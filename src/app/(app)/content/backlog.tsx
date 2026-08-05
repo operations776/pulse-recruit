@@ -4,7 +4,7 @@ import { CalendarPlus, Check, GripVertical, Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
-import { SKILLS, SKILL_BY_KEY } from "@/config/content-skills";
+import { SKILLS, SKILL_BY_KEY, skillColour } from "@/config/content-skills";
 import type { ContentSkill, PostRow } from "@/lib/supabase/types";
 import { dayLabel, timeOfDay } from "@/lib/time";
 
@@ -140,7 +140,10 @@ export function Backlog({
               }}
               onDragEnd={onDragEnd}
               className={[
-                "-mt-px flex cursor-grab flex-wrap items-center gap-x-3 gap-y-2 border-t border-rule px-4 py-2.5 first:mt-0 first:border-t-0 active:cursor-grabbing",
+                "settle -mt-px flex cursor-grab flex-wrap items-center gap-x-3 gap-y-2 border-t border-l-[3px] border-rule px-4 py-2.5 first:mt-0 first:border-t-0 active:cursor-grabbing hover:bg-paper",
+                // The skill accent, same language as the calendar card, so a
+                // post keeps its colour when it moves between the two.
+                skillColour(post.skill).edge,
                 draggingId === post.id ? "opacity-40" : "",
               ].join(" ")}
             >
@@ -151,7 +154,9 @@ export function Backlog({
                 aria-hidden
               />
 
-              <span className="legend w-28 shrink-0 text-ink-3">
+              <span
+                className={`legend w-28 shrink-0 ${skillColour(post.skill).text}`}
+              >
                 {SKILL_BY_KEY[post.skill].name}
               </span>
 
