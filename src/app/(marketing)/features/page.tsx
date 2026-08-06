@@ -94,7 +94,7 @@ export default function FeaturesPage() {
               }`}
             >
               <div>
-                <p className="legend text-vermilion">{row.kicker}</p>
+                <p className="legend text-violet">{row.kicker}</p>
                 <h2 className="display mt-3 text-[clamp(1.5rem,3vw,2rem)]">
                   {row.title}
                 </h2>
@@ -109,7 +109,7 @@ export default function FeaturesPage() {
                     >
                       <span
                         aria-hidden
-                        className="mt-[7px] size-1.5 shrink-0 rounded-full bg-vermilion"
+                        className="mt-[7px] size-1.5 shrink-0 rounded-full bg-violet"
                       />
                       {point}
                     </li>
@@ -140,7 +140,7 @@ export default function FeaturesPage() {
                       }`}
                     >
                       <span className="font-medium">{label}</span>
-                      <span className="legend text-vermilion">{value}</span>
+                      <span className="legend text-violet">{value}</span>
                     </li>
                   ))}
                 </ul>
@@ -160,7 +160,7 @@ export default function FeaturesPage() {
           {FEATURES.map((feature) => (
             <div
               key={feature.title}
-              className="settle lift rounded-card border border-rule bg-sheet p-5 hover:border-vermilion"
+              className="settle lift rounded-card border border-rule bg-sheet p-5 hover:border-violet"
             >
               <p className="text-[15px] font-semibold">{feature.title}</p>
               <p className="mt-2 text-[13px] leading-[1.6] text-ink-2">

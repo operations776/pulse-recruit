@@ -30,7 +30,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <span className="display text-[17px] tracking-tight">
               {brand.name}
             </span>
-            <span className="legend mt-0.5 text-vermilion">
+            <span className="legend mt-0.5 text-violet">
               by {brand.company}
             </span>
           </Link>
@@ -40,7 +40,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="settle text-[14px] font-medium text-ink-2 hover:text-vermilion"
+                className="settle text-[14px] font-medium text-ink-2 hover:text-violet"
               >
                 {item.label}
               </Link>
@@ -53,13 +53,13 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <SettingsMenu tone="paper" />
             <Link
               href="/signin"
-              className="settle rounded-control border border-rule bg-sheet px-4 py-2 text-[14px] font-medium hover:border-vermilion hover:text-vermilion"
+              className="settle rounded-control border border-rule bg-sheet px-4 py-2 text-[14px] font-medium hover:border-violet hover:text-violet"
             >
               Log in
             </Link>
             <Link
               href="/signup"
-              className="settle lift rounded-control bg-vermilion px-5 py-2 text-[14px] font-medium text-on-vermilion shadow-[0_8px_20px_rgb(124_58_237/0.22)] hover:bg-vermilion-hover"
+              className="settle lift rounded-control bg-violet px-5 py-2 text-[14px] font-medium text-on-violet shadow-[0_8px_20px_rgb(124_58_237/0.22)] hover:bg-violet-hover"
             >
               Start your pilot
             </Link>

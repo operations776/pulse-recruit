@@ -165,7 +165,7 @@ function SignInCard() {
       <p className="mt-5 text-center text-[12px] text-ink-2">
         <Link
           href="/signup"
-          className="font-semibold text-vermilion-hover hover:underline"
+          className="font-semibold text-violet-hover hover:underline"
         >
           New here? Create an account
         </Link>

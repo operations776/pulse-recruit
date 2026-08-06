@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { removeIntegrationKey, saveIntegrationKey } from "@/lib/actions";
 
-// DESIGN.md rule 5: one vermilion control per view. Eleven providers on one
+// DESIGN.md rule 5: one violet control per view. Eleven providers on one
 // screen would otherwise mean eleven primary buttons, so exactly one row can
 // have its form open at a time and the scope is what enforces it.
 const OpenRow = createContext<{

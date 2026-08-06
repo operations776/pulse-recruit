@@ -119,7 +119,7 @@ export function PersonaScreen({
                   aria-current={step === index ? "step" : undefined}
                   className={`legend flex h-7 items-center gap-1.5 rounded-control px-2.5 ${
                     step === index
-                      ? "cap bg-vermilion text-on-vermilion [--edge:var(--color-vermilion-edge)]"
+                      ? "cap bg-violet text-on-violet [--edge:var(--color-violet-edge)]"
                       : "text-ink-3 hover:text-ink"
                   }`}
                 >

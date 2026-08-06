@@ -40,7 +40,7 @@ export function SettingsMenu({
         className={
           tone === "bar"
             ? `flex h-full items-center px-4 hover:bg-on-bar/10 ${open ? "bg-on-bar/10" : ""}`
-            : `settle flex size-9 items-center justify-center rounded-control border border-rule bg-sheet text-ink-2 hover:border-vermilion hover:text-vermilion ${open ? "border-vermilion text-vermilion" : ""}`
+            : `settle flex size-9 items-center justify-center rounded-control border border-rule bg-sheet text-ink-2 hover:border-violet hover:text-violet ${open ? "border-violet text-violet" : ""}`
         }
       >
         <Settings size={16} strokeWidth={1.75} />

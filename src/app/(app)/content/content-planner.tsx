@@ -392,7 +392,7 @@ export function ContentPlanner({
                   className={[
                     "legend flex h-7 items-center rounded-control px-3",
                     view === key
-                      ? "cap bg-vermilion text-on-vermilion [--edge:var(--color-vermilion-edge)]"
+                      ? "cap bg-violet text-on-violet [--edge:var(--color-violet-edge)]"
                       : "text-ink-2 hover:text-ink",
                   ].join(" ")}
                 >

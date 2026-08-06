@@ -29,7 +29,7 @@ export default function FaqPage() {
         <div className="mx-auto max-w-[760px]">
           {FAQ.map((group) => (
             <section key={group.group} className="mb-10 last:mb-0">
-              <h2 className="legend mb-3 text-vermilion">{group.group}</h2>
+              <h2 className="legend mb-3 text-violet">{group.group}</h2>
               <div className="overflow-hidden rounded-shell border border-rule bg-sheet">
                 {group.items.map((item, index) => (
                   <details
@@ -42,7 +42,7 @@ export default function FaqPage() {
                       <span className="flex items-start gap-3">
                         <span
                           aria-hidden
-                          className="mt-2 size-1.5 shrink-0 rounded-full bg-vermilion opacity-0 transition-opacity group-open:opacity-100"
+                          className="mt-2 size-1.5 shrink-0 rounded-full bg-violet opacity-0 transition-opacity group-open:opacity-100"
                         />
                         <span className="-ml-[18px] group-open:ml-0">
                           {item.q}
@@ -70,7 +70,7 @@ export default function FaqPage() {
             </p>
             <a
               href={`mailto:${brand.supportEmail}`}
-              className="settle lift mt-5 inline-flex items-center gap-2 rounded-control bg-vermilion px-5 py-2.5 text-[14px] font-medium text-on-vermilion hover:bg-vermilion-hover"
+              className="settle lift mt-5 inline-flex items-center gap-2 rounded-control bg-violet px-5 py-2.5 text-[14px] font-medium text-on-violet hover:bg-violet-hover"
             >
               <Mail size={16} strokeWidth={1.75} />
               Email {brand.supportEmail}

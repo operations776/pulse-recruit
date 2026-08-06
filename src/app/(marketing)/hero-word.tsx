@@ -46,7 +46,7 @@ export function HeroWord({ words }: { words: string[] }) {
         <span
           key={word}
           aria-hidden={i !== index}
-          className={`col-start-1 row-start-1 text-vermilion transition-opacity duration-500 ${
+          className={`col-start-1 row-start-1 text-violet transition-opacity duration-500 ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
         >

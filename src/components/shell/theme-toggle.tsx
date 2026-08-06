@@ -75,7 +75,7 @@ export function ThemeToggle() {
       <span
         aria-hidden
         className={`absolute left-[2px] top-[2px] size-[18px] rounded-full transition-transform duration-200 ${
-          isDark ? "translate-x-[18px] bg-[#f4ecc9]" : "bg-vermilion"
+          isDark ? "translate-x-[18px] bg-[#f4ecc9]" : "bg-violet"
         }`}
         style={
           isDark

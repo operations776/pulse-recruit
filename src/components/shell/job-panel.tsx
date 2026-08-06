@@ -70,7 +70,7 @@ export function JobPanel({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search roles"
             aria-label="Search roles"
-            className="well h-8 w-full rounded-control pl-9 pr-2.5 text-[12px] text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-vermilion"
+            className="well h-8 w-full rounded-control pl-9 pr-2.5 text-[12px] text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-violet"
           />
         </span>
       </div>

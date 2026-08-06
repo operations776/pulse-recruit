@@ -31,7 +31,7 @@ export function Hero({
       />
       <Wrap>
         <div className="relative">
-          <p className="legend text-vermilion">{eyebrow}</p>
+          <p className="legend text-violet">{eyebrow}</p>
           <h1 className="display mx-auto mt-4 max-w-[18ch] text-[clamp(2.2rem,5.4vw,3.6rem)] leading-[1.05]">
             {title}
           </h1>
@@ -59,7 +59,7 @@ export function SectionHead({
 }) {
   return (
     <div className="mx-auto mb-11 max-w-[60ch] text-center">
-      <p className="legend text-vermilion">{tag}</p>
+      <p className="legend text-violet">{tag}</p>
       <h2 className="display mt-4 text-[clamp(1.8rem,4vw,2.5rem)] leading-[1.15]">
         {title}
       </h2>
@@ -97,7 +97,7 @@ export function PrimaryLink({
   return (
     <Link
       href={href}
-      className="settle lift inline-flex items-center justify-center gap-2 rounded-control bg-vermilion px-6 py-3 text-[15px] font-medium text-on-vermilion shadow-[0_8px_20px_rgb(124_58_237/0.22)] hover:bg-vermilion-hover"
+      className="settle lift inline-flex items-center justify-center gap-2 rounded-control bg-violet px-6 py-3 text-[15px] font-medium text-on-violet shadow-[0_8px_20px_rgb(124_58_237/0.22)] hover:bg-violet-hover"
     >
       {children}
     </Link>
@@ -114,7 +114,7 @@ export function GhostLink({
   return (
     <Link
       href={href}
-      className="settle lift inline-flex items-center justify-center gap-2 rounded-control border border-rule bg-sheet px-6 py-3 text-[15px] font-medium hover:border-vermilion hover:text-vermilion"
+      className="settle lift inline-flex items-center justify-center gap-2 rounded-control border border-rule bg-sheet px-6 py-3 text-[15px] font-medium hover:border-violet hover:text-violet"
     >
       {children}
     </Link>

@@ -4,7 +4,7 @@ import type { ComponentProps } from "react";
 // primary and 44px minimum for everything else.
 const variants = {
   primary:
-    "cap bg-vermilion text-on-vermilion hover:bg-vermilion-hover [--edge:var(--color-vermilion-edge)]",
+    "cap bg-violet text-on-violet hover:bg-violet-hover [--edge:var(--color-violet-edge)]",
   secondary:
     "cap border border-ink bg-transparent text-ink hover:bg-well [--edge:var(--color-ink)]",
   ghost: "text-ink-2 hover:bg-well hover:text-ink",
@@ -19,7 +19,7 @@ const sizes = {
   md: "h-7 px-3",
 } as const;
 
-// DESIGN.md rule 5: vermilion is a verb. A disabled control is not a verb, so a
+// DESIGN.md rule 5: violet is a verb. A disabled control is not a verb, so a
 // disabled primary drops the cap entirely rather than fading to a washed pink
 // that is neither a token colour nor a thing you can press. Rule 2 says the
 // keycap edge belongs to things you press, so that goes too.

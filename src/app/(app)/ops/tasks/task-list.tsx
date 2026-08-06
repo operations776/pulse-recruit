@@ -256,7 +256,7 @@ export function TaskList({
           onClick={() => toggle(task)}
           className={`flex size-7 shrink-0 items-center justify-center rounded-control border disabled:opacity-40 ${
             isDone
-              ? "border-vermilion bg-vermilion text-on-vermilion"
+              ? "border-violet bg-violet text-on-violet"
               : "border-ink bg-transparent text-ink hover:bg-well"
           }`}
         >
@@ -374,7 +374,7 @@ export function TaskList({
               aria-pressed={view === key}
               className={`legend flex h-7 items-center rounded-control px-3 ${
                 view === key
-                  ? "cap bg-vermilion text-on-vermilion [--edge:var(--color-vermilion-edge)]"
+                  ? "cap bg-violet text-on-violet [--edge:var(--color-violet-edge)]"
                   : "text-ink-2 hover:text-ink"
               }`}
             >

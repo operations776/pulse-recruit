@@ -54,9 +54,9 @@ export default function MarketingPage() {
           {HOW_IT_WORKS.map((step) => (
             <div
               key={step.step}
-              className="settle lift rounded-card border border-rule bg-sheet p-6 hover:border-vermilion"
+              className="settle lift rounded-card border border-rule bg-sheet p-6 hover:border-violet"
             >
-              <p className="legend text-vermilion">{step.step}</p>
+              <p className="legend text-violet">{step.step}</p>
               <p className="mt-3 text-[16px] font-semibold">{step.title}</p>
               <p className="mt-2.5 text-[13px] leading-[1.65] text-ink-2">
                 {step.body}
@@ -76,7 +76,7 @@ export default function MarketingPage() {
           {FEATURES.map((feature) => (
             <div
               key={feature.title}
-              className="settle lift rounded-card border border-rule bg-sheet p-5 hover:border-vermilion"
+              className="settle lift rounded-card border border-rule bg-sheet p-5 hover:border-violet"
             >
               <p className="text-[15px] font-semibold">{feature.title}</p>
               <p className="mt-2 text-[13px] leading-[1.6] text-ink-2">
@@ -88,7 +88,7 @@ export default function MarketingPage() {
         <div className="mt-8 text-center">
           <Link
             href="/features"
-            className="settle inline-flex items-center gap-1.5 text-[14px] font-medium text-vermilion hover:gap-2.5"
+            className="settle inline-flex items-center gap-1.5 text-[14px] font-medium text-violet hover:gap-2.5"
           >
             Explore all features
             <ArrowRight size={16} strokeWidth={2} />
@@ -111,14 +111,14 @@ export default function MarketingPage() {
               {/* Initials rather than a photo. The rebrand embeds two base64
                   JPEGs; a monogram carries the same information at a fraction
                   of the bytes and never goes stale. */}
-              <span className="display flex size-12 items-center justify-center rounded-card bg-vermilion text-[15px] text-on-vermilion">
+              <span className="display flex size-12 items-center justify-center rounded-card bg-violet text-[15px] text-on-violet">
                 {person.name
                   .split(" ")
                   .map((part) => part[0])
                   .join("")}
               </span>
               <p className="mt-4 text-[16px] font-semibold">{person.name}</p>
-              <p className="legend mt-1 text-vermilion">{person.role}</p>
+              <p className="legend mt-1 text-violet">{person.role}</p>
               <p className="mt-3 text-[13px] leading-[1.65] text-ink-2">
                 {person.body}
               </p>

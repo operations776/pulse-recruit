@@ -62,7 +62,7 @@ export function WorkspaceMenu({
                   }`}
                 >
                   {active ? (
-                    <Check size={16} strokeWidth={2} className="shrink-0 text-vermilion" />
+                    <Check size={16} strokeWidth={2} className="shrink-0 text-violet" />
                   ) : (
                     <span aria-hidden className="size-4 shrink-0" />
                   )}

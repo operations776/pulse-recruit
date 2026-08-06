@@ -117,7 +117,7 @@ export function CalendarGrid({
                   cell.inMonth ? "" : "bg-paper",
                   // Today is the one cell you look for first, so it gets a
                   // wash rather than only a ring on its date digit.
-                  isToday && cell.inMonth ? "bg-[#fdf6ec]" : "",
+                  isToday && cell.inMonth ? "bg-today" : "",
                   // Weekends recede. Most recruiters do not post on them, and
                   // dimming two columns makes the working week read as a
                   // block instead of seven identical stripes.
@@ -164,7 +164,7 @@ export function CalendarGrid({
                           // border-l-[3px] is the skill accent. It reads at a
                           // glance across a month without tinting the whole
                           // card, which at this size becomes noise.
-                          "settle lift flex flex-col gap-1 rounded-card border border-l-[3px] p-2 text-left hover:shadow-[0_2px_8px_rgb(23_22_15_/_0.09)]",
+                          "settle lift flex flex-col gap-1 rounded-card border border-l-[3px] p-2 text-left hover:shadow-[0_2px_8px_rgb(27_21_38_/_0.09)]",
                           post.status === "publishing"
                             ? "cursor-default"
                             : "cursor-grab active:cursor-grabbing",

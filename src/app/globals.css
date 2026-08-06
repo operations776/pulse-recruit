@@ -2,11 +2,11 @@
 
 /* Pulse Recruit. Single source of truth is DESIGN.md.
  *
- * Rev C, PLS-101. Rev B was "Panelboard Soft": cream ground, vermilion verb,
+ * Rev C, PLS-101. Rev B was "Panelboard Soft": cream ground, violet verb,
  * 16px shells, keycap edges. This is the violet rebrand, and the token NAMES
  * are unchanged on purpose. `paper`, `sheet`, `ink`, `rule` are semantic, so
  * re-pointing them here reskins 73 component files without touching one of
- * them. Only `vermilion` was a colour name pretending to be a role, and it is
+ * them. Only `violet` was a colour name pretending to be a role, and it is
  * now an alias kept so the diff stayed reviewable (see below).
  *
  * Every value here comes from the rebrand's own CSS, not from an eyedropper
@@ -24,14 +24,14 @@
   --color-ink-3: #8b84a0;
   --color-rule: #e7e1f4;
 
-  /* Action. `vermilion` is now violet: the name survives because it is the
+  /* Action. `violet` is now violet: the name survives because it is the
      role ("the one clickable verb") in 14 files and DESIGN.md rule 5, and
      renaming it in the same commit as a full reskin would have hidden the
      colour change inside a rename diff. It is renamed in PLS-105. */
-  --color-vermilion: #7c3aed;
-  --color-vermilion-hover: #6d28d9;
-  --color-vermilion-edge: #5b21b6;
-  --color-on-vermilion: #ffffff;
+  --color-violet: #7c3aed;
+  --color-violet-hover: #6d28d9;
+  --color-violet-edge: #5b21b6;
+  --color-on-violet: #ffffff;
   --color-violet-3: #a855f7;
 
   /* State. Teal and amber are re-tuned to sit on a violet-tinted ground
@@ -60,6 +60,12 @@
      with the theme is a bar that is not chrome. */
   --color-bar: #17132a;
   --color-on-bar: #f4f1fb;
+
+  /* Two accent washes that must follow the theme. They were hardcoded hexes
+     from the light-only era, so on a dark ground the calendar's today cell
+     stayed cream and the briefing's best-next-move stayed pink. */
+  --color-today: #fdf6ec;
+  --color-move: #f9edf7;
 
   /* Faces. Archivo for display and Inter for body, both from the rebrand.
      IBM Plex Mono stays as the legend face: the rebrand uses JetBrains Mono,
@@ -93,10 +99,10 @@ html[data-theme="dark"] {
   --color-ink-3: #8b83a2;
   --color-rule: #2a2340;
 
-  --color-vermilion: #8b5cf6;
-  --color-vermilion-hover: #7c3aed;
-  --color-vermilion-edge: #6d28d9;
-  --color-on-vermilion: #ffffff;
+  --color-violet: #8b5cf6;
+  --color-violet-hover: #7c3aed;
+  --color-violet-edge: #6d28d9;
+  --color-on-violet: #ffffff;
 
   --color-teal-bg: #0d2b22;
   --color-teal-text: #6ee7b7;
@@ -108,6 +114,8 @@ html[data-theme="dark"] {
   --color-bubble-user: #2a1f4c;
   --color-field: #120c22;
   --color-rail: #100c20;
+  --color-today: #241a10;
+  --color-move: #2a1638;
 }
 
 /* The grain is gone, PLS-101.
@@ -346,6 +354,6 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-vermilion);
+  outline: 2px solid var(--color-violet);
   outline-offset: 2px;
 }

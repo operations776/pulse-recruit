@@ -74,13 +74,11 @@ Token NAMES are semantic, which is why Rev C landed by re-pointing them rather t
   --ink-3:      #8B84A0;  /* placeholders, disabled labels */
   --rule:       #E7E1F4;  /* 1px hairlines */
 
-  /* action. Still named `vermilion` in code: it is the ROLE, and renaming it
-     inside the reskin would have buried the colour change in a rename diff.
-     PLS-105 renames it to `violet`. */
-  --vermilion:       #7C3AED;
-  --vermilion-hover: #6D28D9;
-  --vermilion-edge:  #5B21B6;  /* keycap underside */
-  --on-vermilion:    #FFFFFF;
+  /* action */
+  --violet:       #7C3AED;
+  --violet-hover: #6D28D9;
+  --violet-edge:  #5B21B6;  /* keycap underside */
+  --on-violet:    #FFFFFF;
 
   /* state */
   --teal:       #0F7A5F;  /* on, running, engaged */
@@ -103,7 +101,7 @@ Dark mode overrides these on `html[data-theme="dark"]`. It is opt-in, never a ba
 
 This is the rule that keeps four products in one shell from turning into noise:
 
-- **Violet is a verb.** If it is not clickable, it is not violet. One violet control per view, maximum. (The token is still spelled `vermilion` until PLS-105.)
+- **Violet is a verb.** If it is not clickable, it is not violet. One violet control per view, maximum.
 - **Teal means on.** Running sequences, active states, thrown switches. Never a button.
 - **Amber means look at this.** Stalled, paused, needs input. Never a button.
 - **Red is destructive and error only.** It is not a general warning colour.
@@ -201,7 +199,7 @@ Buttons, toggles, and steppers sit proud of the panel with a solid colour edge u
 }
 ```
 
-`--edge` is the darker tone of whatever the cap is: `--vermilion-edge`, `--teal-edge`, or `--ink` for outline controls.
+`--edge` is the darker tone of whatever the cap is: `--violet-edge`, `--teal-edge`, or `--ink` for outline controls.
 
 ### 6b. Inset well (control beds and inputs)
 
@@ -307,7 +305,7 @@ The prefix does the wayfinding that colour tabs would have done, and it survives
 
 ## 9. Component anatomy
 
-**Primary button.** Vermilion cap, `--vermilion-edge` keycap edge, `--on-vermilion` label, sentence case, 48px tall, `--r-control`. One per view.
+**Primary button.** Violet cap, `--violet-edge` keycap edge, `--on-violet` label, sentence case, 48px tall, `--r-control`. One per view.
 
 **Secondary button.** Transparent fill, 1px `--ink` border, `--ink` label, keycap edge in `--ink`, 48px tall.
 
@@ -319,7 +317,7 @@ The prefix does the wayfinding that colour tabs would have done, and it survives
 
 **Record card.** `--sheet` fill, 1px `--rule` border, `--r-card`, rounded-square avatar, name at 17px/500, secondary line at 15px in `--ink-2`, mono ID pinned top-right.
 
-**Input.** Inset well, no outer border, 48px tall, `--r-control`, 17px text, focus ring `0 0 0 2px var(--vermilion)` inset.
+**Input.** Inset well, no outer border, 48px tall, `--r-control`, 17px text, focus ring `0 0 0 2px var(--violet)` inset.
 
 **Dialog and drawer.** Floating layer treatment, `--r-shell`, backdrop `rgba(23,22,15,0.35)`.
 
@@ -346,7 +344,7 @@ Enforceable rules. If a component violates one of these, it is wrong regardless 
 2. Exactly three depth treatments exist: keycap edge, inset well, floating layer. No other shadows.
 3. Panels inside a shell share 1px rules. Writing `gap` between two sections of one shell breaks the sheet.
 4. Grain lives on the page ground only. Never on sheets, cards, or controls.
-5. Vermilion is a verb. If it is not clickable, it is not vermilion.
+5. Violet is a verb. If it is not clickable, it is not violet.
 6. Backdrop blur only on the scrim. Floating layers are opaque.
 7. Archivo appears on titles, section heads, metric numbers, and the masthead. Nowhere else.
 8. Uppercase appears on the display face and mono legends only.

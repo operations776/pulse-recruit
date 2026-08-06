@@ -242,7 +242,7 @@ export function GenerateDialog({
                   aria-pressed={listening}
                   className={`absolute right-2 top-2 flex size-8 items-center justify-center rounded-control ${
                     listening
-                      ? "bg-vermilion text-on-vermilion"
+                      ? "bg-violet text-on-violet"
                       : "text-ink-3 hover:bg-well hover:text-ink"
                   }`}
                 >

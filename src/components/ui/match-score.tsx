@@ -5,7 +5,7 @@ import { ThumbsUp } from "lucide-react";
 // unambiguous (one board, one role, or the drawer opened from it), so the score
 // is labelled with its basis rather than left to be guessed at.
 //
-// Vermilion is a verb: a score is not clickable, so it is never vermilion.
+// Violet is a verb: a score is not clickable, so it is never violet.
 export function MatchScore({
   value,
   roleTitle,

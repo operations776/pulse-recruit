@@ -109,7 +109,7 @@ export function ConversationList({
                         size={16}
                         strokeWidth={1.5}
                         className={`size-3.5 shrink-0 ${
-                          active ? "text-vermilion" : "text-ink-3"
+                          active ? "text-violet" : "text-ink-3"
                         }`}
                         aria-hidden
                       />
