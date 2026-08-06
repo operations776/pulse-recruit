@@ -14,19 +14,34 @@ import { brand } from "@/config/brand";
 // be scoped to an org and audited. A theme is per-person, per-device and
 // instant, which is why it is the one thing that belongs in a header menu.
 
-export function SettingsMenu() {
+export function SettingsMenu({
+  /**
+   * `bar` is the dark app chrome, `paper` is the marketing nav. The menu
+   * itself is identical; only the trigger sits on a different ground, so this
+   * is a tone rather than a second component.
+   */
+  tone = "bar",
+}: {
+  tone?: "bar" | "paper";
+}) {
   const [open, setOpen] = useState(false);
 
   return (
-    <span className="relative flex h-full items-center border-l border-on-bar/15">
+    <span
+      className={`relative flex items-center ${
+        tone === "bar" ? "h-full border-l border-on-bar/15" : ""
+      }`}
+    >
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Settings"
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`flex h-full items-center px-4 hover:bg-on-bar/10 ${
-          open ? "bg-on-bar/10" : ""
-        }`}
+        className={
+          tone === "bar"
+            ? `flex h-full items-center px-4 hover:bg-on-bar/10 ${open ? "bg-on-bar/10" : ""}`
+            : `settle flex size-9 items-center justify-center rounded-control border border-rule bg-sheet text-ink-2 hover:border-vermilion hover:text-vermilion ${open ? "border-vermilion text-vermilion" : ""}`
+        }
       >
         <Settings size={16} strokeWidth={1.75} />
       </button>

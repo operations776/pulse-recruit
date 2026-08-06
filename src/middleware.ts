@@ -6,7 +6,21 @@ import { NextResponse, type NextRequest } from "next/server";
 // middleware redirect is a convenience, not a security boundary.
 // /apply is the public application form: an applicant holds a slug, not a
 // session, and the anon-granted RPC behind it is the whole boundary.
-const PUBLIC_PATHS = ["/", "/signin", "/signup", "/auth", "/apply"];
+// The marketing site is the whole point of being public: a prospect reading
+// the pricing page has no session and must never be bounced to sign-in.
+// PLS-107 added four pages here and they were unreachable until this list
+// grew, which a screenshot caught and the build did not.
+const PUBLIC_PATHS = [
+  "/",
+  "/signin",
+  "/signup",
+  "/auth",
+  "/apply",
+  "/features",
+  "/pricing",
+  "/faq",
+  "/testimonials",
+];
 
 // Machine callers have no session, so the session gate would answer 401 and the
 // work would silently never happen. These routes are not unprotected: each one
