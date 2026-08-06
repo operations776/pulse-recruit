@@ -57,11 +57,11 @@ export function NotificationsBell({
         }
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="relative flex h-full items-center border-l border-sheet/15 px-4 hover:bg-sheet/10"
+        className="relative flex h-full items-center border-l border-on-bar/15 px-4 hover:bg-on-bar/10"
       >
         <Bell size={14} strokeWidth={1.75} />
         {unread > 0 ? (
-          <span className="absolute right-1.5 top-2 flex h-4 min-w-4 items-center justify-center rounded-chip bg-vermilion px-1 font-mono text-[10px] leading-none text-sheet">
+          <span className="absolute right-1.5 top-2 flex h-4 min-w-4 items-center justify-center rounded-chip bg-vermilion px-1 font-mono text-[10px] leading-none text-on-vermilion">
             {unread > 9 ? "9+" : unread}
           </span>
         ) : null}

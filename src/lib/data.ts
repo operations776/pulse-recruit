@@ -364,6 +364,23 @@ export async function getNotifications() {
   return (data ?? []) as NotificationRow[];
 }
 
+/**
+ * Every org this user belongs to, for the workspace chip.
+ *
+ * RLS on `orgs` already limits this to the caller's own memberships, so the
+ * query needs no user filter of its own: a user who somehow asked for another
+ * agency's org would get an empty set rather than a name.
+ */
+export async function getMyOrgs(): Promise<{ id: string; name: string }[]> {
+  await requireSession();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("orgs")
+    .select("id, name")
+    .order("created_at", { ascending: true });
+  return (data ?? []) as { id: string; name: string }[];
+}
+
 export async function getSequences() {
   await requireSession();
   const supabase = await createClient();

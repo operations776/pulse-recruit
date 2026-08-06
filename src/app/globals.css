@@ -53,6 +53,14 @@
   --color-field: #f5f2fc;
   --color-rail: #efeaf9;
 
+  /* The top bar is dark chrome in BOTH themes, so it needs its own tokens.
+     It used to be `bg-ink text-sheet`, which inverted in dark mode: ink
+     becomes near-white and sheet near-black, so the bar flipped to white with
+     dark text while the app around it went dark. A bar that changes colour
+     with the theme is a bar that is not chrome. */
+  --color-bar: #17132a;
+  --color-on-bar: #f4f1fb;
+
   /* Faces. Archivo for display and Inter for body, both from the rebrand.
      IBM Plex Mono stays as the legend face: the rebrand uses JetBrains Mono,
      but the two are metrically close at 10px caps and Plex is already

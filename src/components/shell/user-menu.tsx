@@ -23,8 +23,8 @@ export function UserMenu({ email }: { email: string }) {
   };
 
   return (
-    <span className="flex h-full items-center gap-3 border-l border-sheet/15 pl-4 pr-2">
-      <span className="max-w-[200px] truncate text-[12px] text-sheet/75">
+    <span className="flex h-full items-center gap-3 border-l border-on-bar/15 pl-4 pr-2">
+      <span className="max-w-[200px] truncate text-[12px] text-on-bar/75">
         {email}
       </span>
       <Button
@@ -32,7 +32,7 @@ export function UserMenu({ email }: { email: string }) {
         variant="ghost"
         disabled={pending}
         onClick={signOut}
-        className="text-sheet! hover:bg-sheet/10! hover:text-sheet!"
+        className="text-on-bar! hover:bg-on-bar/10! hover:text-on-bar!"
       >
         {pending ? "Signing out" : "Sign out"}
       </Button>
