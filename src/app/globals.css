@@ -1,54 +1,115 @@
 @import "tailwindcss";
 
-/* Panelboard Soft Rev B. Single source of truth is DESIGN.md. */
+/* Pulse Recruit. Single source of truth is DESIGN.md.
+ *
+ * Rev C, PLS-101. Rev B was "Panelboard Soft": cream ground, vermilion verb,
+ * 16px shells, keycap edges. This is the violet rebrand, and the token NAMES
+ * are unchanged on purpose. `paper`, `sheet`, `ink`, `rule` are semantic, so
+ * re-pointing them here reskins 73 component files without touching one of
+ * them. Only `vermilion` was a colour name pretending to be a role, and it is
+ * now an alias kept so the diff stayed reviewable (see below).
+ *
+ * Every value here comes from the rebrand's own CSS, not from an eyedropper
+ * on a screenshot.
+ */
 @theme {
   /* Ground and surfaces */
-  --color-paper: #f6f2e9;
-  --color-sheet: #fffdf7;
-  --color-well: #ede7da;
+  --color-paper: #f6f4fc;
+  --color-sheet: #ffffff;
+  --color-well: #f5f2fc;
 
   /* Ink */
-  --color-ink: #17160f;
-  --color-ink-2: #6e675a;
-  --color-ink-3: #9a9284;
-  --color-rule: #d8d1c0;
+  --color-ink: #1b1526;
+  --color-ink-2: #585272;
+  --color-ink-3: #8b84a0;
+  --color-rule: #e7e1f4;
 
-  /* Action */
-  --color-vermilion: #e23d1f;
-  --color-vermilion-hover: #c7331a;
-  --color-vermilion-edge: #a8290f;
-  --color-on-vermilion: #fffdf7;
+  /* Action. `vermilion` is now violet: the name survives because it is the
+     role ("the one clickable verb") in 14 files and DESIGN.md rule 5, and
+     renaming it in the same commit as a full reskin would have hidden the
+     colour change inside a rename diff. It is renamed in PLS-105. */
+  --color-vermilion: #7c3aed;
+  --color-vermilion-hover: #6d28d9;
+  --color-vermilion-edge: #5b21b6;
+  --color-on-vermilion: #ffffff;
+  --color-violet-3: #a855f7;
 
-  /* State */
-  --color-teal: #0f6e56;
+  /* State. Teal and amber are re-tuned to sit on a violet-tinted ground
+     rather than cream; the roles are untouched. */
+  --color-teal: #0f7a5f;
   --color-teal-edge: #0a5240;
-  --color-teal-bg: #e1f5ee;
+  --color-teal-bg: #e3f6ef;
   --color-teal-text: #085041;
 
-  --color-amber: #ba7517;
-  --color-amber-bg: #faeeda;
-  --color-amber-text: #854f0b;
+  --color-amber: #b8860b;
+  --color-amber-bg: #fdf6ec;
+  --color-amber-text: #9a7a20;
 
-  --color-red: #a32d2d;
-  --color-red-bg: #fcebeb;
+  --color-red: #b02a37;
+  --color-red-bg: #fdecee;
 
-  /* Faces */
+  /* Chat and field surfaces the rebrand names explicitly. */
+  --color-bubble-user: #ece4fb;
+  --color-field: #f5f2fc;
+  --color-rail: #efeaf9;
+
+  /* Faces. Archivo for display and Inter for body, both from the rebrand.
+     IBM Plex Mono stays as the legend face: the rebrand uses JetBrains Mono,
+     but the two are metrically close at 10px caps and Plex is already
+     self-hosted through next/font, so swapping it would add a network font
+     for a difference nobody can see at this size. */
   --font-display: var(--font-archivo);
-  --font-sans: var(--font-plex-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-plex-mono);
 
-  /* Fixed radius scale, no arbitrary values */
-  --radius-shell: 16px;
-  --radius-panel: 12px;
-  --radius-card: 10px;
-  --radius-control: 8px;
+  /* Radius. The rebrand is a 6px system throughout, where Rev B ran 16 down
+     to 6. Keeping the five names means no component has to change; they just
+     compress. */
+  --radius-shell: 10px;
+  --radius-panel: 8px;
+  --radius-card: 8px;
+  --radius-control: 6px;
   --radius-chip: 6px;
 }
 
-/* Grain lives on the page ground only, never on sheets, cards or controls. */
+/* Dark mode, straight from the rebrand. Opt-in via html[data-theme="dark"],
+   never a bare prefers-color-scheme: a recruiter whose OS flipped to dark at
+   sunset should not find the product changed underneath them mid-shift. */
+html[data-theme="dark"] {
+  --color-paper: #0d0918;
+  --color-sheet: #141026;
+  --color-well: #120c22;
+
+  --color-ink: #f2effa;
+  --color-ink-2: #bcb4d2;
+  --color-ink-3: #8b83a2;
+  --color-rule: #2a2340;
+
+  --color-vermilion: #8b5cf6;
+  --color-vermilion-hover: #7c3aed;
+  --color-vermilion-edge: #6d28d9;
+  --color-on-vermilion: #ffffff;
+
+  --color-teal-bg: #0d2b22;
+  --color-teal-text: #6ee7b7;
+  --color-amber-bg: #2a2113;
+  --color-amber-text: #e2c37a;
+  --color-red-bg: #2d1418;
+  --color-red: #f4a3ac;
+
+  --color-bubble-user: #2a1f4c;
+  --color-field: #120c22;
+  --color-rail: #100c20;
+}
+
+/* The grain is gone, PLS-101.
+ *
+ * It was Rev B's signature: a fractal-noise texture on the page ground that
+ * made cream read as paper rather than as off-white. On the violet ground it
+ * reads as compression artefacts, and the rebrand has no equivalent. Removing
+ * it also drops an inline SVG data URI from every page. */
 body {
   background-color: var(--color-paper);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -98,7 +159,7 @@ body {
   .cap {
     box-shadow:
       0 2px 0 var(--edge),
-      0 3px 8px rgb(23 22 15 / 0.1);
+      0 3px 8px rgb(27 21 38 / 0.1);
     transition:
       transform 90ms ease-out,
       box-shadow 90ms ease-out;
@@ -107,15 +168,15 @@ body {
     transform: translateY(2px);
     box-shadow:
       0 0 0 var(--edge),
-      0 1px 3px rgb(23 22 15 / 0.08);
+      0 1px 3px rgb(27 21 38 / 0.08);
   }
 
   /* 6b. Inset well. Control beds and inputs are recessed. */
   .well {
     background: var(--color-well);
     box-shadow:
-      inset 0 1px 2px rgb(23 22 15 / 0.1),
-      inset 0 -1px 0 rgb(255 253 247 / 0.6);
+      inset 0 1px 2px rgb(27 21 38 / 0.1),
+      inset 0 -1px 0 rgb(255 255 255 / 0.7);
   }
 
   /* 6c. Floating layer: dialogs, drawers, toasts, menus.
@@ -129,16 +190,16 @@ body {
   .floating {
     background: var(--color-sheet);
     box-shadow:
-      0 16px 40px rgb(23 22 15 / 0.22),
-      0 4px 10px rgb(23 22 15 / 0.12),
-      0 0 0 1px rgb(23 22 15 / 0.06);
+      0 16px 40px rgb(27 21 38 / 0.22),
+      0 4px 10px rgb(27 21 38 / 0.12),
+      0 0 0 1px rgb(27 21 38 / 0.06);
   }
 
   .floating-dark {
     background: var(--color-ink);
     box-shadow:
-      0 16px 40px rgb(23 22 15 / 0.28),
-      0 4px 10px rgb(23 22 15 / 0.16);
+      0 16px 40px rgb(27 21 38 / 0.28),
+      0 4px 10px rgb(27 21 38 / 0.16);
   }
 
   /* The activity signature, and the only ambient animation in the product.
@@ -164,7 +225,7 @@ body {
      Darker than it was, because the panel in front is now opaque and the two
      have to read as separate planes. */
   .scrim {
-    background: rgb(23 22 15 / 0.46);
+    background: rgb(27 21 38 / 0.46);
     backdrop-filter: blur(10px) saturate(0.9);
     -webkit-backdrop-filter: blur(10px) saturate(0.9);
     animation: layer-in 160ms ease-out;
@@ -261,7 +322,7 @@ body {
    Someone who asked for less transparency should get a flat dim, not glass. */
 @media (prefers-reduced-transparency: reduce) {
   .scrim {
-    background: rgb(23 22 15 / 0.7);
+    background: rgb(27 21 38 / 0.7);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
