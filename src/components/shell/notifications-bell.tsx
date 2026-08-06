@@ -61,7 +61,7 @@ export function NotificationsBell({
       >
         <Bell size={14} strokeWidth={1.75} />
         {unread > 0 ? (
-          <span className="absolute right-1.5 top-2 flex h-4 min-w-4 items-center justify-center rounded-chip bg-vermilion px-1 font-mono text-[10px] leading-none text-on-vermilion">
+          <span className="absolute right-1.5 top-2 flex h-4 min-w-4 items-center justify-center rounded-chip bg-violet px-1 font-mono text-[10px] leading-none text-on-violet">
             {unread > 9 ? "9+" : unread}
           </span>
         ) : null}

@@ -64,7 +64,7 @@ export default function SettingsClient({ data }: { data: SettingsData }) {
                     aria-current={active ? "page" : undefined}
                     className={`w-full rounded-control px-3 py-2 text-left text-[12px] transition-colors duration-150 ${
                       active
-                        ? "bg-well font-semibold text-vermilion-hover"
+                        ? "bg-well font-semibold text-violet-hover"
                         : "text-ink-2 hover:bg-paper hover:text-ink"
                     }`}
                   >
@@ -398,7 +398,7 @@ function BillingPanel() {
         {PLAN_FEATURES.map((item) => (
           <li key={item} className="flex items-start gap-2.5 text-[12px]">
             <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-well">
-              <Check size={11} strokeWidth={3} className="text-vermilion" />
+              <Check size={11} strokeWidth={3} className="text-violet" />
             </span>
             {item}
           </li>

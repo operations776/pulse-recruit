@@ -7,6 +7,7 @@ import { BD_FEEDBACK_TITLE } from "@/lib/supabase/types";
 import { dayKey } from "@/lib/time";
 import type {
   ActivityRow,
+  ChatConversationRow,
   BDFeedbackRating,
   AssetRow,
   CandidateRow,
@@ -41,6 +42,10 @@ import type {
   StageEventRow,
   TaskRow,
 } from "@/lib/supabase/types";
+
+// A uuid no row will ever carry, used to express "match nothing" without
+// branching a query builder into two incompatible shapes.
+const NO_ROW = "00000000-0000-0000-0000-000000000000";
 
 // Every read goes through here. Each function resolves the session itself, so a
 // screen cannot forget to scope by org, and RLS is the backstop if one does.
@@ -249,14 +254,41 @@ export async function getChat(surface: ChatSurface) {
  * window and reads visible durable context separately, so old conversation is
  * not mistaken for memory and is not shipped on every visit.
  */
-export async function getBDWorkspace() {
+export async function getBDWorkspace(
+  conversationId?: string,
+  /** True when the caller wants a blank slate, not the most recent thread. */
+  startFresh = false,
+) {
   const session = await requireSession();
   const supabase = await createClient();
 
+  // Which thread to open. An explicit id wins; otherwise the most recently
+  // active one, which is what a recruiter coming back to the screen expects.
+  // Null means the workspace is empty and the composer starts a first thread.
+  const { data: threadRows } = await supabase
+    .from("chat_conversations")
+    .select("*")
+    .eq("surface", "market")
+    .order("last_message_at", { ascending: false })
+    .limit(40);
+
+  const conversations = (threadRows ?? []) as ChatConversationRow[];
+  const active = startFresh
+    ? null
+    : (conversations.find((c) => c.id === conversationId) ??
+      conversations[0] ??
+      null);
+
   const [messages, credits, memories] = await Promise.all([
-    supabase
-      .from("chat_messages")
-      .select("*")
+    // Scoped to the open thread. This is what the 60-row cap was standing in
+    // for: a transcript that grew forever had no natural boundary to read to.
+    (active
+      ? supabase
+          .from("chat_messages")
+          .select("*")
+          .eq("conversation_id", active.id)
+      : supabase.from("chat_messages").select("*").eq("id", NO_ROW)
+    )
       .eq("surface", "market")
       // `role` is the tiebreak, and it is load-bearing. begin_ask inserts the
       // question and the answer in ONE transaction, so both rows carry an
@@ -271,7 +303,7 @@ export async function getBDWorkspace() {
       // here displays as user then assistant: the order they happened in.
       .order("created_at", { ascending: false })
       .order("role", { ascending: false })
-      .limit(60),
+      .limit(200),
     supabase.from("credit_ledger").select("*").maybeSingle(),
     loadBDAgentMemories(supabase, session.org.id, session.userId),
   ]);
@@ -307,6 +339,8 @@ export async function getBDWorkspace() {
     credits: (credits.data ?? null) as CreditRow | null,
     memories,
     feedbackByAnswer,
+    conversations,
+    activeConversationId: active?.id ?? null,
   };
 }
 

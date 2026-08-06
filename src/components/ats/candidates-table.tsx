@@ -167,7 +167,7 @@ export function CandidatesTable({
               button style. One tab stop, one focus ring, real navigation. */}
           <Link
             href="/pipeline"
-            className="cap inline-flex h-8 shrink-0 items-center justify-center gap-2 rounded-control bg-vermilion px-3.5 text-[12px] font-medium text-on-vermilion hover:bg-vermilion-hover [--edge:var(--color-vermilion-edge)]"
+            className="cap inline-flex h-8 shrink-0 items-center justify-center gap-2 rounded-control bg-violet px-3.5 text-[12px] font-medium text-on-violet hover:bg-violet-hover [--edge:var(--color-violet-edge)]"
           >
             <Plus size={16} strokeWidth={1.5} />
             Add candidate

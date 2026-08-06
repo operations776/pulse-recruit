@@ -32,7 +32,7 @@ export function TopBar({
     <header className="flex h-12 shrink-0 items-center justify-between border-b border-rule bg-bar px-0 text-on-bar">
       <div className="flex h-full items-center">
         <span className="flex h-full items-center gap-2 border-r border-on-bar/15 px-4">
-          <span className="flex size-5 items-center justify-center rounded-control bg-vermilion">
+          <span className="flex size-5 items-center justify-center rounded-control bg-violet">
             <span className="size-1.5 rounded-full bg-on-bar" />
           </span>
           <span className="display text-[12px] leading-none">{brand.name}</span>

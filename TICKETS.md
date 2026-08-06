@@ -303,6 +303,42 @@ and may never support a claim about a company, person, role, funding event or
 date. Those still require a tool result every time. AI.md section 5 states the
 rule and the system prompt enforces it.
 
+## The rebrand port
+
+Daniyal's sister rebuilt the whole front end as 17 static HTML files. PLS-101
+ported the token layer, which reskinned 73 components by editing one file.
+Daniyal's correction was that this was a colour swap, not the system: the
+folder is a complete product with surfaces we did not have.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-104 | The shell: settings popover, working dark mode, workspace menu. Dark mode is persisted, unlike the rebrand's in-memory toggle, and applied by an inline script before paint rather than in an effect, which is a white flash on every navigation | done |
+| PLS-105 | `chat_conversations`, so a chat surface has threads. `begin_ask` resolves the thread inside the function to keep the claim atomic. All 14 existing messages adopted into 3 threads titled from their own first questions | done |
+| PLS-106 | The BD history panel: threads grouped Today / Yesterday / date, New conversation, author-only delete. The transcript is scoped to the open thread, and so is the history the model receives | done |
+| PLS-107 | The marketing site: landing, features, pricing, FAQ, testimonials, sharing one layout. Copy in one config file. The FAQ moves from a runtime JS array into server-rendered `<details>` | done |
+| PLS-108 | `vermilion` becomes `violet` across 29 files, and two hardcoded light-only washes become theme-aware tokens | done |
+
+**Testimonials ships without quotes, deliberately.** The rebrand attributes six
+five-star quotes by name to real RecruiterGTM clients praising a product none
+of them runs, plus "40+ Agencies on Pulse" and "2x faster time to first touch".
+The layout is built; the slots say they are waiting for real quotes.
+
+Four bugs across this block that typecheck, lint and build all passed, and only
+a screenshot caught:
+
+1. The top bar was `bg-ink text-sheet`. Both flip with the theme, so dark mode
+   inverted the bar to white while the app went dark.
+2. Sign out kept a `text-sheet!` override and went near-black on near-black.
+3. Every segmented control painted its selected cap teal, which DESIGN.md
+   reserves for on/running. A selected tab is not a running thing.
+4. **All four new marketing pages were missing from `PUBLIC_PATHS`**, so a
+   logged-out prospect reading the pricing page was redirected to sign-in. The
+   entire marketing site was unreachable to exactly the people it is for.
+
+Checked rather than assumed: the Ops morning brief already had its four tiles
+and the sequences page already had Enrolled / Replied / Booked / Reply rate
+from real columns. Both were on the plan as gaps; neither was one.
+
 ## Found on the production deploy
 
 | ID | Ticket | Status |

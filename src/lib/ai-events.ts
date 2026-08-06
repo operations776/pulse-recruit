@@ -20,7 +20,14 @@ export type RunPhase =
 export type AskEvent =
   // The run has a home in the transcript. Sent first, so a reload mid-run can
   // still find the message that is in flight.
-  | { type: "opened"; messageId: string; reserved: number }
+    // `conversationId` is optional because content generation shares this
+  // lifecycle but has no transcript and therefore no thread to belong to.
+  | {
+      type: "opened";
+      messageId: string;
+      reserved: number;
+      conversationId?: string;
+    }
   | { type: "phase"; phase: RunPhase; detail?: string }
   // One line per unit of work performed: a search issued, a page read, a
   // pipeline query run. This is the audit trail the user watches happen.

@@ -67,7 +67,7 @@ export function Backlog({
       aria-pressed={view === key}
       className={`legend flex h-7 items-center gap-1.5 rounded-control px-3 ${
         view === key
-          ? "cap bg-vermilion text-on-vermilion [--edge:var(--color-vermilion-edge)]"
+          ? "cap bg-violet text-on-violet [--edge:var(--color-violet-edge)]"
           : "text-ink-2 hover:text-ink"
       }`}
     >
@@ -162,7 +162,7 @@ export function Backlog({
 
               <button
                 onClick={() => onOpen(post)}
-                className="min-w-[12rem] flex-1 truncate text-left text-[13px] font-medium hover:text-vermilion"
+                className="min-w-[12rem] flex-1 truncate text-left text-[13px] font-medium hover:text-violet"
               >
                 {post.hook}
               </button>
@@ -302,7 +302,7 @@ function DateControl({
         onChange={(event) => setDay(event.target.value)}
         className="w-40"
       />
-      {/* Secondary, not primary. DESIGN.md section 3 allows one vermilion
+      {/* Secondary, not primary. DESIGN.md section 3 allows one violet
           control per view and the page header already spends it on New post. */}
       <Button
         disabled={!day}

@@ -32,6 +32,7 @@ export function StrategyRail({
   meId,
   meter,
   currentRead,
+  history,
 }: {
   memories: BDAgentMemoryRow[];
   canManageAgency: boolean;
@@ -45,6 +46,8 @@ export function StrategyRail({
    * only part anyone reads, got the least width of the lot.
    */
   currentRead: React.ReactNode;
+  /** The conversation history panel, between the brief and the evidence. */
+  history: React.ReactNode;
 }) {
   const router = useRouter();
   const { notify } = useToast();
@@ -183,6 +186,8 @@ export function StrategyRail({
             {group(personal, "Your coaching", UserRound)}
           </>
         )}
+
+        {history}
 
         {/* The evidence panel closes the column, so the brief runs from what
             it knows at the top to what it last found at the bottom, and the

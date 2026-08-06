@@ -15,9 +15,33 @@ import { StrategistWorkspace } from "./strategist-workspace";
 // using it. The strategy rail carries the identity now, and the space belongs
 // to the work.
 
-export default async function BDStrategistPage() {
-  const { session, messages, credits, memories, feedbackByAnswer } =
-    await getBDWorkspace();
+export default async function BDStrategistPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ c?: string }>;
+}) {
+  const params = await searchParams;
+  // `c=new` is how the New conversation button says "do not open anything":
+  // it is not an id, so nothing matches and the transcript renders empty.
+  const requested = params.c && params.c !== "new" ? params.c : undefined;
+
+  const {
+    session,
+    messages,
+    credits,
+    memories,
+    feedbackByAnswer,
+    conversations,
+    activeConversationId,
+  } = await getBDWorkspace(requested, params.c === "new");
+
+  // Grouping keys are computed on the server so Today and Yesterday cannot
+  // disagree with the client's clock after hydration.
+  const now = new Date();
+  const todayKey = now.toISOString().slice(0, 10);
+  const yesterdayKey = new Date(now.getTime() - 86_400_000)
+    .toISOString()
+    .slice(0, 10);
 
   const allowance = credits?.weekly_allowance ?? 0;
   const used = credits?.used_this_week ?? 0;
@@ -39,6 +63,10 @@ export default async function BDStrategistPage() {
       // Agency strategy is shared by everyone, so changing it is an
       // organisation-level act. Personal coaching is always the author's.
       canManageAgency={session.role === "owner" || session.role === "admin"}
+      conversations={conversations}
+      activeConversationId={activeConversationId}
+      todayKey={todayKey}
+      yesterdayKey={yesterdayKey}
       meId={session.userId}
       available={available}
       allowance={allowance}

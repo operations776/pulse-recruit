@@ -61,7 +61,7 @@ export function StatusBoard({
                   <button
                     key={post.id}
                     onClick={() => onOpen(post)}
-                    className={`settle lift flex flex-col gap-2 rounded-card border border-l-[3px] p-3 text-left hover:shadow-[0_2px_8px_rgb(23_22_15_/_0.09)] ${
+                    className={`settle lift flex flex-col gap-2 rounded-card border border-l-[3px] p-3 text-left hover:shadow-[0_2px_8px_rgb(27_21_38_/_0.09)] ${
                       post.status === "failed"
                         ? "border-red border-l-red bg-red-bg"
                         : post.status === "published"

@@ -6,7 +6,7 @@ import type { ComponentProps, ReactNode } from "react";
 // DESIGN.md 6b and 9: inputs are inset wells, no outer border, 48px tall,
 // 17px text, focus ring inset.
 const base =
-  "well rounded-control text-[13px] text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-vermilion";
+  "well rounded-control text-[13px] text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-violet";
 
 export function Input({ className = "w-full", ...props }: ComponentProps<"input">) {
   return <input className={`${base} h-8 px-3 ${className}`} {...props} />;

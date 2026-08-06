@@ -132,7 +132,7 @@ export function Briefing({
             key={section.key}
             className={`settle border-l-[3px] py-2.5 pl-3 ${style.edge} ${
               index > 0 ? "mt-2.5 border-t border-t-rule pt-3" : ""
-            } ${section.key === "move" ? "bg-[#f9edf7]" : ""}`}
+            } ${section.key === "move" ? "bg-move" : ""}`}
           >
             <p className={`legend flex items-center gap-1.5 ${style.text}`}>
               <Icon size={16} strokeWidth={1.75} className="size-3.5" aria-hidden />
