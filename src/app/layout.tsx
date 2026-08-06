@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, IBM_Plex_Mono, Inter } from "next/font/google";
+import { ThemeScript } from "@/components/shell/theme-script";
 import { brand } from "@/config/brand";
 import "./globals.css";
 
@@ -42,10 +43,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // suppressHydrationWarning on <html> because ThemeScript writes data-theme
+    // before React hydrates, so the server markup (no attribute) and the DOM
+    // (attribute set) legitimately differ on this one element.
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${archivo.variable} ${inter.variable} ${plexMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Before the first paint, always. An effect would run after the
+            browser has painted, which is a white flash on every navigation
+            for anyone using dark mode. */}
+        <ThemeScript />
+      </head>
       {/* Browser extensions such as Grammarly inject attributes onto body
           before React hydrates, which reports as a hydration mismatch that is
           not ours. Suppressing here keeps real mismatches visible elsewhere. */}

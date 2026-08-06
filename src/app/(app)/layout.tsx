@@ -5,7 +5,7 @@ import { RailAside } from "@/components/shell/rail-aside";
 import { TopBar } from "@/components/shell/top-bar";
 import { ToastProvider } from "@/components/ui/toast";
 import { requireSession } from "@/lib/auth";
-import { getNotifications } from "@/lib/data";
+import { getMyOrgs, getNotifications } from "@/lib/data";
 
 /**
  * The bell, resolved on its own.
@@ -24,13 +24,16 @@ async function Bell() {
 // provide. requireSession is what keeps an unauthenticated request from
 // rendering the product at all, and RLS is the backstop behind it.
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const session = await requireSession();
+  // Both are already-cached reads behind the same session resolver, so the
+  // pair costs one round trip rather than two sequential ones.
+  const [session, orgs] = await Promise.all([requireSession(), getMyOrgs()]);
 
   return (
     <ToastProvider>
       <div className="flex h-screen flex-col overflow-hidden">
         <TopBar
           orgName={session.org.name}
+          orgs={orgs}
           email={session.email}
           bell={
             <Suspense fallback={<NotificationsBell notifications={[]} />}>

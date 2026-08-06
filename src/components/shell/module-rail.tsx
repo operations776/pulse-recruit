@@ -39,7 +39,7 @@ export function ModuleRail({ aside }: { aside?: ReactNode }) {
               aria-current={isActive ? "page" : undefined}
               className={`flex size-8 items-center justify-center rounded-control ${
                 isActive
-                  ? "bg-ink text-sheet"
+                  ? "bg-vermilion text-on-vermilion"
                   : "text-ink-3 hover:bg-well hover:text-ink"
               }`}
             >
@@ -54,7 +54,7 @@ export function ModuleRail({ aside }: { aside?: ReactNode }) {
           aria-label="Settings"
           className={`mt-auto flex size-8 items-center justify-center rounded-control ${
             pathname.startsWith("/settings")
-              ? "bg-ink text-sheet"
+              ? "bg-vermilion text-on-vermilion"
               : "text-ink-3 hover:bg-well hover:text-ink"
           }`}
         >
