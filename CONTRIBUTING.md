@@ -23,34 +23,30 @@ branch  →  commit  →  push  →  PR  →  CI green  →  merge to main  → 
 Never `git push origin main` directly. The PR is where the gates live and a
 direct push skips them.
 
-### Preview deploys are currently blocked
+### Preview deploys
 
-Vercel comments on each PR that it will not build it. Two reasons stacked:
+Every PR gets one. Vercel comments the URL on the PR:
 
-- Commits here are authored as `i220753-bot <daniyalaziz184@gmail.com>`, which
-  GitHub attributes to `Daniyal1234-alt`. The Vercel team belongs to
-  `operations776`, and Vercel will not deploy a commit from a non-member.
-- Preview deploys on a **private** repo need a Vercel Pro seat.
+```
+https://pulse-git-<branch>-operations-3595s-projects.vercel.app
+```
 
-Production is unaffected: `main` deploys, and a manual
-`npx vercel deploy --prod` still works because it authenticates as the account
+**They are behind Vercel SSO.** Opening one in a browser signed in to the
+Vercel account works; `curl` gets a 302 to `vercel.com/sso-api`, which is
+deployment protection doing its job, not a broken build. To share a preview
+with somebody outside the team, turn off Deployment Protection for previews in
+Project Settings, or send them a protection bypass link.
+
+This only started working when the repo went public on 2026-08-06. While it
+was private, Vercel refused every PR build: commits here are authored as
+`i220753-bot <daniyalaziz184@gmail.com>`, which GitHub attributes to
+`Daniyal1234-alt`, the Vercel team belongs to `operations776`, and previews on
+a private repo need a Pro seat. If the repo ever goes private again, previews
+stop and the fix is to either correct the commit identity or buy a Pro seat.
+
+Production was never affected by any of that: `main` deploys, and a manual
+`npx vercel deploy --prod` works because it authenticates as the account
 rather than the commit author.
-
-To turn previews on, pick one:
-
-1. **Fix the commit identity** so commits are authored by the same account that
-   owns the Vercel team:
-   ```bash
-   git config user.name  "Daniyal Aziz"
-   git config user.email "<the email on the operations776 GitHub account>"
-   ```
-   This only affects new commits.
-2. **Upgrade to Vercel Pro** and add the author account to the team.
-3. Leave it. Review against localhost and production, which is what has
-   happened up to now anyway.
-
-Until then, "look at the preview URL" is not a step that exists, so this file
-does not pretend it is.
 
 ## What CI checks, and what it does not
 
