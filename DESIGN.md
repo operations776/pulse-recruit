@@ -1,8 +1,23 @@
-# Panelboard Soft
+# Pulse Recruit
 
 Design system for an all-in-one recruiting operations platform: applicant tracking, outbound, operations, and content engine.
 
-**Rev B.** Rev A was a flat printed sheet with 2px corners and hard offset shadows. Rev B keeps the instrument logic and moves the personality into softer places: rounded shells, inset wells, keycap edges, and a grained ground.
+**Rev C.** Rev A was a flat printed sheet with 2px corners and hard offset shadows. Rev B, "Panelboard Soft", kept the instrument logic and moved the personality into softer places: rounded shells, inset wells, keycap edges, and a cream ground with grain on it.
+
+Rev C is the violet rebrand, ported in PLS-101 from a full static-HTML front end. What changed and what did not:
+
+| | Rev B | Rev C |
+|---|---|---|
+| Ground | Cream `#F6F2E9`, grained | Violet-tinted `#F6F4FC`, flat |
+| Verb | Vermilion `#E23D1F` | Violet `#7C3AED` |
+| Display | Archivo Black, one weight | Archivo 600 to 900 |
+| Body | IBM Plex Sans | Inter |
+| Radius | 16 / 12 / 10 / 8 / 6 | 10 / 8 / 8 / 6 / 6 |
+| Themes | Light only | Light and dark |
+
+**The structural rules did not change.** Sections inside a shell still share a 1px rule with no gap. Status is still colour plus icon plus word. One primary verb per view. Nothing behind hover. Density is still the point. Rev C is a reskin, not a redesign, which is why it landed by re-pointing tokens rather than editing 73 component files.
+
+The grain is gone. It made cream read as paper; on the violet ground it reads as compression artefacts.
 
 ---
 
@@ -44,45 +59,51 @@ Additional rules:
 
 ## 3. Colour
 
+Token NAMES are semantic, which is why Rev C landed by re-pointing them rather than editing every component. Live values are in `src/app/globals.css`; this table is the contract, that file is the source.
+
 ```css
 :root {
   /* ground and surfaces */
-  --paper:      #F6F2E9;  /* page ground, carries the grain */
-  --sheet:      #FFFDF7;  /* panel and card fill */
-  --well:       #EDE7DA;  /* inset wells, control troughs, input beds */
+  --paper:      #F6F4FC;  /* page ground */
+  --sheet:      #FFFFFF;  /* panel and card fill */
+  --well:       #F5F2FC;  /* inset wells, control troughs, input beds */
 
   /* ink */
-  --ink:        #17160F;  /* primary text, strong borders, control bodies */
-  --ink-2:      #6E675A;  /* secondary text, metadata */
-  --ink-3:      #9A9284;  /* placeholders, disabled labels */
-  --rule:       #D8D1C0;  /* 1px hairlines */
+  --ink:        #1B1526;  /* primary text, strong borders, control bodies */
+  --ink-2:      #585272;  /* secondary text, metadata */
+  --ink-3:      #8B84A0;  /* placeholders, disabled labels */
+  --rule:       #E7E1F4;  /* 1px hairlines */
 
-  /* action */
-  --vermilion:       #E23D1F;
-  --vermilion-hover: #C7331A;
-  --vermilion-edge:  #A8290F;  /* keycap underside */
-  --on-vermilion:    #FFFDF7;
+  /* action. Still named `vermilion` in code: it is the ROLE, and renaming it
+     inside the reskin would have buried the colour change in a rename diff.
+     PLS-105 renames it to `violet`. */
+  --vermilion:       #7C3AED;
+  --vermilion-hover: #6D28D9;
+  --vermilion-edge:  #5B21B6;  /* keycap underside */
+  --on-vermilion:    #FFFFFF;
 
   /* state */
-  --teal:       #0F6E56;  /* on, running, engaged */
+  --teal:       #0F7A5F;  /* on, running, engaged */
   --teal-edge:  #0A5240;
-  --teal-bg:    #E1F5EE;
+  --teal-bg:    #E3F6EF;
   --teal-text:  #085041;
 
-  --amber:      #BA7517;  /* needs attention, paused, stalled */
-  --amber-bg:   #FAEEDA;
-  --amber-text: #854F0B;
+  --amber:      #B8860B;  /* needs attention, paused, stalled */
+  --amber-bg:   #FDF6EC;
+  --amber-text: #9A7A20;
 
-  --red:        #A32D2D;  /* destructive and error only */
-  --red-bg:     #FCEBEB;
+  --red:        #B02A37;  /* destructive and error only */
+  --red-bg:     #FDECEE;
 }
 ```
+
+Dark mode overrides these on `html[data-theme="dark"]`. It is opt-in, never a bare `prefers-color-scheme`: a recruiter whose OS flips at sunset should not find the product changed underneath them mid-shift.
 
 ### Colour roles
 
 This is the rule that keeps four products in one shell from turning into noise:
 
-- **Vermilion is a verb.** If it is not clickable, it is not vermilion. One vermilion control per view, maximum.
+- **Violet is a verb.** If it is not clickable, it is not violet. One violet control per view, maximum. (The token is still spelled `vermilion` until PLS-105.)
 - **Teal means on.** Running sequences, active states, thrown switches. Never a button.
 - **Amber means look at this.** Stalled, paused, needs input. Never a button.
 - **Red is destructive and error only.** It is not a general warning colour.
@@ -116,25 +137,27 @@ The palette lives in `src/config/content-skills.ts` beside the icons. Colour for
 ## 4. Type
 
 ```css
---font-display: 'Archivo Black', system-ui, sans-serif;
---font-body:    'IBM Plex Sans', system-ui, sans-serif;
+--font-display: 'Archivo', system-ui, sans-serif;      /* 600 to 900 */
+--font-body:    'Inter', system-ui, sans-serif;
 --font-mono:    'IBM Plex Mono', ui-monospace, monospace;
 ```
 
+Display moved off Archivo Black in Rev C. Archivo Black is a separate family locked to a single weight, so the rebrand's lighter headings were not expressible in it. Plex Mono stays: the rebrand uses JetBrains Mono, but at 10px caps the two are metrically close and Plex is already self-hosted, so swapping it would add a network font for a difference nobody can see.
+
 | Role | Face | Size | Weight | Treatment |
 |---|---|---|---|---|
-| Page title | Archivo Black | 18px | 400 | Uppercase, tracking -0.01em |
-| Section head | Archivo Black | 13px | 400 | Uppercase, tracking 0 |
-| Metric number | Archivo Black | 21px | 400 | Tabular figures |
-| Record name | IBM Plex Sans | 13px | 500 | Sentence case |
-| Body | IBM Plex Sans | 13px | 400 | Line height 1.5 |
-| Secondary | IBM Plex Sans | 12px | 400 | `--ink-2` |
-| Button | IBM Plex Sans | 12px | 500 | Sentence case, never uppercase |
+| Page title | Archivo | 18px | 800 | Uppercase, tracking -0.01em |
+| Section head | Archivo | 13px | 700 | Uppercase, tracking 0 |
+| Metric number | Archivo | 21px | 700 | Tabular figures |
+| Record name | Inter | 13px | 500 | Sentence case |
+| Body | Inter | 13px | 400 | Line height 1.5 |
+| Secondary | Inter | 12px | 400 | `--ink-2` |
+| Button | Inter | 12px | 500 | Sentence case, never uppercase |
 | Legend / eyebrow | IBM Plex Mono | 10px | 400 | Uppercase, tracking 0.12em |
 | Record ID | IBM Plex Mono | 10px | 400 | Uppercase, tracking 0.08em |
 | Count / metadata | IBM Plex Mono | 10px | 400 | Tabular figures |
 
-Archivo Black is the personality and it works by being rare. It appears on page titles, section heads, metric numbers, and the masthead. Nowhere else.
+Archivo is the personality and it works by being rare. It appears on page titles, section heads, metric numbers, and the masthead. Nowhere else.
 
 ---
 
@@ -143,12 +166,14 @@ Archivo Black is the personality and it works by being rare. It appears on page 
 Fixed scale. No arbitrary values.
 
 ```css
---r-shell:   16px;  /* outermost panel, dialog, drawer */
---r-panel:   12px;  /* board column, sidebar section */
---r-card:    10px;  /* record card, avatar */
---r-control:  8px;  /* button, input, toggle, select */
+--r-shell:   10px;  /* outermost panel, dialog, drawer */
+--r-panel:    8px;  /* board column, sidebar section */
+--r-card:     8px;  /* record card, avatar */
+--r-control:  6px;  /* button, input, toggle, select */
 --r-chip:     6px;  /* status chip, tag, count badge */
 ```
+
+Rev C compressed the scale. The rebrand is a flat 6px system; keeping five names meant no component had to change, they just tightened.
 
 Avatars are rounded squares at `--r-card`, never circles. This is deliberate and it is a large part of what stops the layout reading as generic.
 
@@ -260,7 +285,7 @@ Four products behind one nav is the hardest problem in this product. A user need
 
 Since colour is reserved for roles, identity runs through two channels:
 
-1. **Masthead lockup.** Each module has its own Archivo Black uppercase wordmark, fixed in the same position, always visible.
+1. **Masthead lockup.** Each module has its own Archivo uppercase wordmark, fixed in the same position, always visible.
 2. **Record ID prefix.** Every object in the system carries a mono ID in the top-right of its card.
 
 One module per RecruiterGTM pillar, so the shell and the offer tell the same story.
@@ -323,7 +348,7 @@ Enforceable rules. If a component violates one of these, it is wrong regardless 
 4. Grain lives on the page ground only. Never on sheets, cards, or controls.
 5. Vermilion is a verb. If it is not clickable, it is not vermilion.
 6. Backdrop blur only on the scrim. Floating layers are opaque.
-7. Archivo Black appears on titles, section heads, metric numbers, and the masthead. Nowhere else.
+7. Archivo appears on titles, section heads, metric numbers, and the masthead. Nowhere else.
 8. Uppercase appears on the display face and mono legends only.
 9. Status is colour plus icon plus word, always all three. A hue that carries a category rather than a state (content skill accents, section 3) is an accent edge, never a fill, and never the only thing saying what a state is.
 10. No body text below 11px, no font weight below 400, no hit target below 28px.
