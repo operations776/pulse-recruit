@@ -2,24 +2,46 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]
   pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# The pre-merge gates from CLAUDE.md, run on every pull request and on main.
+#
+# Playwright is NOT run here, deliberately. Two reasons, in order:
+#
+#   1. Daniyal's standing instruction is that he checks the browser himself.
+#      Specs are written and kept honest, not executed by the agent.
+#   2. Even without that, these specs need a running app signed in as a seeded
+#      user against the live Supabase project. Putting those credentials into
+#      Actions to make a green tick appear buys a worse trade than it looks:
+#      a shared database that any PR from any branch could write to.
+#
+#   What is left is genuinely useful and genuinely free of secrets: types,
+#   lint, and a real production build.
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    steps:
-      - uses: actions/checkout@v4
+    # `next build` reads these at module scope in the Supabase clients, so the
+    # build fails without them. They are the PUBLISHABLE pair, which is safe in
+    # a repo secret and safe in the browser bundle: RLS is the boundary, not
+    # the key. The service role key is never referenced here.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
 
-      - uses: actions/setup-node@v4
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          # Matches the Node the app is developed and deployed on.
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -34,16 +56,26 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+  # A migration that lands after the code that needs it takes production down.
+  # Law 10 says migrations ship first, so a PR that adds one says so loudly
+  # rather than relying on somebody remembering at deploy time.
+  migrations:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 5
 
-      - name: Playwright
-        run: npm run test:e2e
-
-      - name: Upload Playwright report
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+    steps:
+      - uses: actions/checkout@v5
         with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
+          fetch-depth: 0
+
+      - name: Flag new migrations
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+          NEW=$(git diff --name-only --diff-filter=A "$BASE"...HEAD -- supabase/migrations || true)
+          if [ -n "$NEW" ]; then
+            echo "::warning title=Migrations in this PR::Apply these to Supabase BEFORE merging (law 10)."
+            echo "$NEW" | while read -r f; do echo "::warning file=$f::Apply this migration before the code that needs it."; done
+          else
+            echo "No new migrations in this PR."
+          fi
