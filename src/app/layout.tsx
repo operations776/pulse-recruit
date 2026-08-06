@@ -1,19 +1,24 @@
 import type { Metadata } from "next";
-import { Archivo_Black, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Archivo, IBM_Plex_Mono, Inter } from "next/font/google";
 import { brand } from "@/config/brand";
 import "./globals.css";
 
-// Three faces per DESIGN.md. Archivo Black carries the whole personality and is
-// restricted to display. Plex Sans reads, Plex Mono labels everything.
-const archivo = Archivo_Black({
+// Three faces per DESIGN.md. Archivo carries the personality and is restricted
+// to display, Inter reads, Plex Mono labels everything.
+//
+// PLS-101 moved display from Archivo Black (one weight, 400) to Archivo at
+// 600 to 900. Archivo Black is a separate family locked to a single weight, so
+// the rebrand's lighter display headings were not expressible in it at all.
+const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["600", "700", "800", "900"],
   display: "swap",
 });
 
-const plexSans = IBM_Plex_Sans({
-  variable: "--font-plex-sans",
+// Inter replaces IBM Plex Sans as the reading face, per the rebrand.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
@@ -39,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${inter.variable} ${plexMono.variable} h-full antialiased`}
     >
       {/* Browser extensions such as Grammarly inject attributes onto body
           before React hydrates, which reports as a hydration mismatch that is
