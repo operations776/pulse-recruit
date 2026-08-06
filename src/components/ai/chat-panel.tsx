@@ -51,6 +51,8 @@ export function ChatPanel({
   headerRight,
   renderAnswer,
   answerFooter,
+  conversationId,
+  onOpened,
 }: {
   surface: ChatSurface;
   messages: ChatRow[];
@@ -74,6 +76,10 @@ export function ChatPanel({
   renderAnswer?: (message: ChatRow) => ReactNode;
   /** Controls under a settled answer, such as BD coaching feedback. */
   answerFooter?: (message: ChatRow) => ReactNode;
+  /** The thread to continue. Null or undefined starts a new one. */
+  conversationId?: string | null;
+  /** The thread the run actually landed in, so the caller can switch to it. */
+  onOpened?: (conversationId: string) => void;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
@@ -103,7 +109,7 @@ export function ChatPanel({
         response = await fetch("/api/ask", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ surface, question: text }),
+          body: JSON.stringify({ surface, question: text, conversationId }),
         });
       } catch {
         setRun(null);
@@ -141,6 +147,13 @@ export function ChatPanel({
 
         for (const event of events) {
           switch (event.type) {
+            case "opened":
+              // The run tells us which thread it landed in. A first question
+              // creates one server-side, so the client cannot know the id
+              // until now, and the history panel needs it to highlight the
+              // right row.
+              if (event.conversationId) onOpened?.(event.conversationId);
+              break;
             case "phase":
               setRun((r) => (r ? { ...r, phase: event.phase } : r));
               break;
@@ -190,7 +203,7 @@ export function ChatPanel({
       setRun(null);
       composerRef.current?.focus();
     },
-    [router, run, surface],
+    [router, run, surface, conversationId, onOpened],
   );
 
   const submit = () => {

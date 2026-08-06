@@ -239,6 +239,27 @@ export type ChatRow = {
   // How the answer was built and what it cost: model, tokens, searches, pages.
   // This is what makes a credit charge auditable rather than trusted.
   meta: Record<string, unknown>;
+  // The thread this belongs to. Nullable only for rows written before
+  // PLS-105; every existing one was adopted by that migration.
+  conversation_id: string | null;
+};
+
+/**
+ * A thread on a chat surface (PLS-105).
+ *
+ * `title` is taken from the first question rather than asked for, because
+ * nobody names a conversation before they have had it. `last_message_at` is
+ * what the history panel sorts on, so replying to an old thread brings it
+ * back to the top.
+ */
+export type ChatConversationRow = {
+  id: string;
+  org_id: string;
+  surface: ChatSurface;
+  title: string;
+  author_id: string | null;
+  created_at: string;
+  last_message_at: string;
 };
 
 export type CreditEventRow = {

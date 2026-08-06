@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const session = await sessionOrNull();
   if (!session) return refuse("Sign in to ask a question.", 401);
 
-  let payload: { surface?: string; question?: string };
+  let payload: { surface?: string; question?: string; conversationId?: string };
   try {
     payload = await request.json();
   } catch {
@@ -51,9 +51,16 @@ export async function POST(request: Request) {
   // so a failed read cannot leave a reservation stranded. In parallel: they do
   // not depend on each other and this is on the path to a streamed answer.
   const [priorResult, memories] = await Promise.all([
-    supabase
-      .from("chat_messages")
-      .select("*")
+    // Scoped to the thread being continued. Without this a brand new
+    // conversation would silently inherit the previous one's context, which
+    // is the entire thing starting a new one is meant to avoid.
+    (payload.conversationId
+      ? supabase
+          .from("chat_messages")
+          .select("*")
+          .eq("conversation_id", payload.conversationId)
+      : supabase.from("chat_messages").select("*").limit(0)
+    )
       .eq("surface", surface)
       .order("created_at", { ascending: false })
       .limit(12),
@@ -73,6 +80,9 @@ export async function POST(request: Request) {
     target_surface: surface,
     question,
     reserve: limits.reserveCredits,
+    // Null starts a new thread, which is what the New conversation button
+    // sends. The RPC resolves it inside the same transaction as the claim.
+    target_conversation: payload.conversationId ?? null,
   });
 
   if (claimError) return refuse(claimError.message, 400);
@@ -85,6 +95,7 @@ export async function POST(request: Request) {
 
   const messageId = (claim as { message_id: string }).message_id;
   const reserved = (claim as { reserved: number }).reserved;
+  const conversationId = (claim as { conversation_id: string }).conversation_id;
 
   const encoder = new TextEncoder();
 
@@ -101,7 +112,7 @@ export async function POST(request: Request) {
       const abort = new AbortController();
       request.signal.addEventListener("abort", () => abort.abort());
 
-      send({ type: "opened", messageId, reserved });
+      send({ type: "opened", messageId, reserved, conversationId });
 
       try {
         const outcome = await runAsk({

@@ -209,6 +209,32 @@ export async function sweepStalledAsks(): Promise<Result<number>> {
   return { ok: true, data: (data as number) ?? 0 };
 }
 
+/**
+ * Forget a research thread.
+ *
+ * The RLS policy allows this only for a thread you started, so a teammate's
+ * history is not something an admin can clear. Messages cascade with it.
+ */
+export async function deleteConversation(id: string): Promise<Result> {
+  await requireSession();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("chat_conversations")
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error) return fail(readable(error.message));
+
+  // RLS returns an empty set rather than an error when the policy says no.
+  if (!data || data.length === 0) {
+    return fail("Only the person who started that conversation can delete it.");
+  }
+
+  revalidatePath("/market");
+  return { ok: true, data: undefined };
+}
+
 /* ---------------------------------------------------------------------------
  * BD Strategist memory (PLS-92, PLS-93)
  * ------------------------------------------------------------------------- */

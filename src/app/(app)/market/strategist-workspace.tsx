@@ -1,12 +1,18 @@
 "use client";
 
 import { Clock, Compass, Target } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { Briefing, parseBriefing } from "@/components/ai/briefing";
 import { ChatPanel } from "@/components/ai/chat-panel";
-import type { BDAgentMemoryRow, ChatRow } from "@/lib/supabase/types";
+import type {
+  BDAgentMemoryRow,
+  ChatConversationRow,
+  ChatRow,
+} from "@/lib/supabase/types";
 import { formatDate } from "@/lib/time";
 import { AnswerFeedback } from "./answer-feedback";
+import { ConversationList } from "./conversation-list";
 import { StrategyRail } from "./strategy-rail";
 
 // PLS-98. The workspace.
@@ -42,6 +48,10 @@ export function StrategistWorkspace({
   usedPct,
   configured,
   unconfiguredReason,
+  conversations,
+  activeConversationId,
+  todayKey,
+  yesterdayKey,
 }: {
   messages: ChatRow[];
   memories: BDAgentMemoryRow[];
@@ -56,7 +66,14 @@ export function StrategistWorkspace({
   usedPct: number;
   configured: boolean;
   unconfiguredReason: string;
+  conversations: ChatConversationRow[];
+  activeConversationId: string | null;
+  /** Fixed on the server so Today/Yesterday cannot disagree after hydration. */
+  todayKey: string;
+  yesterdayKey: string;
 }) {
+  const router = useRouter();
+
   const answers = useMemo(
     () => messages.filter((m) => m.role === "assistant" && m.status === "complete"),
     [messages],
@@ -171,6 +188,19 @@ export function StrategistWorkspace({
         meId={meId}
         meter={meter}
         currentRead={currentRead}
+        history={
+          <ConversationList
+            conversations={conversations}
+            activeId={activeConversationId}
+            meId={meId}
+            todayKey={todayKey}
+            yesterdayKey={yesterdayKey}
+            onSelect={(id) => router.push(`/market?c=${id}`)}
+            // No id at all: the next question starts a fresh thread, and the
+            // transcript empties so it is obvious nothing is being continued.
+            onNew={() => router.push("/market?c=new")}
+          />
+        }
       />
 
       <div className="layer-rise flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -186,6 +216,13 @@ export function StrategistWorkspace({
           emptyTitle="Nothing researched yet"
           emptyBody="Ask about hiring, funding, or leadership moves at the companies you want to win. Every answer names the opportunity, why it matters to you, and the one move worth making, with the sources it was built from."
           suggestions={SUGGESTIONS}
+          conversationId={activeConversationId}
+          // A first question creates its thread server-side, so the client
+          // only learns the id when the run opens. Switching to it means a
+          // reload lands on the conversation just started.
+          onOpened={(id) => {
+            if (id !== activeConversationId) router.replace(`/market?c=${id}`);
+          }}
           renderAnswer={(message) => {
             const sections = parseBriefing(message.body);
             // No labels means the model answered in prose, usually because the
