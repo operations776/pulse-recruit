@@ -67,7 +67,7 @@ export function Backlog({
       aria-pressed={view === key}
       className={`legend flex h-7 items-center gap-1.5 rounded-control px-3 ${
         view === key
-          ? "cap bg-teal text-sheet [--edge:var(--color-teal-edge)]"
+          ? "cap bg-vermilion text-on-vermilion [--edge:var(--color-vermilion-edge)]"
           : "text-ink-2 hover:text-ink"
       }`}
     >
