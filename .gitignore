@@ -47,7 +47,9 @@ next-env.d.ts
 /playwright/.cache/
 
 # design review artifacts
-/.design-shots/
+# Design-review screenshots, including the -narrow and -v2 style passes a
+# review run produces while iterating on a fix.
+/.design-shots*/
 !.env.example
 
 .vercel

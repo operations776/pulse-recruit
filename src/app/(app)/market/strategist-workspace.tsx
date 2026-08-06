@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Compass, Radar, Target } from "lucide-react";
+import { Clock, Compass, Target } from "lucide-react";
 import { useMemo } from "react";
 import { Briefing, parseBriefing } from "@/components/ai/briefing";
 import { ChatPanel } from "@/components/ai/chat-panel";
@@ -9,12 +9,18 @@ import { formatDate } from "@/lib/time";
 import { AnswerFeedback } from "./answer-feedback";
 import { StrategyRail } from "./strategy-rail";
 
-// PLS-98. The three-region workspace.
+// PLS-98. The workspace.
 //
-// Strategy on the left (what it knows), the briefing in the middle (what it
-// found), evidence on the right (how current that is). Everything on this
-// screen is either something the recruiter told it or something it researched:
-// there is no third category, and nothing here invents a persona.
+// Two columns, not three. The working brief on the left runs top to bottom
+// from what the strategist knows to what it last found; the briefing takes
+// everything else. An earlier build had a third evidence column on the right,
+// which at 1440px made four vertical strips counting the module rail, and gave
+// the transcript, the only part anyone actually reads, the least width of the
+// lot.
+//
+// Everything on this screen is either something the recruiter told it or
+// something it researched. There is no third category, and nothing here
+// invents a persona.
 
 const SUGGESTIONS = [
   "Which companies in my patch raised funding in the last 30 days?",
@@ -108,6 +114,55 @@ export function StrategistWorkspace({
     </div>
   );
 
+  const currentRead = (
+    <>
+      <section className="border-t border-rule px-4 py-3">
+        <p className="legend flex items-center gap-1.5 text-[#8a4380]">
+          <Target size={16} strokeWidth={1.75} className="size-3.5" aria-hidden />
+          Best next move
+        </p>
+        <p className="mt-1.5 text-[12px] leading-[1.5] text-ink">
+          {nextMove ??
+            "Ask a question and the strategist will name one, with the evidence behind it."}
+        </p>
+      </section>
+
+      <section className="border-t border-rule px-4 py-3">
+        <p className="legend flex items-center gap-1.5 text-ink-3">
+          <Clock size={16} strokeWidth={1.5} className="size-3.5" aria-hidden />
+          Evidence
+        </p>
+        <p className="mt-1.5 text-[12px] leading-[1.5] text-ink-2">
+          {latest
+            ? `${freshness}, ${formatDate(latest.created_at)}`
+            : "Nothing researched yet."}
+        </p>
+        {latest && Array.isArray(latest.sources) && latest.sources.length > 0 ? (
+          <p className="meta mt-1 text-ink-3">
+            {latest.sources.length}{" "}
+            {latest.sources.length === 1 ? "source" : "sources"}
+          </p>
+        ) : null}
+      </section>
+
+      {coaching.length > 0 ? (
+        <section className="border-t border-rule px-4 py-3">
+          <p className="legend flex items-center gap-1.5 text-ink-3">
+            <Compass size={16} strokeWidth={1.5} className="size-3.5" aria-hidden />
+            Coaching it has taken
+          </p>
+          <ul className="mt-1.5 flex flex-col gap-2">
+            {coaching.map((memory) => (
+              <li key={memory.id} className="text-[12px] leading-[1.5] text-ink-2">
+                <span className="line-clamp-3">{memory.body}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </>
+  );
+
   return (
     <main className="flex min-w-0 flex-1 overflow-hidden bg-paper">
       <StrategyRail
@@ -115,6 +170,7 @@ export function StrategistWorkspace({
         canManageAgency={canManageAgency}
         meId={meId}
         meter={meter}
+        currentRead={currentRead}
       />
 
       <div className="layer-rise flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -155,72 +211,6 @@ export function StrategistWorkspace({
         />
       </div>
 
-      {/* The evidence rail. Present without pretending to be a person. */}
-      <aside className="hidden w-[248px] shrink-0 flex-col overflow-y-auto border-l border-rule bg-sheet xl:flex">
-        <p className="legend px-4 py-3 text-ink-2">Current read</p>
-
-        <section className="border-t border-rule px-4 py-3">
-          <p className="legend flex items-center gap-1.5 text-[#8a4380]">
-            <Target size={16} strokeWidth={1.75} className="size-3.5" aria-hidden />
-            Best next move
-          </p>
-          <p className="mt-1.5 text-[12px] leading-[1.5] text-ink">
-            {nextMove ??
-              "Ask a question and the strategist will name one, with the evidence behind it."}
-          </p>
-        </section>
-
-        <section className="border-t border-rule px-4 py-3">
-          <p className="legend flex items-center gap-1.5 text-ink-3">
-            <Clock size={16} strokeWidth={1.5} className="size-3.5" aria-hidden />
-            Evidence
-          </p>
-          <p className="mt-1.5 text-[12px] leading-[1.5] text-ink-2">
-            {latest
-              ? `${freshness}, ${formatDate(latest.created_at)}`
-              : "Nothing researched yet."}
-          </p>
-          {latest && Array.isArray(latest.sources) && latest.sources.length > 0 ? (
-            <p className="meta mt-1 text-ink-3">
-              {latest.sources.length}{" "}
-              {latest.sources.length === 1 ? "source" : "sources"}
-            </p>
-          ) : null}
-        </section>
-
-        <section className="border-t border-rule px-4 py-3">
-          <p className="legend flex items-center gap-1.5 text-ink-3">
-            <Compass size={16} strokeWidth={1.5} className="size-3.5" aria-hidden />
-            Coaching it has taken
-          </p>
-          {coaching.length === 0 ? (
-            <p className="mt-1.5 text-[12px] leading-[1.5] text-ink-2">
-              Mark an answer useful or off target and it will work that way next
-              time.
-            </p>
-          ) : (
-            <ul className="mt-1.5 flex flex-col gap-2">
-              {coaching.map((memory) => (
-                <li key={memory.id} className="text-[12px] leading-[1.5] text-ink-2">
-                  <span className="line-clamp-3">{memory.body}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="border-t border-rule px-4 py-3">
-          <p className="legend flex items-center gap-1.5 text-ink-3">
-            <Radar size={16} strokeWidth={1.5} className="size-3.5" aria-hidden />
-            Working brief
-          </p>
-          <p className="mt-1.5 text-[12px] leading-[1.5] text-ink-2">
-            {memories.length === 0
-              ? "Nothing yet. Add context on the left so its advice fits your desk."
-              : `${memories.length} ${memories.length === 1 ? "record" : "records"} shaping its advice.`}
-          </p>
-        </section>
-      </aside>
     </main>
   );
 }

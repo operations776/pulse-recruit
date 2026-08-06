@@ -270,10 +270,32 @@ transcript, and it repeated live research for identical recent queries.
 | PLS-96 | The briefing. Four labelled sections (what changed, why it matters, best next move, evidence) parsed from plain text rather than requested as JSON, because a model that must close a JSON object truncates and renders nothing. An answer without the labels falls back to exactly what was written | done |
 | PLS-97 | Coaching. Useful or off target under every settled answer, off target requiring a reason on both the client and the server, written to visible personal memory and read by the next run | done |
 | PLS-98 | The three-region workspace: strategy rail (what it knows, editable and deletable), briefing centre, evidence rail (freshness, coaching taken, next move). The old 140px page header is gone; it repeated the module rail and explained the product to somebody already using it | done |
+| PLS-99 | Design review fixes: two columns instead of four, the working brief absorbs the evidence panel, and the transcript renders in the order it happened. APPROVED on the second screenshot pass | done |
 
 Verified against the live database before shipping: the RLS policies isolate a
 personal memory from a teammate in the same org, and the advisor reports no new
-anon-callable surface. The one new entry, `sweep_bd_research_cache`, is
+anon-callable surface.
+
+**Design review found four defects the code could not show.** PLS-99 fixes
+them, and three were only visible in a screenshot:
+
+1. The workspace put its own rail beside the 264px module rail, so two columns
+   said "MARKET" and "BD Strategist" with a dead column between them. The
+   module rail cannot carry BD content (the layout renders one shared aside for
+   every route), so the workspace column stopped repeating the pillar name and
+   became the working brief.
+2. A third evidence column on the right made four vertical strips at 1440px and
+   gave the transcript, the only part anyone reads, the least width of the lot.
+   It folded into the bottom of the brief, which also filled the void under the
+   intake card.
+3. **Every answer rendered above the question that produced it.** `begin_ask`
+   writes both rows in one transaction with an identical `created_at`, so
+   ordering by time alone is a tie Postgres resolves by heap order. Same class
+   as the `jobs[0]` bug: no total order.
+4. The first fix for 3 did nothing, and the screenshot proved it. `chat_role`
+   is an enum, so it sorts by DEFINITION order (`user` = 1, `assistant` = 2),
+   not alphabetically. The check that produced the wrong direction used
+   `role::text`, which sorts alphabetically and gives the opposite answer. The one new entry, `sweep_bd_research_cache`, is
 authenticated-only and bounded to an org the caller belongs to.
 
 **Memory is strategy, never evidence.** It shapes how the strategist advises

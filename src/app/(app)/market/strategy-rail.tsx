@@ -31,11 +31,20 @@ export function StrategyRail({
   canManageAgency,
   meId,
   meter,
+  currentRead,
 }: {
   memories: BDAgentMemoryRow[];
   canManageAgency: boolean;
   meId: string;
   meter: React.ReactNode;
+  /**
+   * The evidence panel, rendered at the bottom of this same column.
+   *
+   * It was a third column on the right. At 1440px that made four vertical
+   * strips (module rail, this, transcript, evidence) and the transcript, the
+   * only part anyone reads, got the least width of the lot.
+   */
+  currentRead: React.ReactNode;
 }) {
   const router = useRouter();
   const { notify } = useToast();
@@ -133,9 +142,13 @@ export function StrategyRail({
   };
 
   return (
+    // Not a second rail. The module rail 264px to the left already names the
+    // pillar, so a column repeating "BD Strategist" beside it was two rails
+    // saying one thing with a dead column between them. This is the working
+    // brief, and it says what it holds rather than what screen you are on.
     <aside className="flex w-[264px] shrink-0 flex-col overflow-hidden border-r border-rule bg-sheet">
       <div className="flex items-center gap-2 px-4 py-3">
-        <span className="legend flex-1 text-ink-2">BD Strategist</span>
+        <span className="legend flex-1 text-ink-2">Working brief</span>
         <Button onClick={() => setAdding(true)} aria-label="Add context">
           <Plus size={16} strokeWidth={2} />
           Context
@@ -170,6 +183,11 @@ export function StrategyRail({
             {group(personal, "Your coaching", UserRound)}
           </>
         )}
+
+        {/* The evidence panel closes the column, so the brief runs from what
+            it knows at the top to what it last found at the bottom, and the
+            space below the intake is doing work instead of sitting empty. */}
+        {currentRead}
       </div>
 
       {adding ? (

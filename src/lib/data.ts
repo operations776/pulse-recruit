@@ -207,7 +207,13 @@ export async function getChat(surface: ChatSurface) {
       .from("chat_messages")
       .select("*")
       .eq("surface", surface)
-      .order("created_at", { ascending: true }),
+      // Same tie as getBDWorkspace: begin_ask writes the question and the
+      // answer with one created_at. chat_role is an enum and sorts by
+      // definition order ('user' = 1, 'assistant' = 2), so on this
+      // oldest-first query with no reverse, ascending role is what puts the
+      // question ahead of its answer.
+      .order("created_at", { ascending: true })
+      .order("role", { ascending: true }),
     supabase.from("credit_ledger").select("*").maybeSingle(),
   ]);
 
@@ -252,7 +258,19 @@ export async function getBDWorkspace() {
       .from("chat_messages")
       .select("*")
       .eq("surface", "market")
+      // `role` is the tiebreak, and it is load-bearing. begin_ask inserts the
+      // question and the answer in ONE transaction, so both rows carry an
+      // identical created_at and ordering by time alone is a tie Postgres
+      // resolves by heap order. On the deployed build that rendered answers
+      // above the questions that produced them.
+      //
+      // chat_role is an ENUM, so it sorts by DEFINITION order ('user' = 1,
+      // 'assistant' = 2), not alphabetically. Checking this with `role::text`
+      // gives the opposite answer and a fix that changes nothing. This query
+      // is newest-first and the result is reversed below, so descending role
+      // here displays as user then assistant: the order they happened in.
       .order("created_at", { ascending: false })
+      .order("role", { ascending: false })
       .limit(60),
     supabase.from("credit_ledger").select("*").maybeSingle(),
     loadBDAgentMemories(supabase, session.org.id, session.userId),
