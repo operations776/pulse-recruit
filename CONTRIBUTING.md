@@ -15,14 +15,42 @@ branch  →  commit  →  push  →  PR  →  CI green  →  merge to main  → 
 1. **Branch off main.** One ticket, one branch: `git switch -c pls-104-whatever`.
 2. **Commit small, with the ticket ID first.** `PLS-104: reskin the pipeline board`.
 3. **Push.** `git push -u origin pls-104-whatever`.
-4. **Open a PR.** `gh pr create --fill`. Vercel builds a preview URL and
-   comments it on the PR. That URL is what you look at, not localhost.
+4. **Open a PR.** `gh pr create --fill`.
 5. **CI must be green.** Typecheck, lint, and a production build. A red tick is
    a blocked merge, not a suggestion.
 6. **Merge.** Vercel deploys `main` to production automatically.
 
-Never `git push origin main` directly. The PR is where the preview URL and the
-gates live, and a direct push skips both.
+Never `git push origin main` directly. The PR is where the gates live and a
+direct push skips them.
+
+### Preview deploys are currently blocked
+
+Vercel comments on each PR that it will not build it. Two reasons stacked:
+
+- Commits here are authored as `i220753-bot <daniyalaziz184@gmail.com>`, which
+  GitHub attributes to `Daniyal1234-alt`. The Vercel team belongs to
+  `operations776`, and Vercel will not deploy a commit from a non-member.
+- Preview deploys on a **private** repo need a Vercel Pro seat.
+
+Production is unaffected: `main` deploys, and a manual
+`npx vercel deploy --prod` still works because it authenticates as the account
+rather than the commit author.
+
+To turn previews on, pick one:
+
+1. **Fix the commit identity** so commits are authored by the same account that
+   owns the Vercel team:
+   ```bash
+   git config user.name  "Daniyal Aziz"
+   git config user.email "<the email on the operations776 GitHub account>"
+   ```
+   This only affects new commits.
+2. **Upgrade to Vercel Pro** and add the author account to the team.
+3. Leave it. Review against localhost and production, which is what has
+   happened up to now anyway.
+
+Until then, "look at the preview URL" is not a step that exists, so this file
+does not pretend it is.
 
 ## What CI checks, and what it does not
 
