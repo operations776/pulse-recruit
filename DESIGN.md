@@ -353,6 +353,28 @@ Revised in PLS-90. Daniyal, on the deployed build: "I need more animations, I ne
 - **Still no decorative animation.** Everything here is tied to a state change: a layer opening, a row responding, a value changing. The one ambient exception remains the live pulse dot.
 - **`prefers-reduced-motion` collapses all of it.** Durations to 0, opacity instant. The global rule at the bottom of `globals.css` handles this, so a new animation is covered automatically.
 
+### 10a. Everything above governs the application
+
+Revised in PLS-171. The bounds in section 10 were written about a product a recruiter works in all day, where a long animation is latency wearing a costume. They are correct there and they stay.
+
+They are wrong for a page a stranger sees for eleven seconds and then decides. A marketing surface has to earn attention before it can be useful, and the rules that make the app feel fast make the landing page feel like a spreadsheet.
+
+**Marketing surfaces** (`src/app/(marketing)/**`) may therefore:
+
+- **One authored focal entrance, up to 800ms.** One per page, on first load only, never on navigation back to it. Everything else on the page stays inside the app's bounds.
+- **Ambient motion, where it carries the product's meaning.** A pulse on a claim about a live pipeline is the product saying what it is. A floating gradient orb is decoration, and section 10's ban on decorative animation still holds: the test is whether removing it would lose meaning or only lose polish.
+- **Anything ambient must stop when it is offscreen or the tab is hidden.** An animation nobody is looking at is a battery cost with no reader.
+- **`prefers-reduced-motion` still collapses everything**, unchanged. The global rule covers it automatically.
+
+What does not change anywhere: no overshoot, no springs past their target, no animating layout-driving properties in a loop, and no motion that is not doing a job.
+
+### 10b. Two patterns this system does not use
+
+Adopted product-wide in PLS-171, from the Impeccable craft floor, because both had already appeared in shipped screens.
+
+- **No kicker above a heading.** A small tracked uppercase label sitting as its own block directly above a heading is banned outright, repeated or not. The heading carries its own weight. If the words matter, work them into the heading or the body. This is not a default to be argued past; there is no brief that earns it back.
+- **No coloured left border above 1px.** A 3px accent rule down the side of a card, callout or list item is the category's reflex for "this one is important". Rule 9 already governs accent edges: an edge is 1px, and importance is carried by hierarchy, not by a stripe.
+
 ---
 
 ## 11. The contract
@@ -369,4 +391,4 @@ Enforceable rules. If a component violates one of these, it is wrong regardless 
 8. Uppercase appears on the display face and mono legends only.
 9. Status is colour plus icon plus word, always all three. A hue that carries a category or a rank rather than a state (content skill accents and the task priority ring, section 3) is an accent edge, never a fill, and never the only thing saying what a state is.
 10. No body text below 11px, no font weight below 400, no hit target below 28px.
-11. Motion is bounded: nothing over 220ms, nothing travelling more than 24px, and every animation tied to a state change.
+11. Motion is bounded **in the application**: nothing over 220ms, nothing travelling more than 24px, and every animation tied to a state change. Marketing surfaces get one authored entrance up to 800ms and meaning-carrying ambient motion, per section 10a. Everywhere: no kicker above a heading, and no coloured left border above 1px (section 10b).
