@@ -52,7 +52,9 @@ test("every module renders for a signed in user", async ({ page }) => {
     ["/mailboxes", /mailboxes/i],
     ["/market", /bd engine/i],
     ["/ops", /morning brief/i],
-    ["/ops/tasks", /tasks/i],
+    // PLS-111: the h1 is the open view, not the module. "Tasks" is the rail's
+    // nav entry, and the masthead above it is what names the module.
+    ["/ops/tasks", /today/i],
     ["/content", /content planner/i],
     ["/settings/integrations", /api keys/i],
   ];

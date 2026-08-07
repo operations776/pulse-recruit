@@ -15,7 +15,11 @@ async function signIn(page: Page) {
   await page.waitForURL(/\/(pipeline|candidates)/, { timeout: 30_000 });
 }
 
-test("a task arrives whole: assigned, prioritised, dated, then completed", async ({
+// PLS-111 rewrote this screen, and these two tests with it. The always-mounted
+// add row with its four controls is gone: one typed sentence carries the title,
+// the date and the priority, and the reads-as row is what proves the server and
+// the browser read it the same way.
+test("a typed sentence becomes a whole task, and completing it is undoable", async ({
   page,
 }) => {
   await signIn(page);
@@ -23,36 +27,80 @@ test("a task arrives whole: assigned, prioritised, dated, then completed", async
 
   const title = `Spec task ${Date.now()}`;
 
-  // The always-mounted add row: title, assignee (defaults to you), priority.
-  // exact, because the sort header also answers to "Priority".
-  await page.getByLabel("New task title").fill(title);
-  await page.getByLabel("Priority", { exact: true }).selectOption("high");
-  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByLabel("Add a task").fill(`${title} tomorrow 3pm p1`);
+
+  // The preview is the contract: if these chips are wrong, the row that lands
+  // is wrong, and this is the only place a user finds out before committing.
+  await expect(page.getByText("Reads as")).toBeVisible();
+  await expect(page.getByText("Priority 1", { exact: true })).toBeVisible();
+  await expect(page.getByText(/\d{1,2} [A-Z]{3} 15:00/)).toBeVisible();
+
+  await page.getByLabel("Add a task").press("Enter");
   await expect(page.getByText(title)).toBeVisible({ timeout: 15_000 });
 
-  // Assigned to me by default, so it lives on the Mine view, and the row's
-  // status control is live.
-  const statusSelect = page.getByLabel(/Status of TASK-/).last();
-  await expect(statusSelect).toBeVisible();
-
-  // Complete it through the checkbox; it moves under Completed.
+  // Complete it. The row stays in place, struck through, with Undo on it.
   await page.getByRole("checkbox", { name: `Complete ${title}` }).click();
+  const undo = page.getByRole("button", { name: "Undo" });
+  await expect(undo).toBeVisible({ timeout: 5_000 });
+
+  // Undo puts it straight back, and no toast was ever involved.
+  await undo.click();
+  await expect(
+    page.getByRole("checkbox", { name: `Complete ${title}` }),
+  ).toBeVisible({ timeout: 15_000 });
+
+  // Complete it for real. It collapses out of the open list after the four
+  // second window and reappears under the completed toggle.
+  await page.getByRole("checkbox", { name: `Complete ${title}` }).click();
+  await page
+    .getByRole("button", { name: /show \d+ completed/i })
+    .click({ timeout: 20_000 });
   await expect(
     page.getByRole("checkbox", { name: `Reopen ${title}` }),
   ).toBeVisible({ timeout: 15_000 });
 });
 
-test("the everyone view groups open tasks per person", async ({ page }) => {
+test("the view rail moves the list, and every view is a URL", async ({
+  page,
+}) => {
   await signIn(page);
   await page.goto("/ops/tasks");
 
-  await page.getByRole("button", { name: "Everyone" }).click();
-  // The demo org has one member, so the visible group header is You. exact
-  // text also matches a hidden option inside the assignee select, so the
-  // assertion filters to what a person can actually see.
-  await expect(
-    page.getByText("You", { exact: true }).locator("visible=true").first(),
-  ).toBeVisible();
+  await page.getByRole("link", { name: /^Everything/ }).click();
+  await expect(page).toHaveURL(/view=everything/);
+  await expect(page.getByRole("heading", { name: "Everything" })).toBeVisible();
+
+  // The demo org has one member, so By person lists exactly You.
+  await page.getByRole("link", { name: /^You/ }).click();
+  await expect(page).toHaveURL(/person=/);
+});
+
+test("a task opens into the panel and takes a comment", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/ops/tasks");
+
+  const title = `Spec panel ${Date.now()}`;
+  await page.getByLabel("Add a task").fill(`${title} tomorrow`);
+  await page.getByLabel("Add a task").press("Enter");
+  await expect(page.getByText(title)).toBeVisible({ timeout: 15_000 });
+
+  await page.getByRole("button", { name: title }).click();
+  await expect(page).toHaveURL(/task=/);
+
+  // create_task writes the opening line of the stream in the same transaction,
+  // so a task can never arrive with an empty activity feed.
+  await expect(page.getByText(/Created this/)).toBeVisible({ timeout: 15_000 });
+
+  const note = `Spec comment ${Date.now()}`;
+  await page.getByLabel("Comment").fill(note);
+  await page.getByRole("button", { name: "Post" }).click();
+  await expect(page.getByText(note)).toBeVisible({ timeout: 15_000 });
+
+  // Yours, so all three actions are mounted rather than hidden behind hover.
+  await expect(page.getByRole("button", { name: "Edit" }).last()).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(page).not.toHaveURL(/task=/);
 });
 
 test("the application link mints, takes an application, and revokes", async ({
