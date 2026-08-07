@@ -20,6 +20,11 @@ const PUBLIC_PATHS = [
   "/pricing",
   "/faq",
   "/testimonials",
+  // The component sheet. No tenant data, only fixed sample copy, and being
+  // reachable without a session is what lets the design-review gate screenshot
+  // it in a production build. It is noindex, so it is public to a reviewer
+  // with the URL rather than to search.
+  "/design",
 ];
 
 // Machine callers have no session, so the session gate would answer 401 and the

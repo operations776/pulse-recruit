@@ -25,22 +25,34 @@ const password = process.env.PULSE_DEMO_PASSWORD ?? "pulse-demo-2026";
 
 mkdirSync(outDir, { recursive: true });
 
-const browser = await chromium.launch();
+// A container or CI image often ships one Chromium that the pinned Playwright
+// does not expect, and the launch fails on a path rather than on anything real.
+// Point PULSE_CHROMIUM at it instead of reinstalling browsers.
+const executablePath = process.env.PULSE_CHROMIUM;
+const browser = await chromium.launch(executablePath ? { executablePath } : {});
 const context = await browser.newContext({
   viewport: { width, height },
   deviceScaleFactor: 2,
 });
 const page = await context.newPage();
 
-await page.goto(`${baseUrl}/signin`);
-// Seed the preference before signing in, so every subsequent navigation is a
-// real returning-user load rather than a toggle we just clicked.
+// The component sheet at /design is public and holds no tenant data, so
+// signing in to photograph it is a round trip that buys nothing and needs
+// credentials this run may not have. Everything inside the product still
+// signs in.
+const isPublic = process.env.PULSE_SHOT_PUBLIC === "1";
+
+// Seed the preference on the right origin before the first real navigation, so
+// every load below is a returning-user load rather than a toggle we clicked.
+await page.goto(`${baseUrl}${isPublic ? paths[0] : "/signin"}`);
 await page.evaluate((t) => localStorage.setItem("pulse.theme", t), theme);
 
-await page.getByLabel("Email").fill(email);
-await page.getByLabel("Password").fill(password);
-await page.getByRole("button", { name: /sign in/i }).click();
-await page.waitForURL(/\/(pipeline|candidates)/, { timeout: 30_000 });
+if (!isPublic) {
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(/\/(pipeline|candidates)/, { timeout: 30_000 });
+}
 
 for (const path of paths) {
   await page.goto(`${baseUrl}${path}`);

@@ -27,17 +27,29 @@ this skill runs before the merge.
 ### 1. Identify changed screens
 
 ```bash
-git add -N .   # see the note below before removing this line
-git diff --name-only main -- src/app src/components src/app/globals.css
+git fetch origin main   # all three parts matter, see below
+git add -N .
+git diff --name-only origin/main -- src/app src/components src/app/globals.css
 ```
 
-**Both halves of that first command matter.** `git diff main...HEAD` reads
-committed work only, so a review run before the commit reports a clean diff and
-every mechanical check in step 5 passes on nothing. `git diff main` includes the
-working tree, and `git add -N .` (intent to add, which stages no content) is
-what makes **untracked files visible to diff at all**. A new component file is
-exactly what a new feature adds, and without that line it is invisible to every
-check in this skill while appearing to pass them.
+**All three parts matter, and each one failed silently before it was added.**
+
+- `git diff main...HEAD` reads committed work only, so a review run before the
+  commit reports a clean diff and every mechanical check in step 5 passes on
+  nothing. `git diff` against a branch tip includes the working tree.
+- `git add -N .` (intent to add, which stages no content) is what makes
+  **untracked files visible to diff at all**. A new component file is exactly
+  what a new feature adds, and without this it is invisible to every check here
+  while appearing to pass them.
+- **`origin/main`, not `main`.** The local ref lags behind whatever was merged
+  while you were working, so `git diff main` quietly widens the review to
+  include work that already shipped. On the run that caught this, local `main`
+  sat 4 commits behind and the diff claimed 13 changed files against a real 5,
+  including two the reviewer had merged an hour earlier.
+
+The failure mode in all three cases is the same shape: the check reports a pass
+because it was looking at nothing, or reports noise because it was looking at
+too much. Neither announces itself.
 
 Map each changed file to the routes that render it. A changed primitive means
 every route using it is in scope. If a token in `globals.css` changed, the
@@ -160,9 +172,9 @@ through typecheck, lint and build, and were caught in an image:
 Cheaper in text than in pixels. Run these over the diff, not the whole tree.
 
 ```bash
-# Working tree, not main...HEAD, and only after the `git add -N .` in step 1.
-# See the note there: without both, new and uncommitted files pass by absence.
-d() { git diff main -- src "$@"; }
+# origin/main, working tree, and only after the fetch and `git add -N .` in
+# step 1. See the note there: each part fails silently on its own.
+d() { git diff origin/main -- src "$@"; }
 
 # Rule 1, raw hex. globals.css is the token source; content-skills.ts is the
 # one other sanctioned home for colour (DESIGN.md section 3, skill accents).
