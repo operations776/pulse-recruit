@@ -93,7 +93,7 @@ export default async function IntegrationsPage() {
     <main className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-paper">
       <header className="border-b border-rule px-6 py-5">
         <p className="legend text-ink-3">Settings</p>
-        <h1 className="display mt-2 text-[18px]">API keys</h1>
+        <h1 className="page-title mt-2 text-ink">API keys</h1>
         <p className="mt-2 max-w-[62ch] text-[12px] text-ink-2">
           Connect the accounts that are yours: your sending tools, your LinkedIn,
           your newsletter. Keys are encrypted at rest and never shown again after

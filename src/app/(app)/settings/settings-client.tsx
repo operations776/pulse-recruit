@@ -44,7 +44,7 @@ export default function SettingsClient({ data }: { data: SettingsData }) {
     <main className="relative flex min-w-0 flex-1 flex-col overflow-auto bg-paper">
       <div className="px-6 pt-4">
         <Breadcrumb trail={["Settings"]} />
-        <h1 className="display mt-2 text-[18px] tracking-[-0.01em]">
+        <h1 className="page-title mt-2 text-ink">
           Settings
         </h1>
       </div>

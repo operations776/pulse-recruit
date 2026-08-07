@@ -28,7 +28,7 @@ export default async function MailboxesPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="legend text-ink-3">Pillar 3 / multichannel outbound</p>
-            <h1 className="display mt-2 text-[18px]">Mailboxes</h1>
+            <h1 className="page-title mt-2 text-ink">Mailboxes</h1>
             <p className="mt-2 max-w-[62ch] text-[12px] text-ink-2">
               The inboxes your sequences send from. Daily caps and warmup protect
               your domain reputation.

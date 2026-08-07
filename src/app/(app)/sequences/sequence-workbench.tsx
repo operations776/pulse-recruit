@@ -164,7 +164,7 @@ export function SequenceWorkbench({
     <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-paper">
       <header className="shrink-0 border-b border-rule px-6 py-5">
         <p className="legend text-ink-3">Pillar 3 / multichannel outbound</p>
-        <h1 className="display mt-2 text-[18px]">Sequences</h1>
+        <h1 className="page-title mt-2 text-ink">Sequences</h1>
 
         <dl className="mt-4 flex flex-wrap gap-x-10 gap-y-3">
           {stats.map(([label, value]) => (

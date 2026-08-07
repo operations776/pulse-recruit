@@ -70,7 +70,7 @@ export default async function ReportsPage() {
     <main className="flex min-w-0 flex-1 flex-col overflow-auto bg-paper">
       <div className="px-6 pt-4">
         <Breadcrumb trail={["Talent", "Reports"]} />
-        <h1 className="display mt-2 text-[18px]">Reports</h1>
+        <h1 className="page-title mt-2 text-ink">Reports</h1>
       </div>
 
       <div className="flex flex-col gap-5 px-6 pb-8 pt-5">

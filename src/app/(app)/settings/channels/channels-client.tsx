@@ -76,7 +76,7 @@ export function ChannelsClient({
     <main className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-paper">
       <header className="border-b border-rule px-6 py-5">
         <p className="legend text-ink-3">Settings</p>
-        <h1 className="display mt-2 text-[18px]">Channels</h1>
+        <h1 className="page-title mt-2 text-ink">Channels</h1>
         <p className="mt-2 max-w-[62ch] text-[12px] text-ink-2">
           Connect the LinkedIn profile your posts go out as. Once one is here,
           anything you schedule on the content calendar publishes on its own at

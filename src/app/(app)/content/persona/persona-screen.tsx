@@ -83,7 +83,7 @@ export function PersonaScreen({
       <header className="border-b border-rule px-6 py-5">
         <p className="legend text-ink-3">Pillar 5 / content</p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="display text-[18px]">Your voice</h1>
+          <h1 className="page-title text-ink">Your voice</h1>
           {hasVoice ? <StatusChip tone="on">Built</StatusChip> : null}
         </div>
         <p className="mt-2 max-w-[62ch] text-[12px] text-ink-2">

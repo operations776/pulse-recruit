@@ -1433,3 +1433,24 @@ profile is connected AND auto_publish is on), with Undo in the row.
 | --- | --- |
 | PLS-188 | Skills screen: list, stats, pause, edit-in-place, best posts | done |
 | PLS-189 | Ranked schedule slots from real history + green confirmation with Undo | done |
+
+## PLS-183: the Talent pillar in the warm system
+
+The serif landed on every page title in the product, which is the sweep
+DESIGN.md 4z always implied: the role board, Candidates, Companies,
+Reports, Signals, Sequences, Mailboxes, Your voice, Settings, Channels and
+API keys. All four talent screens verified in both themes: warm cards on
+elevation, mono fit scores and record IDs, the editorial title over the
+kanban.
+
+Still open from the master handoff, needing schema before pixels:
+- The shortlist builder with per-candidate privacy toggles (photo and
+  LinkedIn on, employer and salary off by default) and the live preview.
+  ShortlistRow carries no privacy columns yet, so the migration comes
+  first. The hosted shortlist landing page project is the likely vehicle.
+- Explainable fit on the candidate profile: the score renders, the WHY
+  behind it is not yet stored per candidate.
+
+| Piece | State |
+| --- | --- |
+| PLS-183 | Talent screens in the warm system; serif on every page title product-wide | done |

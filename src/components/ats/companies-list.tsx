@@ -90,7 +90,7 @@ export function CompaniesList({
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-baseline gap-3">
-            <h1 className="display text-[18px]">Companies</h1>
+            <h1 className="page-title text-ink">Companies</h1>
             <span className="flex items-baseline gap-1.5">
               <span className="meta text-ink">{rows.length}</span>
               <span className="legend text-ink-3">
