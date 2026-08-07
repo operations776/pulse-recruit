@@ -83,6 +83,25 @@ Deploying code first means production runs against a schema that does not have
 the column yet. CI warns on any PR that adds a migration file so this is hard
 to forget.
 
+### Connecting the Supabase MCP
+
+`.mcp.json` is checked in, so the server is configured for everyone. It holds a
+URL and nothing else: authentication is OAuth per person, so there is no token
+in the repo and no personal access token to mint. Each person authenticates
+once:
+
+```bash
+claude /mcp          # in a real terminal, not the IDE extension
+```
+
+Pick `supabase`, then **Authenticate**, then choose the organisation holding
+the `pulse` project (eu-west-2). Restart the client afterwards; a session that
+started before the server was authorised will not see the tools.
+
+Step 1 above then becomes `apply_migration` with the file's exact contents.
+Apply first, mirror second, and paste the SQL verbatim in both directions:
+the folder is the mirror of what ran, not a draft of what might.
+
 ## Environment variables
 
 Two places, and they must agree:
