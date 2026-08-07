@@ -759,6 +759,74 @@ If the assistant is wanted back later, the cheaper move is a composer on the
 task list rather than restoring a second room: the tiles it carried were four
 counts, and the tasks header already answers the one that mattered.
 
+## Content rebuilt from Figma, page 02 (PLS-134 to PLS-151)
+
+Figma page `32:2` holds six frames that replace the whole content module: a
+"This week" planner with two rails, a full-screen post editor, a five-column
+pipeline board, a month view, a Skills screen, and a spec frame for the
+schedule, draft and dismiss behaviours. Daniyal asked for an exact copy.
+
+It is not a restyle. Four capabilities the schema could not express: real
+LinkedIn engagement metrics, suggestions grounded in the recruiter's own
+pipeline, skills as editable rules that learn from edits, and slot advice
+ranked by what has actually performed. Group A below is all schema and server
+capability, so it lands and is verified before a pixel moves.
+
+Decisions taken before planning: build the real analytics ingestion rather than
+seed numbers, build all four systems rather than a subset, and match Figma where
+it conflicts with DESIGN.md, amending the spec in the same commit.
+
+Verified during planning rather than assumed: Unipile's post endpoint really
+does return `reaction_counter`, `comment_counter`, `repost_counter` and
+`impressions_counter`, plus a fuller `analytics` object on accounts that have
+it. That is what makes PLS-136 and PLS-137 buildable at all.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-134 | `post_status` gains `needs_review` and `needs_attention`, alone in its own migration | done |
+| PLS-135 | A disconnected LinkedIn becomes Needs attention, never Failed. `finish_publish` learns a failure kind, and `flag_unpublishable_posts` surfaces due posts the claim query structurally cannot see | done |
+| PLS-136 | `post_metrics`, every counter nullable | done |
+| PLS-137 | Unipile `getPostStats` and the six-hourly refresher at `/api/cron/post-metrics` | done |
+| PLS-138 to PLS-143 | Provenance, the metered rewrite bar, skills as rules, suggestions and their two RPCs, the suggestion engine, best-slot advice | todo |
+| PLS-144 | DESIGN.md amended for the two Figma conflicts, plus the shared primitives onto `/design` | todo |
+| PLS-145 to PLS-151 | The six screens, then retire the dialogs | todo |
+
+**Null is the load-bearing decision in this whole block.** Every counter in
+`post_metrics` is nullable, and a figure LinkedIn did not report is written as
+null, never 0. Zero is a measurement: it says nobody engaged. Null says we do
+not know. Defaulting a missing figure to 0 would turn "we have no data" into a
+claim, on the one screen whose entire job is telling a recruiter what worked.
+That is the never-fabricate rule applied to arithmetic rather than prose, and it
+is why nothing may substitute reactions for views: impressions come from
+LinkedIn's own analytics and a personal profile may never expose them.
+
+**Failed and Needs attention are different facts.** The spec frame is blunt
+about why: "Failed tells the user nothing they can act on." `failed` means
+LinkedIn refused the words and the post needs rewriting. `needs_attention` means
+Pulse never got to ask, almost always a disconnected account, and the fix is
+reconnecting. An attempt we never made does not burn one of the three retries,
+so `unreachable` gives the attempt back. `needs_attention` is publisher-owned
+and deliberately absent from `MANUAL_STATUSES`: a human choosing it from a
+dropdown would be asserting an attempt that never happened.
+
+**`flag_unpublishable_posts` closes a silent hole that predates this work.**
+`claim_due_posts` inner joins a connected account, correctly, because there is
+no point claiming a post we cannot send. The consequence was that a due post in
+a workspace whose LinkedIn had expired was never selected, sat in `scheduled`
+past its date indefinitely, and showed up only as something that looked overdue
+on a calendar. Known gap left open on purpose: a scheduled post with an empty
+body is stuck the same way for the same structural reason, but it is a different
+cause needing a different message, and folding it in would make one reason
+string cover two situations.
+
+Verified against the live database in a rolled back transaction before any of
+it shipped: `unreachable` lands `needs_attention` and returns the attempt to 0,
+`refused` lands `failed` and keeps it at 1, an unknown failure kind is refused
+outright, `flag_unpublishable_posts` moves a due post with no connected account
+and leaves a future-dated one alone, and exactly one `finish_publish` overload
+survives the replace. The advisor reports no new anon-callable surface;
+`post_metrics` raises no RLS finding.
+
 ## Later weeks (placeholders, not yet specced)
 
 Week 2: enrichment credits end to end (waterfall email and phone, per-plan caps), signals feed v1 (open jobs).
