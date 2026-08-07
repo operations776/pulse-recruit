@@ -93,11 +93,32 @@ Known absences that future work must not paper over:
 - **The publisher's scheduler is deliberately not switched on** until a real
   post has been watched going out.
 
+**Price, confirmed.** One plan. The first ten agencies pay 50 USD a month for
+their first three months, then 299 USD a month. Everyone after them pays 299
+from the start.
+
+The two numbers in the repository were not two candidate prices, which is how
+they read before this was confirmed: they are the introductory rate and the
+standard rate. AI.md's cost model is written against 299 and is correct for the
+steady state.
+
+**The founding rate is where the credit economics get tight, and the allowance
+has not been adjusted for it.** A credit is one US cent of provider spend and
+the default weekly allowance is 250 credits, so a workspace using its whole
+allowance every week costs about 10.83 USD a month in model spend. Against 299
+that is roughly 3.6 percent of revenue. Against 50 it is roughly 22 percent, on
+the same allowance, because the allowance is a single default rather than a
+per-plan cap. Add Unipile at roughly 5 EUR per connected account on a 49 EUR
+monthly floor and a fully-utilising founding customer is spending about a third
+of its own revenue on direct variable cost.
+
+That is survivable across ten agencies for three months, which is exactly the
+size and length of the offer. It stops being survivable if the founding rate is
+ever extended, offered more widely, or made permanent, and the fix at that point
+is a per-plan allowance rather than a lower price.
+
 Undecided, and recorded rather than invented:
 
-- **Price.** The AI cost model is written against a 299 USD monthly price; the
-  roadmap names a 50 USD founding price. Those two numbers disagree in the
-  repository today and nothing should quote either as settled.
 - **The billing unit.** A change from credits to sessions is planned but not
   built, and nothing prints a session count until it is.
 
