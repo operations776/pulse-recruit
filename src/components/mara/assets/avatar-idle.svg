@@ -1,0 +1,14 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="92" height="92" viewBox="0 0 92 92" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Avatar / idle" clip-path="url(#clip0_0_5)">
+<circle id="Session ring" cx="46" cy="46" r="44.5" stroke="#DED7FE" stroke-width="3"/>
+<circle id="Head" cx="46" cy="46" r="36" fill="#F4F1FE"/>
+<circle id="Eye L" cx="35.5" cy="41.5" r="3.5" fill="#38217E"/>
+<circle id="Eye R" cx="56.5" cy="41.5" r="3.5" fill="#38217E"/>
+<rect id="Mouth" x="36" y="56" width="20" height="4" rx="2" fill="#6D3BF5"/>
+</g>
+<defs>
+<clipPath id="clip0_0_5">
+<rect width="92" height="92" fill="white"/>
+</clipPath>
+</defs>
+</svg>
