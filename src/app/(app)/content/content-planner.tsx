@@ -23,6 +23,7 @@ import type {
   ContentSkill,
   OrgMember,
   PostAsset,
+  PostMetricsRow,
   PostRow,
   Shape,
   SuggestionRow,
@@ -41,6 +42,7 @@ import { WeekView } from "./week-view";
 import { SuggestionsRail } from "./suggestions-rail";
 import { WaitingOnYou, waitingRows } from "./waiting-on-you";
 import { GenerateDialog } from "./generate-dialog";
+import { PerformanceStrip } from "./performance-strip";
 import { PostDialog } from "./post-dialog";
 import { SkillsDialog } from "./skills-dialog";
 import { StatusBoard } from "./content-board";
@@ -71,6 +73,7 @@ export function ContentPlanner({
   pendingLessons,
   suggestions,
   canPublish,
+  metricsByPost,
 }: {
   filter: ContentFilter;
   posts: PostRow[];
@@ -89,6 +92,8 @@ export function ContentPlanner({
   suggestions: SuggestionRow[];
   /** A connected LinkedIn profile, so a scheduled post actually goes out. */
   canPublish: boolean;
+  /** Freshest Unipile reading per post, for the performance strip. */
+  metricsByPost: Record<string, PostMetricsRow>;
 }) {
   const router = useRouter();
   const { notify } = useToast();
@@ -149,6 +154,17 @@ export function ContentPlanner({
 
   const backlog = useMemo(
     () => visible.filter((p) => !p.scheduled_for),
+    [visible],
+  );
+
+  // Newest live first, for the performance strip.
+  const published = useMemo(
+    () =>
+      visible
+        .filter((p) => p.status === "published")
+        .sort((a, b) =>
+          (b.published_at ?? "").localeCompare(a.published_at ?? ""),
+        ),
     [visible],
   );
 
@@ -405,7 +421,8 @@ export function ContentPlanner({
       */}
       <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-rule px-6 py-3">
         <div className="min-w-0 shrink-0">
-          <h1 className="display text-[18px] leading-none">{headline.title}</h1>
+          {/* The serif, per the frame and DESIGN.md 4z. */}
+          <h1 className="page-title text-ink">{headline.title}</h1>
           <p className="meta mt-1.5 text-ink-2">{headline.sub}</p>
         </div>
 
@@ -513,6 +530,7 @@ export function ContentPlanner({
               <WeekView
                 posts={visible}
                 shapes={shapes}
+                assets={assets}
                 todayKey={today}
                 tz={timezone}
                 onOpen={(post) => setOpenId(post.id)}
@@ -598,11 +616,58 @@ export function ContentPlanner({
           }}
         />
 
-        {/* PLS-182. The engine shipped in PLS-162 with nothing reading it.
-            Below the queue rather than above: what is already waiting on you
-            outranks a new idea, the same argument the BD ledger makes. */}
-        <SuggestionsRail suggestions={suggestions} />
+        {/* PLS-186. What the last posts actually did, per the frame, with
+            Unipile's numbers and nothing invented. */}
+        <PerformanceStrip
+          posts={published.slice(0, 4)}
+          metricsByPost={metricsByPost}
+          assets={assets}
+          shapes={shapes}
+          tz={timezone}
+          total={published.length}
+          onOpen={(post) => setOpenId(post.id)}
+          onSeeAll={() => router.push("/content?filter=published")}
+        />
       </div>
+
+      </main>
+
+      {/* The frame's right rail: ideas from your own rows, then the voice.
+          Its own column so the week strip keeps the width a calendar needs,
+          and hidden below xl where three columns cannot fit. */}
+      <aside className="hidden w-[300px] shrink-0 flex-col gap-5 overflow-y-auto border-l border-rule bg-paper p-4 xl:flex">
+        <SuggestionsRail
+          suggestions={suggestions}
+          skillNameOf={(key) =>
+            shapes.find((s) => s.key === key)?.name ??
+            SKILL_BY_KEY[key as ContentSkill]?.name ??
+            key.replace(/_/g, " ")
+          }
+        />
+
+        {/* Your voice, with only real state on it. The frame's percentage is
+            a score nothing here computes, so the card says what it actually
+            holds: whether a distilled voice exists and how many corrections
+            are waiting to sharpen it. */}
+        <section className="raised flex flex-col gap-2 rounded-card border border-rule bg-sheet px-3.5 py-3">
+          <p className="text-[13px] font-medium leading-[1.45] text-ink">
+            Your voice
+          </p>
+          <p className="text-[12px] leading-[1.5] text-ink-2">
+            {hasPersona
+              ? pendingLessons > 0
+                ? `${pendingLessons} ${pendingLessons === 1 ? "correction" : "corrections"} from your edits ${pendingLessons === 1 ? "is" : "are"} waiting to be applied. Apply them and it writes sharper.`
+                : "Trained on your writing and current. Feed it a post you love and it gets sharper."
+              : "Not set up yet. Give it a few posts you have written and every draft comes out in your voice."}
+          </p>
+          <button
+            onClick={() => router.push("/content/persona")}
+            className="settle self-start rounded-control border border-rule bg-sheet px-3 py-1.5 text-[12px] leading-[1.45] text-ink-2 hover:border-violet hover:text-violet"
+          >
+            {hasPersona ? "Feed it a post" : "Set up your voice"}
+          </button>
+        </section>
+      </aside>
 
       <GenerateDialog
         // Remount per opening, so a seeded date lands and last time's draft
@@ -649,7 +714,6 @@ export function ContentPlanner({
           onError={(message) => notify(message, "danger")}
         />
       ) : null}
-    </main>
     </div>
   );
 }

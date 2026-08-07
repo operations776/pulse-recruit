@@ -44,20 +44,43 @@ const REASONS: { key: SuggestionDismissReason; label: string }[] = [
 
 export function SuggestionsRail({
   suggestions,
+  skillNameOf,
 }: {
   suggestions: SuggestionRow[];
+  /** Resolve a suggestion's shape_key to the skill's display name. */
+  skillNameOf?: (key: string) => string;
 }) {
   const router = useRouter();
   const { notify } = useToast();
   const [pending, startTransition] = useTransition();
   const [askingWhy, setAskingWhy] = useState<string | null>(null);
 
+  const header = (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <p className="flex items-center gap-1.5 text-[13px] font-medium leading-[1.45] text-ink">
+          <Sparkles size={14} strokeWidth={1.75} aria-hidden />
+          Worth posting about
+        </p>
+        {/* Suggestions are computed from rows, so fresh rows mean fresh
+            ideas: a refresh is a re-read, never a paid call. */}
+        <button
+          onClick={() => router.refresh()}
+          className="meta text-ink-3 hover:text-ink"
+        >
+          Refresh
+        </button>
+      </div>
+      <p className="text-[11px] leading-[1.5] text-ink-3">
+        Pulled from your patch. Each one already knows which skill fits.
+      </p>
+    </div>
+  );
+
   if (suggestions.length === 0) {
     return (
       <section className="flex flex-col gap-2">
-        <p className="text-[13px] font-medium leading-[1.45] text-ink">
-          Worth posting about
-        </p>
+        {header}
         {/* A workspace with nothing new produces zero suggestions and says so.
             It does not produce a generic "post about your expertise", which is
             the fabrication rule broken on the most persuasive surface. */}
@@ -100,25 +123,24 @@ export function SuggestionsRail({
 
   return (
     <section className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <p className="flex items-center gap-1.5 text-[13px] font-medium leading-[1.45] text-ink">
-          <Sparkles size={14} strokeWidth={1.75} aria-hidden />
-          Worth posting about
-        </p>
-        <MonoLabel>{suggestions.length} open</MonoLabel>
-      </div>
+      {header}
 
       {suggestions.map((row) => (
         <article
           key={row.id}
           className="raised flex flex-col gap-2 rounded-card border border-rule bg-sheet px-3.5 py-3"
         >
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-[13px] leading-[1.45] text-ink">{row.title}</p>
+          {/* The skill it already knows it fits, per the frame, with the
+              grounding beside it. */}
+          <div className="flex items-center justify-between gap-2">
+            <MonoLabel>
+              {skillNameOf ? skillNameOf(row.shape_key) : row.shape_key}
+            </MonoLabel>
             <Chip variant="state" tone="neutral">
               {SOURCE_WORD[row.source_kind]}
             </Chip>
           </div>
+          <p className="text-[13px] leading-[1.45] text-ink">{row.title}</p>
 
           {/* Why it was suggested, always. An unexplained suggestion is one
               users learn to ignore. */}

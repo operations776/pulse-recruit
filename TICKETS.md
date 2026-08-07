@@ -1340,3 +1340,43 @@ title stepped up to 17px.
 | Piece | State |
 | --- | --- |
 | PLS-181 | Tasks aligned to the six frames, behaviour audited, visuals closed | done |
+
+## PLS-186: the Content planner against its frames
+
+Daniyal sent seven Content frames: "I want everything to match how it is in
+the screenshot", with Unipile doing the automated posting at the scheduled
+time, images included.
+
+Landed this pass:
+- The serif page title.
+- The right rail from the frame: "Worth posting about" with Refresh and
+  "each one already knows which skill fits", every suggestion carrying its
+  skill in mono plus its grounding chip; under it the "Your voice" card
+  showing only real state (distilled voice present or not, corrections
+  waiting) with "Feed it a post" into the persona screen. The frame's 72%
+  meter is not computed by anything, so no percentage is shown.
+- "How your last posts did": last four published posts with their Unipile
+  numbers. Null prints as a dash, never zero: zero means nobody engaged,
+  null means LinkedIn did not say. Best real value per column carries the
+  teal. getPlanner now returns the freshest post_metrics row per post and
+  signs media for recent published posts whatever month is open.
+- Week strip cards carry their media thumbnail, per the frame.
+
+Still open, specs captured from the frames:
+- PLS-187, the post editor (frame 2): LinkedIn-preview shell with avatar
+  and headline, the YOU CHANGED THIS diff block, rewrite toolbar (Shorter,
+  Warmer, Sharper hook, Cut the question, Regenerate) with the char count,
+  WHY IT WROTE IT THIS WAY with per-rule provenance, WHAT YOU CHANGED with
+  Learn from this / One off, and GOING OUT with the slot advice.
+- PLS-188, Skills as a screen (frame 5): list with posts count, avg views,
+  pause toggles; editor with WHAT THIS SKILL IS FOR, open/close rules,
+  NEVER DO THIS, learned rules surfaced ("Learned from you removing the
+  closing question 9 times"), posts it learns from, Write a test post.
+- PLS-189, the schedule popover (frame 6): three ranked slots with real
+  per-slot averages from post_metrics, BEST tag, Pick another time; after
+  scheduling the green strip with Undo. Disconnected LinkedIn at post time
+  goes to Needs attention with the reason, never Failed (already true).
+
+| Piece | State |
+| --- | --- |
+| PLS-186 | Planner: serif, right rail, voice card, performance strip, week thumbnails | done |

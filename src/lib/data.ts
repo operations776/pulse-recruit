@@ -29,6 +29,7 @@ import type {
   OrgMember,
   PersonFieldDefRow,
   PostAsset,
+  PostMetricsRow,
   PostRow,
   TaskAssigneeRow,
   TaskCommentRow,
@@ -809,6 +810,7 @@ export async function getPlanner(month: string) {
     personaResult,
     lessonsResult,
     channelResult,
+    metricsResult,
   ] = await Promise.all([
       supabase
         .from("content_posts")
@@ -838,6 +840,13 @@ export async function getPlanner(month: string) {
         .from("linkedin_accounts")
         .select("id", { count: "exact", head: true })
         .eq("status", "connected"),
+      // What the last posts actually did, as Unipile reported it. Newest
+      // first so the reduce below keeps the freshest reading per post.
+      supabase
+        .from("post_metrics")
+        .select("*")
+        .order("fetched_at", { ascending: false })
+        .limit(200),
     ]);
 
   const posts = (postsResult.data ?? []) as PostRow[];
@@ -854,6 +863,14 @@ export async function getPlanner(month: string) {
       )
       .map((p) => p.id),
   );
+
+  // The performance strip shows the last few published posts whatever month
+  // is open, so their thumbnails need signing too.
+  for (const post of posts
+    .filter((p) => p.status === "published")
+    .slice(0, 6)) {
+    visible.add(post.id);
+  }
 
   const toSign = assets.filter((a) => visible.has(a.post_id));
   const signed = new Map<string, string>();
@@ -886,6 +903,15 @@ export async function getPlanner(month: string) {
     persona: (personaResult.data ?? null) as PersonaRow | null,
     pendingLessons: lessonsResult.count ?? 0,
     canPublish: (channelResult.count ?? 0) > 0,
+    // Freshest reading per post. Older rows are history the strip does not
+    // print.
+    metricsByPost: (() => {
+      const out: Record<string, PostMetricsRow> = {};
+      for (const row of (metricsResult.data ?? []) as PostMetricsRow[]) {
+        if (!out[row.post_id]) out[row.post_id] = row;
+      }
+      return out;
+    })(),
   };
 }
 

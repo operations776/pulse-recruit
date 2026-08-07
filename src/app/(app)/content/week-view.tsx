@@ -1,7 +1,7 @@
 "use client";
 
 import { skillColour } from "@/config/content-skills";
-import type { PostRow, Shape } from "@/lib/supabase/types";
+import type { PostAsset, PostRow, Shape } from "@/lib/supabase/types";
 import { shapeForPost } from "@/lib/shapes";
 import { dayKey, timeOfDay } from "@/lib/time";
 
@@ -55,6 +55,7 @@ const LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export function WeekView({
   posts,
   shapes,
+  assets = {},
   todayKey,
   tz,
   onOpen,
@@ -62,6 +63,8 @@ export function WeekView({
 }: {
   posts: PostRow[];
   shapes: Shape[];
+  /** Signed media per post, for the card thumbnails the frame draws. */
+  assets?: Record<string, PostAsset[]>;
   todayKey: string;
   tz: string;
   onOpen: (post: PostRow) => void;
@@ -116,6 +119,8 @@ export function WeekView({
                 const shape = shapeForPost(post, shapes);
                 const accent = skillColour(shape.key);
                 const state = statusOf(post);
+                const thumb =
+                  (assets[post.id] ?? []).find((a) => a.url)?.url ?? null;
 
                 return (
                   <button
@@ -127,6 +132,17 @@ export function WeekView({
                     // status always wins over it.
                     className={`settle w-full rounded-card border border-l-[3px] border-rule bg-sheet px-2 py-1.5 text-left hover:bg-well ${accent.edge}`}
                   >
+                    {/* The media going out with the post, per the frame. A
+                        post with no media shows no placeholder: an empty slot
+                        would imply an image is expected on every post. */}
+                    {thumb ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={thumb}
+                        alt=""
+                        className="mb-1.5 h-14 w-full rounded-[4px] object-cover"
+                      />
+                    ) : null}
                     <span className="flex items-center gap-1.5">
                       <span
                         aria-hidden
