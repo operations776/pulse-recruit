@@ -53,6 +53,7 @@ export function ChatPanel({
   answerFooter,
   conversationId,
   onOpened,
+  onRunStateChange,
 }: {
   surface: ChatSurface;
   messages: ChatRow[];
@@ -80,6 +81,12 @@ export function ChatPanel({
   conversationId?: string | null;
   /** The thread the run actually landed in, so the caller can switch to it. */
   onOpened?: (conversationId: string) => void;
+  /**
+   * The live run state, lifted so a caller can show it outside this panel.
+   * PLS-110 uses it for the strategist's Ready/Thinking indicator, which sits
+   * in the rail rather than in the transcript.
+   */
+  onRunStateChange?: (state: { busy: boolean; phase: RunPhase | null }) => void;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
@@ -94,6 +101,22 @@ export function ChatPanel({
     const el = transcriptRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, run?.draft, run?.steps.length, failure]);
+
+  const busy = run !== null;
+  const phase = run?.phase ?? null;
+
+  // Held in a ref so an inline callback from the parent does not re-fire this
+  // on every parent render. The notification is owed when the run state
+  // changes, not when the caller re-renders. Declared before the effect that
+  // reads it, so it is populated by the time that one runs.
+  const notifyRunState = useRef(onRunStateChange);
+  useEffect(() => {
+    notifyRunState.current = onRunStateChange;
+  }, [onRunStateChange]);
+
+  useEffect(() => {
+    notifyRunState.current?.({ busy, phase });
+  }, [busy, phase]);
 
   const ask = useCallback(
     async (question: string) => {
@@ -210,7 +233,6 @@ export function ChatPanel({
     void ask(draft);
   };
 
-  const busy = run !== null;
   const canAsk = configured && !busy && draft.trim().length > 0;
 
   return (
