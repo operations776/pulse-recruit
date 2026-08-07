@@ -352,6 +352,44 @@ token-addressed page that is meant to work without a session.
 Still open, and Daniyal's call because it is an Auth setting rather than
 schema: leaked password protection is disabled on the Supabase project.
 
+## Mara, the BD strategist redesign (Figma JNQb065A0l98R0chZVy0B6)
+
+Built from the Figma alone, on Daniyal's instruction to ignore DESIGN.md for
+this screen and follow the file. The redesign turns pillar 1 from a research
+chat into a coach: the screen opens with what you promised, not with metrics.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-109 | `bd_commitments` and `bd_debriefs`, RLS from birth, `settle_commitment` RPC writing both tables. `asked_on` is a stored column because `created_at::date` cannot be indexed | done |
+| PLS-110 | Mara tokens and motion keyframes, avatar with five states from the extracted geometry | done |
+| PLS-111 | Persona panel: identity, advisory domains, context chips | done |
+| PLS-112 | The stage: greeting, ledger, today's play, metrics, signals feed, conversation | done |
+| PLS-113 | "Tell Mara something" drawer, gap list driven by which memory kinds are missing | done |
+| PLS-114 | "I'd push back" briefing section and the evening debrief card | done |
+
+Three metrics come from rows that already exist. **BD time has no source
+anywhere in Pulse**, so its tile shows `--` behind a "soon" badge. It stays
+that way until something measures hours; a plausible number there would end up
+in a screenshot and then in a pitch.
+
+Today's play is derived from the freshest signal rather than generated. A model
+call on every page render would spend credits outside the `begin_ask` lifecycle
+AI.md requires.
+
+### Caught by screenshots, passed by every gate
+
+1. `/market` auto-opened the most recent thread, so the entire redesigned stage
+   was invisible to anyone who had ever asked a question.
+2. The stage and the transcript were both `flex-1`, splitting the height and
+   burying the signals feed under its own scrollbar.
+3. An empty transcript still claimed `flex-1`, reserving a blank region the
+   size of a conversation above the composer.
+4. "+8 this week" against a patch of 8 is the whole list restating itself.
+
+The section rail also went for MARKET, by rule rather than by name: a module
+with one destination has no sections to navigate between. A second section
+brings it back automatically.
+
 ## Later weeks (placeholders, not yet specced)
 
 Week 2: enrichment credits end to end (waterfall email and phone, per-plan caps), signals feed v1 (open jobs).
