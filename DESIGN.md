@@ -61,6 +61,56 @@ Additional rules:
 
 Token NAMES are semantic, which is why Rev C landed by re-pointing them rather than editing every component. Live values are in `src/app/globals.css`; this table is the contract, that file is the source.
 
+### 3z. Rev E: the warm system (PLS-176)
+
+From the Figma handoff. **Warm editorial shell, layered data surfaces.** The
+previous palette was cool violet-on-white; every ground, border and grey below
+moves warm. Violet itself does not change.
+
+```css
+/* surfaces, four levels */
+--surface-0: #F6F2EC;  /* page canvas, warm paper */
+--surface-1: #EFEAE2;  /* sunken wells: kanban columns, inputs, inset blocks */
+--surface-2: #FFFCF8;  /* raised cards */
+--surface-3: #FFFFFF;  /* popovers, drawers, dragged items only */
+
+--border:        #E4DCD1;
+--border-strong: #D5CABA;
+
+--text-primary:   #1C1917;
+--text-secondary: #6B6259;
+--text-muted:     #72685E;  /* Figma #96897B, see below */
+
+/* brand, unchanged */
+--brand:      #6D3BF5;   --brand-deep: #4A28B0;   --brand-ink:  #2E1A6B;
+--brand-100:  #DFD3FC;   --brand-wash: #F3EEFE;
+```
+
+| Role | Text | Background |
+|---|---|---|
+| Good | `#0F7956` | `#E4F2EC` |
+| Attention | `#965D0D` | `#FAF0DC` |
+| Info | `#2563A8` | `#E8F0FA` |
+| Problem | `#B33A34` | `#FBEAE7` |
+
+**Text on any tinted fill uses that family's dark stop. Never black, never grey.**
+
+### Three values diverge from the Figma, deliberately
+
+Contrast was computed for every pair against the 4.5:1 floor in section 2, not
+eyeballed. Three failed, and each is darkened along its own hue until it passes
+on all four surfaces. The Figma value is recorded so the divergence stays
+visible:
+
+| Token | Figma | Measured | Shipped | Now |
+|---|---|---|---|---|
+| `text-muted` | `#96897B` | **2.85:1** | `#72685E` | 4.55:1 |
+| Good text | `#0F7A57` | **4.45:1** | `#0F7956` | 4.51:1 |
+| Attention text | `#A8690F` | **3.74:1** | `#965D0D` | 4.53:1 |
+
+The worst case is `surface-1`, the sunken well, which is the darkest ground any
+of these sits on. Everything else passes with room.
+
 ```css
 :root {
   /* ground and surfaces */
@@ -153,6 +203,24 @@ The map lives in `PRIORITY_RING` in `src/lib/tasks.ts`, next to the rank the sam
 
 ## 4. Type
 
+### 4z. Rev E: three fonts, strict scopes (PLS-176)
+
+| Font | Scope | Spec |
+|---|---|---|
+| **Newsreader** Regular | Page titles and coach prose **only** | ~25px, line-height 120% |
+| **Inter** | Everything else | **Weights 400 and 500 only. Never 600 or 700.** |
+| **JetBrains Mono** | Anything measured or system-generated | 8 to 11px, uppercase, slight negative tracking on large numerics |
+
+Mono covers counts, percentages, fit scores, timestamps, state labels, keyboard
+hints, IDs and date ranges. **A serif on a data label makes a table unreadable,
+so keep the Newsreader scope narrow.**
+
+The Inter weight cap is a real change: the shipped build uses 600 and 700 for
+emphasis in many places. Emphasis comes from size, colour and space instead.
+
+Archivo stays for the masthead and module wordmarks, which is furniture rather
+than prose.
+
 ```css
 --font-display: 'Archivo', system-ui, sans-serif;      /* 600 to 900 */
 --font-body:    'Inter', system-ui, sans-serif;
@@ -190,17 +258,76 @@ Fixed scale. No arbitrary values.
 --r-chip:     6px;  /* status chip, tag, count badge */
 ```
 
-Rev C compressed the scale. The rebrand is a flat 6px system; keeping five names meant no component had to change, they just tightened.
+**Rev E, PLS-176.** The Figma handoff for `JNQb065A0l98R0chZVy0B6` specifies a
+different scale and reverses two rules below. Daniyal's call: the Figma wins,
+and the superseded reasoning is recorded rather than deleted.
 
-Avatars are rounded squares at `--r-card`, never circles. This is deliberate and it is a large part of what stops the layout reading as generic.
+```css
+--r-card:     12px;  /* cards, metric tiles, panels */
+--r-panel:     8px;  /* inner blocks inside a card */
+--r-control:   6px;  /* button, input, toggle, select */
+--r-chip:     20px;  /* chips and pills */
+--r-avatar:    50%;  /* avatars */
+```
 
-Pills and fully-rounded shapes do not exist in this system.
+**Never mix radii within one component.**
+
+### What changed and why the old rule existed
+
+Rev C said *"avatars are rounded squares, never circles. This is deliberate and
+it is a large part of what stops the layout reading as generic"*, and *"pills
+and fully-rounded shapes do not exist in this system"*.
+
+Both were written to stop a flat violet-on-white product looking like every
+other SaaS dashboard, and at the time they were doing real work. **The warm
+editorial palette and the elevation ramp now carry that job**, which is a
+stronger way to be distinctive than refusing a shape. Circles and pills return.
 
 ---
 
 ## 6. Depth and texture
 
-Exactly three depth treatments exist. Anything else is a bug.
+**Rev E, PLS-176. Depth is a token layer, not a per-screen decision.** That
+sentence is from the Figma handoff and it is the reason this section changed:
+the product read flat because every screen was deciding its own elevation, which
+in practice meant none of them did.
+
+Rev C said *"exactly three depth treatments exist. Anything else is a bug."*
+There are now four elevation levels plus the two mounted-control treatments
+below, and the bug is applying the wrong one, not adding one.
+
+### 6z. The elevation ramp
+
+**The shadow colour is always `rgba(58, 38, 84, α)`. Never neutral black.** A
+neutral shadow on a warm violet product reads grey and dead, which is most of
+why the shipped build felt lifeless.
+
+```css
+--elev-1: 0 1px 2px rgb(58 38 84 / 0.07);
+          /* list rows, list tiles */
+--elev-2: 0 1px 2px rgb(58 38 84 / 0.07), 0 4px 10px rgb(58 38 84 / 0.07);
+          /* cards, metric tiles, post cards, candidate cards */
+--elev-3: 0 2px 4px rgb(58 38 84 / 0.09), 0 10px 24px rgb(58 38 84 / 0.10);
+          /* side panels, nav columns, top bar, sticky bars */
+--elev-4: 0 4px 8px rgb(58 38 84 / 0.11), 0 20px 44px rgb(58 38 84 / 0.15);
+          /* popovers, modals, PDF preview, anything mid-drag */
+```
+
+**A raised card also carries `inset 0 1px 0 rgb(255 255 255 / 0.9)`.** That top
+highlight is what actually reads as lit from above. It is the single detail most
+responsible for depth and it is the one people leave out.
+
+Rules:
+
+- **At most two floating layers at once.** A third means a dialog, not a popover
+  on a popover.
+- **Raised surfaces get a hairline border. Sunken wells get none** and recede by
+  fill alone.
+- **Never apply elevation to a sunken surface.** A well with a drop shadow is a
+  contradiction the eye notices before the mind does.
+
+The keycap and inset-well treatments below survive unchanged: they describe
+*mounted controls*, which is a different job from surface elevation.
 
 ### 6a. Keycap edge (mounted controls)
 
@@ -381,13 +508,13 @@ Adopted product-wide in PLS-171, from the Impeccable craft floor, because both h
 
 Enforceable rules. If a component violates one of these, it is wrong regardless of how it looks.
 
-1. The radius scale is fixed. No arbitrary radius values.
-2. Exactly three depth treatments exist: keycap edge, inset well, floating layer. No other shadows.
+1. The radius scale is fixed. No arbitrary radius values, and never two radii inside one component.
+2. Depth comes from the elevation ramp (section 6z) plus the two mounted-control treatments. The shadow colour is always `rgb(58 38 84 / a)`, never neutral. Never elevate a sunken surface, and never stack more than two floating layers.
 3. Panels inside a shell share 1px rules. Writing `gap` between two sections of one shell breaks the sheet.
 4. Grain lives on the page ground only. Never on sheets, cards, or controls.
 5. Violet is a verb. If it is not clickable, it is not violet.
 6. Backdrop blur only on the scrim. Floating layers are opaque.
-7. Archivo appears on titles, section heads, metric numbers, and the masthead. Nowhere else.
+7. Newsreader appears on page titles and coach prose, nowhere else. Archivo is the masthead and module wordmarks. Inter is everything else at weight 400 or 500, never 600 or 700. Mono is anything measured or system-generated.
 8. Uppercase appears on the display face and mono legends only.
 9. Status is colour plus icon plus word, always all three. A hue that carries a category or a rank rather than a state (content skill accents and the task priority ring, section 3) is an accent edge, never a fill, and never the only thing saying what a state is.
 10. No body text below 11px, no font weight below 400, no hit target below 28px.

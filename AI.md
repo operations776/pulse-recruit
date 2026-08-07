@@ -36,6 +36,34 @@ Neither platform key is ever prefixed `NEXT_PUBLIC_`. Both are read only from `s
 
 **The founding rate changes that ratio and the allowance does not know it.** The first ten agencies pay 50 USD a month for three months. The default `weekly_allowance` is 250 credits and it is one default, not a per-plan cap, so a founding workspace using all of it costs about 10.83 USD a month against 50 rather than against 299: roughly 22 percent of its revenue instead of 3.6 percent. Bounded and deliberate at ten agencies for three months. If the founding rate is ever extended or widened, the answer is a per-plan allowance, not a lower price, because lowering the price without lowering the allowance moves the same cost onto a smaller number.
 
+### 2a. Sessions are a presentation, not a second unit (PLS-176)
+
+The Figma top bar reads **"23 sessions left"** rather than a credit count.
+Daniyal's call: **a session is one question you ask.**
+
+This does not weaken anything above. Credits remain the unit of account, still
+metered from what actually happened, still 1 credit = 1 US cent of provider
+spend. A session is derived at render time:
+
+```
+sessions = floor(available / AVERAGE_ASK_CREDITS)
+```
+
+Three rules keep it honest:
+
+- **Floored, always.** A number that rounds up promises a question the
+  allowance cannot pay for.
+- **Derived, never stored.** There is no session column, no session ledger and
+  no second reservation. If sessions and credits could ever disagree, the
+  derivation is wrong.
+- **`AVERAGE_ASK_CREDITS` lives in `pricing.ts`** beside the rates it depends
+  on, and moves when the rates or the model move. It is a presentation
+  constant, not a cap: the actual ceiling is still `reserveCredits` per surface.
+
+The composer footer keeps the exact credit line. The top bar is for the person
+who wants to know whether they can ask another question; the footer is for the
+person who wants to know what it costs.
+
 Rates live in exactly one file, `src/lib/server/ai/pricing.ts`. They are configured defaults, not gospel: confirm them against the current OpenAI and Exa pricing pages before the pilot takes real money, and change them in that one file when the providers move.
 
 Cost is metered from what actually happened, never estimated after the fact:
