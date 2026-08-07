@@ -723,6 +723,42 @@ and it answers that with "could not choose the best candidate function". The AI
 tool in `src/lib/server/ai/tools.ts` calls it exactly that way, so the failure
 would have landed on Claude writing a task rather than on the migration.
 
+## OPS is the task list
+
+Daniyal, on the shipped tasks workspace: the operations module should discard
+the morning brief and show the task page and nothing else.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-133 | The morning brief goes. OPS has one destination, so the section rail stops rendering for it by the existing rule, and `/ops` redirects to `/ops/tasks` | review: CI green, no screenshot pass |
+
+**The section column disappears for free.** `module-rail.tsx` already gates the
+second nav column on `nav.length <= 1`, the rule PR #7 introduced for MARKET:
+a module with one destination has no sections to navigate between. Dropping the
+Morning brief entry leaves OPS with one, so the 208px column stops rendering
+without a line of layout code. That also answers the width worry filed against
+PLS-132, where the tasks workspace put its own 224px view rail beside the
+module rail and left the list about 620px at 1440. It now gets about 830.
+
+**A redirect, not a 404.** PLS-80 let `/content/skills` 404 on purpose, because
+that feature moved into a popup on another screen and a stale bookmark had
+somewhere wrong to land. Here there is exactly one right answer, `/ops` is the
+module's front door, and notification rows written before today point at it.
+
+**What this costs, and it is not nothing.** The morning brief was the only UI
+for the `ops` chat surface: four pipeline tiles over a credit-metered assistant
+that reads the org's own rows, has no web search by design, and can write
+follow-ups as tasks. That surface is now unreachable from inside the product.
+It is NOT deleted: `ChatSurface` still carries `ops`, the tool dispatcher in
+`src/lib/server/ai/tools.ts` still serves it, and the MCP server still exposes
+it, so Claude can still work the pipeline through it from outside. Only the
+screen is gone. `getOpsTiles` went with it rather than staying as an export
+nothing reaches.
+
+If the assistant is wanted back later, the cheaper move is a composer on the
+task list rather than restoring a second room: the tiles it carried were four
+counts, and the tasks header already answers the one that mattered.
+
 ## Later weeks (placeholders, not yet specced)
 
 Week 2: enrichment credits end to end (waterfall email and phone, per-plan caps), signals feed v1 (open jobs).

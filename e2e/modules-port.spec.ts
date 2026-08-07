@@ -60,6 +60,23 @@ test("a typed sentence becomes a whole task, and completing it is undoable", asy
   ).toBeVisible({ timeout: 15_000 });
 });
 
+// PLS-133. OPS has one destination, so the module rail's second column is not
+// rendered at all. The rule is nav.length <= 1, not a special case for OPS, so
+// this also guards against somebody adding a second entry without noticing the
+// column comes back.
+test("OPS is the task list and nothing else", async ({ page }) => {
+  await signIn(page);
+
+  // The front door redirects rather than 404s.
+  await page.goto("/ops");
+  await expect(page).toHaveURL(/\/ops\/tasks/);
+
+  await expect(
+    page.getByRole("navigation", { name: "OPS sections" }),
+  ).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Morning brief" })).toHaveCount(0);
+});
+
 test("the view rail moves the list, and every view is a URL", async ({
   page,
 }) => {

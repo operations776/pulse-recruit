@@ -51,7 +51,10 @@ test("every module renders for a signed in user", async ({ page }) => {
     ["/sequences", /sequences/i],
     ["/mailboxes", /mailboxes/i],
     ["/market", /bd engine/i],
-    ["/ops", /morning brief/i],
+    // PLS-133: OPS is the task list and nothing else. /ops is kept as a
+    // redirect rather than a 404, so this asserts the front door still lands
+    // somewhere, and lands on the same heading the route below expects.
+    ["/ops", /today/i],
     // PLS-111: the h1 is the open view, not the module. "Tasks" is the rail's
     // nav entry, and the masthead above it is what names the module.
     ["/ops/tasks", /today/i],

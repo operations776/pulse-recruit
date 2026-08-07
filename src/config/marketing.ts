@@ -52,7 +52,7 @@ export const FEATURES = [
   },
   {
     title: "An ops manager that works",
-    body: "A morning brief built from your own pipeline, never the open web, that says what moved and what needs you.",
+    body: "One list of what the team owes, who is carrying it, and what is already late. Add a task by typing a sentence.",
   },
   {
     title: "Numbers that mean something",
@@ -170,7 +170,7 @@ export const FAQ: FaqGroup[] = [
     items: [
       {
         q: "What do the five pillars actually do?",
-        a: "Market researches your niche and buyers; Ops runs your morning brief and tasks; Outbound turns hiring and funding signals into campaigns; Talent keeps searches moving to placed; Content plans posts in your voice.",
+        a: "Market researches your niche and buyers; Ops is the shared task list the whole team works from; Outbound turns hiring and funding signals into campaigns; Talent keeps searches moving to placed; Content plans posts in your voice.",
       },
       {
         q: "Does the AI make changes on its own?",

@@ -59,14 +59,15 @@ export const MODULES: ModuleDef[] = [
     pillar: 2,
     pillarName: "AI operations manager",
     prefix: "TASK",
-    href: "/ops",
+    href: "/ops/tasks",
     icon: ListChecks,
     blurb:
-      "Your ops manager. It reads your pipeline and tells you what moved, what stalled, and what needs you today.",
-    nav: [
-      { href: "/ops", label: "Morning brief", icon: MessageSquare },
-      { href: "/ops/tasks", label: "Tasks", icon: ListChecks },
-    ],
+      "Every promise the workspace has made, who is carrying it, and what is already late.",
+    // One destination, so the section rail does not render for OPS at all.
+    // That is the rule rather than a special case: a module with one place to
+    // go has no sections to navigate between, and a second entry here brings
+    // the column back on its own.
+    nav: [{ href: "/ops/tasks", label: "Tasks", icon: ListChecks }],
   },
   {
     key: "outbound",
