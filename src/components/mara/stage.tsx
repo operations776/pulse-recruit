@@ -4,8 +4,9 @@ import { History, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Briefing, parseBriefing } from "@/components/ai/briefing";
-import { ChatPanel } from "@/components/ai/chat-panel";
-import type { MaraState } from "@/components/mara/avatar";
+import { ASK_FORM_ID, ChatPanel } from "@/components/ai/chat-panel";
+import { MaraAvatar, type MaraState } from "@/components/mara/avatar";
+import type { RunPhase } from "@/lib/ai-events";
 import { DebriefCard } from "@/components/mara/debrief";
 import { CommitmentsLedger } from "@/components/mara/ledger";
 import { MetricsStrip, type Metric } from "@/components/mara/metrics";
@@ -51,6 +52,24 @@ function greetingFor(hour: number): string {
   return "Evening";
 }
 
+// "Two things moved on your patch overnight." Words up to nine because that is
+// how the sentence would be said; digits past that because "seventeen things"
+// is a number pretending to be prose.
+const COUNT_WORDS = [
+  "",
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+] as const;
+
+const countWord = (n: number) => COUNT_WORDS[n] ?? String(n);
+
 export function MaraStage({
   messages,
   memories,
@@ -74,6 +93,7 @@ export function MaraStage({
   unconfiguredReason,
   pendingQuestion,
   openMemory,
+  clientCount,
   conversations,
   activeConversationId,
   todayKey,
@@ -106,6 +126,7 @@ export function MaraStage({
   pendingQuestion: string | null;
   /** True when "Manage" sent the user here to see what the agent knows. */
   openMemory: boolean;
+  clientCount: number;
   conversations: ChatConversationRow[];
   activeConversationId: string | null;
   /** Fixed on the server so Today/Yesterday cannot disagree after hydration. */
@@ -136,19 +157,42 @@ export function MaraStage({
     [pendingQuestion, configured, router],
   );
 
-  // A run in flight is the only thing that should animate the avatar. Anything
-  // else would be a mood with no cause behind it.
-  const state: MaraState = useMemo(() => {
-    const last = messages[messages.length - 1];
-    if (last?.status === "running") return "thinking";
-    if (last?.role === "assistant" && last.status === "complete")
-      return "speaking";
-    return "idle";
-  }, [messages]);
+  // The avatar states board, as behaviour. Speaking is WHILE STREAMING, which
+  // an earlier build got wrong: it derived speaking from the last settled
+  // message, so the face sat open-mouthed forever after any answer. Live run
+  // state, focus and failure are the only causes; anything else would be a
+  // mood with nothing behind it.
+  const [running, setRunning] = useState<{
+    busy: boolean;
+    phase: RunPhase | null;
+  }>({ busy: false, phase: null });
+  const [failed, setFailed] = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  const state: MaraState = failed
+    ? "stumped"
+    : running.busy
+      ? running.phase === "writing"
+        ? "speaking"
+        : "thinking"
+      : focused
+        ? "listening"
+        : "idle";
 
   // The briefing owns the screen once there is one. Below this threshold the
   // stage is the page; above it the stage is a header.
   const started = messages.length > 0;
+
+  // The disagreement treatment's two replies belong on the newest answer
+  // only: "No, do it mine" under a week-old push-back would fire a follow-up
+  // into a context the model has long moved past.
+  const lastAnswerId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role === "assistant" && m.status === "complete") return m.id;
+    }
+    return null;
+  }, [messages]);
 
   return (
     <main className="flex min-w-0 flex-1 overflow-hidden bg-mara-ground">
@@ -213,10 +257,29 @@ export function MaraStage({
                     {todayLabel}
                   </p>
                 </div>
+                {/* The dateline's sentence counts what MOVED, per the frame:
+                    "Two things moved on your patch overnight. Start with the
+                    first one." Promises are the fallback subject, not the
+                    lead, because the feed below is what the sentence points
+                    at. */}
                 <p className="text-[13px] leading-[1.5] text-mara-ink-2">
-                  {commitments.length > 0
-                    ? `You have ${commitments.length} open ${commitments.length === 1 ? "promise" : "promises"}. Let's start there.`
-                    : "Nothing outstanding. Ask me about the companies you want to win."}
+                  {(() => {
+                    // "Overnight" only when it is true. The feed's window is
+                    // seven days, so a quiet night falls back to the week
+                    // rather than claiming freshness it does not have.
+                    const overnight = signals.filter(
+                      (signal) =>
+                        nowMs - new Date(signal.detected_at).getTime() <
+                        86_400_000,
+                    ).length;
+                    if (overnight > 0)
+                      return `${countWord(overnight)} ${overnight === 1 ? "thing" : "things"} moved on your patch overnight. Start with the first one.`;
+                    if (signals.length > 0)
+                      return `${countWord(signals.length)} ${signals.length === 1 ? "thing" : "things"} moved on your patch this week. Start with the first one.`;
+                    if (commitments.length > 0)
+                      return `You have ${commitments.length} open ${commitments.length === 1 ? "promise" : "promises"}. Let's start there.`;
+                    return "Nothing outstanding. Ask me about the companies you want to win.";
+                  })()}
                 </p>
               </div>
             ) : null}
@@ -246,7 +309,21 @@ export function MaraStage({
             {!started ? (
               <>
                 <div className="mara-in mara-in-2">
-                  <TodaysPlay signal={signals[0] ?? null} />
+                  {/* The play is the most ACTIONABLE signal, not merely the
+                      freshest: an open-roles signal outranks a funding round
+                      because one is a brief to win this week and the other is
+                      a company to watch this quarter. */}
+                  <TodaysPlay
+                    signal={
+                      signals.find(
+                        (signal) =>
+                          signal.kind === "open_role" ||
+                          signal.kind === "promotion",
+                      ) ??
+                      signals[0] ??
+                      null
+                    }
+                  />
                 </div>
                 <div className="mara-in mara-in-3">
                   <MetricsStrip metrics={metrics} />
@@ -294,7 +371,7 @@ export function MaraStage({
             resetsAt={resetsAt ?? new Date().toISOString()}
             configured={configured}
             unconfiguredReason={unconfiguredReason}
-            placeholder={`Ask ${agent.name} about the companies you want to win`}
+            placeholder="Ask about a company, a client, or where your offer is losing"
             emptyTitle=""
             emptyBody=""
             suggestions={SUGGESTIONS}
@@ -302,8 +379,63 @@ export function MaraStage({
             onOpened={(id) => {
               if (id !== activeConversationId) router.replace(`/market?c=${id}`);
             }}
+            onRunStateChange={setRunning}
+            onComposerFocus={setFocused}
+            onFailureChange={setFailed}
+            // The face beside every reply, per the frame: an answer spoken by
+            // someone, not emitted into a box.
+            answerAvatar={<MaraAvatar state="idle" size={30} />}
+            // The stumped face and its line, in character. The reason is the
+            // server's, verbatim: character never replaces the actual cause.
+            renderFailure={(reason, canRetry) => (
+              <div className="flex w-full items-start gap-2.5 rounded-card bg-mara-well px-3.5 py-3">
+                <MaraAvatar state="stumped" size={30} className="mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[13px] leading-[1.5] text-mara-ink">
+                    Lost my thread there. {reason}
+                  </p>
+                  {canRetry ? (
+                    // Submits the composer form by association: the failed
+                    // question is already back in the box.
+                    <button
+                      type="submit"
+                      form={ASK_FORM_ID}
+                      className="settle mt-2 rounded-control border border-mara-rule bg-mara-sheet px-3 py-1.5 text-[12px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
+                    >
+                      Try again
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            )}
             renderAnswer={(message) => {
               const sections = parseBriefing(message.body);
+              const pushbackActions =
+                message.id === lastAnswerId &&
+                sections?.some((section) => section.key === "pushback") ? (
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <button
+                      onClick={() =>
+                        askRef.current?.(
+                          "Fine, draft it your way and show me why it wins.",
+                        )
+                      }
+                      className="settle rounded-control border border-mara-rule bg-mara-sheet px-3 py-1.5 text-[12px] leading-[1.45] text-mara-ink hover:border-mara-violet hover:text-mara-violet"
+                    >
+                      Draft it {agent.possessive} way
+                    </button>
+                    <button
+                      onClick={() =>
+                        askRef.current?.(
+                          "No, do it mine. Draft it the way I asked.",
+                        )
+                      }
+                      className="settle rounded-control border border-mara-rule bg-mara-sheet px-3 py-1.5 text-[12px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
+                    >
+                      No, do it mine
+                    </button>
+                  </div>
+                ) : undefined;
               if (!sections) {
                 return (
                   <p className="whitespace-pre-line text-[13px] leading-[1.5]">
@@ -311,14 +443,34 @@ export function MaraStage({
                   </p>
                 );
               }
-              return <Briefing sections={sections} />;
+              return (
+                <Briefing sections={sections} pushbackActions={pushbackActions} />
+              );
             }}
             answerFooter={(message) =>
               message.status === "complete" ? (
-                <AnswerFeedback
-                  answerId={message.id}
-                  existing={feedbackByAnswer[message.id] ?? null}
-                />
+                <>
+                  {/* The grounding worn on the answer: the context the
+                      strategist holds and answers against. Titles only, the
+                      full facts live in the drawer. */}
+                  {memories.length > 0 ? (
+                    <div className="mt-2.5 flex flex-wrap gap-1.5">
+                      {memories.slice(0, 4).map((memory) => (
+                        <span
+                          key={memory.id}
+                          title={memory.body}
+                          className="rounded-[20px] border border-mara-rule bg-mara-sheet px-2.5 py-1 text-[11px] leading-[1.45] text-mara-ink-2"
+                        >
+                          {memory.title}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                  <AnswerFeedback
+                    answerId={message.id}
+                    existing={feedbackByAnswer[message.id] ?? null}
+                  />
+                </>
               ) : null
             }
           />
@@ -362,6 +514,7 @@ export function MaraStage({
         memories={memories}
         canManageAgency={canManageAgency}
         meId={meId}
+        clientCount={clientCount}
       />
     </main>
   );

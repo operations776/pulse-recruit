@@ -45,7 +45,9 @@ await page.waitForURL((url) => !url.pathname.startsWith("/signin"), {
 await page.goto(`${baseUrl}/market`, { waitUntil: "load" });
 
 for (const [name, label] of [
-  ["tell-mara", "Tell Mara something"],
+  // The agent's name lives in src/config/brand.ts and has changed once
+  // already, so the trigger is matched on the constant part of the label.
+  ["tell-mara", /Tell \w+ something/],
   ["history", "Past conversations"],
 ]) {
   const trigger = page.getByRole("button", { name: label }).first();

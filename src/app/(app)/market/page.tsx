@@ -213,6 +213,7 @@ export default async function BDStrategistPage({
       // A question handed over in the URL, asked once on arrival.
       pendingQuestion={params.q ?? null}
       openMemory={params.memory === "1"}
+      clientCount={counts.clients}
       conversations={conversations}
       activeConversationId={activeConversationId}
       todayKey={renderedAt.toISOString().slice(0, 10)}

@@ -44,7 +44,10 @@ export function PersonaPanel({
   onTellHer: () => void;
 }) {
   return (
-    <aside className="flex w-[320px] shrink-0 flex-col gap-5 overflow-y-auto border-l border-mara-rule bg-mara-sheet px-5 pb-5 pt-6">
+    // On the page ground, not a raised sheet: the frame keeps this panel in
+    // the same world as the canvas, receding behind the cards rather than
+    // competing with them.
+    <aside className="flex w-[320px] shrink-0 flex-col gap-5 overflow-y-auto border-l border-mara-rule bg-mara-ground px-5 pb-5 pt-6">
       {/* Identity */}
       <div className="flex flex-col items-center gap-1.5">
         <MaraAvatar state={state} size={92} ring />

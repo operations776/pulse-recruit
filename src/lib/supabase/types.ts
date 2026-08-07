@@ -344,7 +344,13 @@ export type BDMemoryKind =
   | "offer"
   | "qualification"
   | "preference"
-  | "feedback";
+  | "feedback"
+  // A pasted email, fee agreement, job spec, win or loss: the drawer's
+  // freeform box. Kept out of the strategy kinds so it can never satisfy a
+  // gap it does not actually answer.
+  | "note"
+  // Hours per week actually available for BD.
+  | "capacity";
 export type BDMemorySource = "manual" | "feedback";
 
 /**

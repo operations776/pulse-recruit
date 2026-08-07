@@ -131,9 +131,17 @@ const SECTION_STYLE: Record<
 export function Briefing({
   sections,
   footer,
+  pushbackActions,
 }: {
   sections: BriefingSection[];
   footer?: ReactNode;
+  /**
+   * The two replies the disagreement frame specifies, "Draft it his way" and
+   * "No, do it mine", supplied by the caller because only it can fire a
+   * follow-up ask. Rendered inside the push-back section, and the caller
+   * passes them for the newest answer only.
+   */
+  pushbackActions?: ReactNode;
 }) {
   return (
     <div className="flex flex-col">
@@ -141,14 +149,35 @@ export function Briefing({
         const style = SECTION_STYLE[section.key];
         const Icon = style.icon;
 
+        // The disagreement treatment, verbatim from the frame: amber rule on
+        // the left, square corners on that edge, a mono I'D PUSH BACK label,
+        // and the body itself in amber. Distinct from a normal reply on
+        // purpose, and used only when the model actually disagreed.
+        if (section.key === "pushback") {
+          return (
+            <section
+              key={section.key}
+              className={`settle border-l-[3px] border-l-amber bg-amber-bg py-3 pl-3 pr-3 ${
+                index > 0 ? "mt-2.5" : ""
+              }`}
+            >
+              <p className="meta uppercase tracking-[0.06em] text-amber-text">
+                I&rsquo;d push back
+              </p>
+              <p className="mt-1.5 whitespace-pre-line text-[13px] leading-[1.55] text-amber-text">
+                {section.body}
+              </p>
+              {pushbackActions}
+            </section>
+          );
+        }
+
         return (
           <section
             key={section.key}
             className={`settle border-l-[3px] py-2.5 pl-3 ${style.edge} ${
               index > 0 ? "mt-2.5 border-t border-t-rule pt-3" : ""
-            } ${section.key === "move" ? "bg-move" : ""} ${
-              section.key === "pushback" ? "bg-amber-bg" : ""
-            }`}
+            } ${section.key === "move" ? "bg-move" : ""}`}
           >
             <p className={`legend flex items-center gap-1.5 ${style.text}`}>
               <Icon size={16} strokeWidth={1.75} className="size-3.5" aria-hidden />

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AnswerCost, AnswerFailure, SourceList } from "@/components/ai/answer";
@@ -20,6 +20,14 @@ import { DictateButton } from "@/components/ai/dictate";
 // A run streams (AI.md section 7). The panel holds the in-flight run in local
 // state and the finished transcript comes from the server, so there is never a
 // second copy of a settled answer to fall out of step.
+
+/**
+ * The composer form's id. A surface's failure card associates its Try again
+ * button to it (`form={ASK_FORM_ID}` + type submit), which re-asks whatever
+ * is in the box without any callback crossing the render boundary. Only one
+ * of the two composer forms renders at a time, so the id is unique.
+ */
+export const ASK_FORM_ID = "ask-form";
 
 type LiveRun = {
   question: string;
@@ -57,6 +65,10 @@ export function ChatPanel({
   conversationId,
   onOpened,
   onRunStateChange,
+  onComposerFocus,
+  onFailureChange,
+  renderFailure,
+  answerAvatar,
 }: {
   surface: ChatSurface;
   messages: ChatRow[];
@@ -109,6 +121,27 @@ export function ChatPanel({
    * in the rail rather than in the transcript.
    */
   onRunStateChange?: (state: { busy: boolean; phase: RunPhase | null }) => void;
+  /**
+   * The avatar spec's Listening state: the face reacts when the composer has
+   * focus, which is the one moment attention is genuinely on the person.
+   */
+  onComposerFocus?: (focused: boolean) => void;
+  /** Fired when a failure appears or clears, so the avatar can look stumped. */
+  onFailureChange?: (failed: boolean) => void;
+  /**
+   * Render a failure in the surface's own voice. When `canRetry` is true the
+   * failed question is back in the composer, so a `<button form={ASK_FORM_ID}
+   * type="submit">` re-asks it: association by id, because `ask` touches the
+   * composer ref and a closure over it cannot legally be built during render.
+   * Omitted, the shared amber failure card renders.
+   */
+  renderFailure?: (reason: string, canRetry: boolean) => ReactNode;
+  /**
+   * Shown at the left of each settled answer. With it the answer sits flat on
+   * the page, spoken by the face beside it, rather than boxed in a card. The
+   * BD stage passes the strategist's face; OPS stays a plain card.
+   */
+  answerAvatar?: ReactNode;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
@@ -126,6 +159,17 @@ export function ChatPanel({
 
   const busy = run !== null;
   const phase = run?.phase ?? null;
+
+  // Failure is state the avatar reacts to, so its appearance and clearing are
+  // reported the same way the run is. In an effect: notifying during render
+  // would set parent state mid-render.
+  const notifyFailure = useRef(onFailureChange);
+  useEffect(() => {
+    notifyFailure.current = onFailureChange;
+  }, [onFailureChange]);
+  useEffect(() => {
+    notifyFailure.current?.(failure !== null);
+  }, [failure]);
 
   // Held in a ref so an inline callback from the parent does not re-fire this
   // on every parent render. The notification is owed when the run state
@@ -262,6 +306,7 @@ export function ChatPanel({
     void ask(draft);
   };
 
+
   const canAsk = configured && !busy && draft.trim().length > 0;
 
   return (
@@ -360,12 +405,24 @@ export function ChatPanel({
 
           return (
             <div key={m.id} className="flex justify-start">
+              {/* The face at the left is what makes the reply read as spoken
+                  rather than emitted, per the Figma: the answer sits flat on
+                  the page beside it, no card. */}
+              {answerAvatar ? (
+                <div aria-hidden className="mr-2.5 mt-0.5 shrink-0">
+                  {answerAvatar}
+                </div>
+              ) : null}
               {/* Wider than the 80% a chat bubble wants: a BD briefing has
                   four labelled sections and reads badly in a narrow column. */}
               <div
-                className={`rounded-card border border-rule bg-sheet px-3 py-2.5 ${
-                  renderAnswer ? "w-full" : "max-w-[80%]"
-                }`}
+                className={
+                  answerAvatar
+                    ? "min-w-0 flex-1"
+                    : `rounded-card border border-rule bg-sheet px-3 py-2.5 ${
+                        renderAnswer ? "w-full" : "max-w-[80%]"
+                      }`
+                }
               >
                 {/* The surface decides how an answer looks. MARKET renders a
                     briefing; OPS keeps the plain paragraph it has always had. */}
@@ -394,10 +451,25 @@ export function ChatPanel({
               </p>
             </div>
             <div className="flex justify-start">
-              <div className="flex w-[80%] flex-col gap-2.5">
+              {answerAvatar ? (
+                <div aria-hidden className="mr-2.5 mt-0.5 shrink-0">
+                  {answerAvatar}
+                </div>
+              ) : null}
+              <div
+                className={`flex flex-col gap-2.5 ${
+                  answerAvatar ? "min-w-0 flex-1" : "w-[80%]"
+                }`}
+              >
                 <RunLog surface={surface} phase={run.phase} steps={run.steps} />
                 {run.draft ? (
-                  <div className="rounded-card border border-rule bg-sheet px-3 py-2.5">
+                  <div
+                    className={
+                      answerAvatar
+                        ? ""
+                        : "rounded-card border border-rule bg-sheet px-3 py-2.5"
+                    }
+                  >
                     <p className="whitespace-pre-line text-[13px] leading-[1.5]">
                       {run.draft}
                     </p>
@@ -411,56 +483,118 @@ export function ChatPanel({
 
         {failure && !busy ? (
           <div className="flex justify-start">
-            <AnswerFailure reason={failure} />
+            {renderFailure ? (
+              renderFailure(
+                failure,
+                // The failed question is back in the box only when the server
+                // said it was retryable, so an empty draft means there is
+                // nothing honest to re-ask.
+                draft.trim().length > 0,
+              )
+            ) : (
+              <AnswerFailure reason={failure} />
+            )}
           </div>
         ) : null}
       </div>
 
-      <form
-        className="border-t border-rule px-4 py-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          submit();
-        }}
-      >
-        <Textarea
-          ref={composerRef}
-          rows={2}
-          value={draft}
-          disabled={!configured || busy}
-          placeholder={configured ? placeholder : "Unavailable until Pulse is configured"}
-          aria-label="Your question"
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              submit();
-            }
+      {chromeless ? (
+        // The Figma composer: one rounded field on a raised sheet with the
+        // violet send square living inside it. Enter asks, Shift+Enter breaks
+        // a line, which is the contract a single-row composer implies.
+        <form
+          id={ASK_FORM_ID}
+          className="pt-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
           }}
-        />
-        <div className="mt-2 flex items-center justify-between gap-3">
-          {/* The allowance is stated once per screen. When the header carries a
-              meter, repeating the same figure here is two statements of one
-              fact inside a single shell. */}
-          <p className="meta text-ink-3">
-            {headerRight || weeklyAllowance === 0
-              ? "Cmd + Enter to ask"
-              : `${available} of ${weeklyAllowance} credits left, resets ${formatDate(resetsAt)}. Cmd + Enter to ask`}
-          </p>
-          <span className="flex items-center gap-2">
-            {/* PLS-135. Dictation writes into the same draft the keyboard
-                does, so everything downstream, the Enter key, the disabled
-                state, the ask itself, is unchanged and unaware. */}
+        >
+          <div className="raised flex items-end gap-2 rounded-card border border-rule bg-sheet py-2 pl-3.5 pr-2 focus-within:border-violet">
+            <textarea
+              ref={composerRef}
+              rows={1}
+              value={draft}
+              disabled={!configured || busy}
+              placeholder={
+                configured ? placeholder : "Unavailable until Pulse is configured"
+              }
+              aria-label="Your question"
+              onChange={(e) => setDraft(e.target.value)}
+              onFocus={() => onComposerFocus?.(true)}
+              onBlur={() => onComposerFocus?.(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
+              className="max-h-32 min-w-0 flex-1 resize-none self-center bg-transparent py-1.5 text-[13px] leading-[1.5] text-ink outline-none placeholder:text-ink-3 disabled:opacity-60"
+            />
             <DictateButton
               disabled={!configured || busy}
               onTranscript={(text) => setDraft(text)}
             />
-            <Button variant="primary" type="submit" disabled={!canAsk}>
-              {busy ? "Working" : "Ask"}
-            </Button>
-          </span>
-        </div>
-      </form>
+            <button
+              type="submit"
+              disabled={!canAsk}
+              aria-label={busy ? "Working" : "Ask"}
+              className="settle flex size-9 shrink-0 items-center justify-center rounded-control bg-violet text-on-violet hover:bg-violet-hover disabled:opacity-40"
+            >
+              <ArrowUp size={16} strokeWidth={2} aria-hidden />
+            </button>
+          </div>
+        </form>
+      ) : (
+        <form
+          id={ASK_FORM_ID}
+          className="border-t border-rule px-4 py-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <Textarea
+            ref={composerRef}
+            rows={2}
+            value={draft}
+            disabled={!configured || busy}
+            placeholder={configured ? placeholder : "Unavailable until Pulse is configured"}
+            aria-label="Your question"
+            onChange={(e) => setDraft(e.target.value)}
+            onFocus={() => onComposerFocus?.(true)}
+            onBlur={() => onComposerFocus?.(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                submit();
+              }
+            }}
+          />
+          <div className="mt-2 flex items-center justify-between gap-3">
+            {/* The allowance is stated once per screen. When the header carries a
+                meter, repeating the same figure here is two statements of one
+                fact inside a single shell. */}
+            <p className="meta text-ink-3">
+              {headerRight || weeklyAllowance === 0
+                ? "Cmd + Enter to ask"
+                : `${available} of ${weeklyAllowance} credits left, resets ${formatDate(resetsAt)}. Cmd + Enter to ask`}
+            </p>
+            <span className="flex items-center gap-2">
+              {/* PLS-135. Dictation writes into the same draft the keyboard
+                  does, so everything downstream, the Enter key, the disabled
+                  state, the ask itself, is unchanged and unaware. */}
+              <DictateButton
+                disabled={!configured || busy}
+                onTranscript={(text) => setDraft(text)}
+              />
+              <Button variant="primary" type="submit" disabled={!canAsk}>
+                {busy ? "Working" : "Ask"}
+              </Button>
+            </span>
+          </div>
+        </form>
+      )}
     </section>
   );
 }

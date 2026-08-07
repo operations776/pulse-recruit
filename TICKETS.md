@@ -1269,3 +1269,50 @@ and 131/12 is 10.
   shortlist builder's toggles, which `ShortlistRow` has no columns for.
 - The landing page's warm depth and background.
 - `recordLesson` still calls `distilLesson` outside the reservation lifecycle.
+
+## PLS-185: the BD pillar, frame by frame
+
+Daniyal sent the four pillar-1 frames back with "it should look like this,
+check each image". The structure was largely built; this pass closed every
+visible divergence and two real bugs the frames exposed.
+
+**Frame 1, the main screen.** The dateline sentence now counts what MOVED
+("Two things moved on your patch overnight"), overnight only when true, week
+otherwise, promises as fallback. Today's play carries the frame's header (dot
+plus sentence case), names the company in medium weight, prefers the
+actionable signal (open roles, promotion) over the merely freshest, and its
+actions are now "Draft the approach" (fires the strategist at the outreach),
+"Why this one" (derived evidence inline: kind, date, source host), and a
+quiet "Put it on my list" that keeps feeding the ledger. Answers render flat
+beside the strategist's face with the recruiter's context worn as chips
+underneath; the composer is the frame's single rounded field with the violet
+send square, Enter to ask. The persona panel sits on the page ground. Signal
+rows lead with the company name.
+
+**Frame 2, avatar states.** Listening now exists (composer focus, via a new
+`onComposerFocus`), speaking is WHILE STREAMING (`phase === "writing"`), and
+the old derivation that left the face open-mouthed forever after any settled
+answer is gone. Failures show the stumped face in character: "Lost my thread
+there" plus the server's actual reason, with Try again submitting the
+composer form by `form` id association, because a closure over `ask` cannot
+legally be built during render (react-hooks/refs).
+
+**Frame 3, the tell drawer.** Freeform box FIRST with the paste placeholder,
+filed as kind `note` (migration `20260808090000`, adds `note` and
+`capacity`). The gaps are rows, not chips: question, consequence line, Answer
+button, N OPEN counter. "Who is already a client" arrives synced from the
+companies book with an Edit link, never asked for. Answered gaps show green
+with Edit, and revising updates the existing row by id rather than stacking
+a duplicate.
+
+**Frame 4, debrief and disagreement.** The debrief is the frame's quiet well
+card: the face, "You said you'd X. How did it land?", and Went well / Not
+yet, still chasing / Dead end / Skip. The push-back section renders the
+frame's treatment: 3px amber left rule, square corners on that edge, mono
+I'D PUSH BACK, amber body, and "Draft it his way" / "No, do it mine" replies
+on the newest answer only. The concede-on-second-push rule was already in
+the system prompt.
+
+| Piece | State |
+| --- | --- |
+| PLS-185 | The four BD frames closed, screenshotted both themes | done |

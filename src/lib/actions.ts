@@ -65,6 +65,8 @@ const BD_MEMORY_KINDS = new Set<BDMemoryKind>([
   "qualification",
   "preference",
   "feedback",
+  "note",
+  "capacity",
 ]);
 
 function canManageAgencyStrategy(role: "owner" | "admin" | "member") {

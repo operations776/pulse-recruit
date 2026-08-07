@@ -7,7 +7,7 @@
 // actionable now, a client who hired without you is a recovery, everything
 // else is worth watching.
 
-import type { SignalRow } from "@/lib/supabase/types";
+import type { PlaySignal } from "@/components/mara/todays-play";
 
 import { agent } from "@/config/brand";
 const URGENCY: Record<string, { label: string; tone: string }> = {
@@ -18,7 +18,7 @@ const URGENCY: Record<string, { label: string; tone: string }> = {
   expansion: { label: "WATCH", tone: "bg-mara-good" },
 };
 
-export function SignalsFeed({ signals }: { signals: SignalRow[] }) {
+export function SignalsFeed({ signals }: { signals: PlaySignal[] }) {
   return (
     <section className="flex w-full flex-col pt-2.5">
       <div className="flex items-center justify-between pb-2">
@@ -50,7 +50,10 @@ export function SignalsFeed({ signals }: { signals: SignalRow[] }) {
                 className={`size-[7px] shrink-0 rounded-full ${urgency.tone}`}
               />
               <span className="min-w-0 flex-1">
+                {/* The company leads, as every row in the frame does: a
+                    signal is only actionable with a name on it. */}
                 <span className="block text-[13px] leading-[1.45] text-mara-ink">
+                  <span className="font-medium">{signal.companyName}</span> ·{" "}
                   {signal.headline}
                 </span>
                 <span className="block text-[11px] leading-[1.45] text-mara-ink-3">

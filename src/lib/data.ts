@@ -382,6 +382,7 @@ export async function getMaraBoard() {
     signals,
     quiet,
     debriefedToday,
+    clients,
   ] = await Promise.all([
     supabase
       .from("bd_commitments")
@@ -420,6 +421,13 @@ export async function getMaraBoard() {
       .from("bd_debriefs")
       .select("commitment_id")
       .eq("asked_on", askedToday),
+    // The tell-drawer's synced row: who is already a client, so the
+    // strategist never pitches them. Derived from the companies book rather
+    // than asked for, because a fact the product already holds is not a gap.
+    supabase
+      .from("companies")
+      .select("id", { count: "exact", head: true })
+      .eq("type", "client"),
   ]);
 
   // Signals carry a dream_company_id, not a name, and the card and the play
@@ -461,6 +469,7 @@ export async function getMaraBoard() {
       patchNew: newDream.count ?? 0,
       rolesLive: openJobs.count ?? 0,
       quiet: quiet.count ?? 0,
+      clients: clients.count ?? 0,
     },
   };
 }

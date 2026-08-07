@@ -12,23 +12,26 @@ import type {
   BDMemoryScope,
 } from "@/lib/supabase/types";
 
-// PLS-113. "Tell Mara something".
+// PLS-113, rebuilt to the frame in PLS-185. "Tell Reyhan something".
 //
-// The Figma shows four prompts, and they are not decoration: they are the four
-// things Mara asks for and cannot infer from any table. A recruiter faced with
-// an empty box types nothing, so the drawer opens with the specific gaps and
-// each one preloads the question.
+// The frame's order is the argument: the freeform box comes FIRST, because
+// the fastest way to hand over context is to paste the thing you already
+// have. The structured gaps come second, as rows rather than chips, and each
+// one says what it costs to leave open: "Without this he cannot tell you
+// when you are underpricing" is a reason to answer, "Your fee model" is just
+// a label.
 //
-// A gap disappears once it is filled. Showing "Add your fee model" to somebody
-// who added their fee model last week is how a product teaches people to
-// ignore it.
+// A gap disappears once it is filled. Showing "Add your fee model" to
+// somebody who added their fee model last week is how a product teaches
+// people to ignore it. The client list arrives synced from the workspace's
+// own book, because a fact the product already holds is never asked for.
 
 type Gap = {
   kind: BDMemoryKind;
-  /** The chip label. */
-  label: string;
-  /** The question shown above the box once this gap is chosen. */
+  /** The question, asked exactly as the row shows it. */
   question: string;
+  /** What stays broken while this gap is open. */
+  consequence: string;
   /** Defaulted title, so a recruiter only has to write the answer. */
   title: string;
   scope: BDMemoryScope;
@@ -37,33 +40,38 @@ type Gap = {
 const GAPS: Gap[] = [
   {
     kind: "offer",
-    label: "Your fee model",
-    question: "What do you charge, and how is it structured?",
+    question: "What do you charge, and how do you structure it?",
+    consequence: `Without this ${agent.pronoun} cannot tell you when you are underpricing`,
     title: "Fee model",
     scope: "agency",
   },
   {
+    kind: "positioning",
+    question: "Which placement are you proudest of, and why did you win it?",
+    consequence: `Becomes the proof point in every approach ${agent.pronoun} drafts`,
+    title: "Proof point",
+    scope: "agency",
+  },
+  {
+    kind: "capacity",
+    question: "How many hours a week can you actually give to BD?",
+    consequence: `${agent.name} plans against your real week, not an ideal one`,
+    title: "BD capacity",
+    scope: "personal",
+  },
+  {
     kind: "ideal_client",
-    label: "Who you are best for",
-    question:
-      "Which kind of client do you do your best work for, and why them?",
+    question: "Which kind of client do you do your best work for?",
+    consequence: `Without this ${agent.possessive} targeting is generic`,
     title: "Ideal client",
     scope: "agency",
   },
   {
     kind: "territory",
-    label: "Your patch",
     question: "Which sectors and geographies are actually yours?",
+    consequence: "Keeps the research on your patch, not the whole market",
     title: "Territory",
     scope: "agency",
-  },
-  {
-    kind: "preference",
-    label: "How you like to work",
-    question:
-      `Anything ${agent.name} should know about how you want to be advised? Blunt, cautious, evidence first?`,
-    title: "How I work",
-    scope: "personal",
   },
 ];
 
@@ -73,51 +81,55 @@ export function TellMaraDrawer({
   memories,
   canManageAgency,
   meId,
+  clientCount,
 }: {
   open: boolean;
   onClose: () => void;
   memories: BDAgentMemoryRow[];
   canManageAgency: boolean;
   meId: string;
+  /** Companies marked as clients, for the synced do-not-pitch row. */
+  clientCount: number;
 }) {
   const router = useRouter();
   const { notify } = useToast();
   const [pending, startTransition] = useTransition();
   const [chosen, setChosen] = useState<Gap | null>(null);
   const [body, setBody] = useState("");
+  const [freeform, setFreeform] = useState("");
 
   // A gap is filled when a memory of that kind exists that this recruiter can
   // see: an agency fact counts for everyone, a personal one only for its
   // author.
-  const filled = new Set(
-    memories
-      .filter((m) => m.scope === "agency" || m.user_id === meId)
-      .map((m) => m.kind),
+  const visible = memories.filter(
+    (m) => m.scope === "agency" || m.user_id === meId,
   );
+  const filled = new Set(visible.map((m) => m.kind));
   const openGaps = GAPS.filter((gap) => !filled.has(gap.kind));
-  const filledGaps = GAPS.filter((gap) => filled.has(gap.kind));
+  const answeredGaps = GAPS.filter((gap) => filled.has(gap.kind));
 
   const close = () => {
     setChosen(null);
     setBody("");
+    setFreeform("");
     onClose();
   };
 
-  const save = () => {
-    if (!chosen) return;
+  const saveMemory = (input: {
+    scope: BDMemoryScope;
+    kind: BDMemoryKind;
+    title: string;
+    body: string;
+    id?: string;
+  }) => {
     // An owner-only fact from a member would be refused by the action anyway.
-    // Filing it as personal coaching keeps what they wrote rather than
-    // throwing an error at them for a permission they did not ask about.
+    // Filing it as personal keeps what they wrote rather than throwing an
+    // error at them for a permission they did not ask about.
     const scope: BDMemoryScope =
-      chosen.scope === "agency" && !canManageAgency ? "personal" : chosen.scope;
+      input.scope === "agency" && !canManageAgency ? "personal" : input.scope;
 
     startTransition(async () => {
-      const result = await saveBDMemory({
-        scope,
-        kind: chosen.kind,
-        title: chosen.title,
-        body,
-      });
+      const result = await saveBDMemory({ ...input, scope });
       if (!result.ok) {
         notify(result.error, "danger");
         return;
@@ -128,61 +140,165 @@ export function TellMaraDrawer({
     });
   };
 
+  const saveFreeform = () => {
+    const text = freeform.trim();
+    if (!text) return;
+    // The first line is the closest true thing to a title. No model call: an
+    // unmetered extraction here would break the claim-before-paid-call law
+    // for a convenience.
+    const firstLine = text.split(/\r?\n/)[0] ?? "";
+    const title =
+      firstLine.length > 60 ? `${firstLine.slice(0, 57)}...` : firstLine;
+    saveMemory({
+      scope: "personal",
+      kind: "note",
+      title: title || "In your own words",
+      body: text,
+    });
+  };
+
+  // Editing an answered gap starts from what was written, not a blank box.
+  const editGap = (gap: Gap) => {
+    const existing = visible.find((m) => m.kind === gap.kind);
+    setBody(existing?.body ?? "");
+    setChosen(gap);
+  };
+
   return (
     <Drawer open={open} onClose={close} label={`Tell ${agent.name} something`}>
-      <div className="flex flex-col gap-4 p-5">
+      <div className="flex flex-col gap-5 p-5">
         <div className="flex flex-col gap-1">
           <p className="text-[15px] font-medium leading-[1.45] text-mara-ink">
             Tell {agent.name} something
           </p>
           <p className="text-[12px] leading-[1.5] text-mara-ink-2">
-            {agent.name} uses this on every answer. The more {agent.pronoun}{" "}
-            knows about your business, the less generic {agent.possessive}{" "}
-            advice is.
+            The more {agent.pronoun} knows, the more specific {agent.possessive}{" "}
+            advice gets. None of this is required.
           </p>
         </div>
 
         {!chosen ? (
           <>
-            {openGaps.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                <p className="meta text-mara-ink-3">HE IS MISSING</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {openGaps.map((gap) => (
-                    <button
-                      key={gap.kind}
-                      onClick={() => setChosen(gap)}
-                      className="settle rounded-[20px] border border-mara-amber-edge bg-mara-amber-bg px-2.5 py-1 text-[11px] leading-[1.45] text-mara-amber-ink hover:brightness-95"
-                    >
-                      {gap.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="text-[12px] leading-[1.5] text-mara-ink-2">
-                He has everything he asks for. Add anything else below.
+            {/* Freeform first, per the frame. */}
+            <div className="flex flex-col gap-2">
+              <p className="text-[13px] font-medium leading-[1.45] text-mara-ink">
+                Tell it in your own words
               </p>
-            )}
+              <textarea
+                value={freeform}
+                onChange={(event) => setFreeform(event.target.value)}
+                rows={4}
+                placeholder="Paste a client email, a fee agreement, a job spec, a win or a loss. Or just type what changed."
+                className="w-full resize-none rounded-card border border-mara-rule bg-mara-sheet px-3 py-2.5 text-[13px] leading-[1.5] text-mara-ink outline-none placeholder:text-mara-ink-3 focus:border-mara-violet"
+              />
+              {freeform.trim().length > 0 ? (
+                <button
+                  onClick={saveFreeform}
+                  disabled={pending}
+                  className="settle self-start rounded-control bg-mara-violet px-3 py-1.5 text-[12px] font-medium leading-[1.45] text-white hover:brightness-110 disabled:opacity-60"
+                >
+                  {pending ? "Saving" : "Save it"}
+                </button>
+              ) : null}
+            </div>
 
-            {/* Only when there is something to revise. A heading with an empty
-                list under it is a promise the drawer does not keep. */}
-            {filledGaps.length > 0 ? (
-              <div className="flex flex-col gap-2 border-t border-mara-rule pt-3">
-                <p className="meta text-mara-ink-3">OR REVISE</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {filledGaps.map((gap) => (
-                    <button
-                      key={gap.kind}
-                      onClick={() => setChosen(gap)}
-                      className="settle rounded-[20px] border border-mara-rule bg-mara-sheet px-2.5 py-1 text-[11px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
-                    >
-                      {gap.label}
-                    </button>
-                  ))}
-                </div>
+            <div className="flex flex-col border-t border-mara-rule pt-3.5">
+              <div className="flex items-center justify-between pb-1">
+                <p className="text-[13px] font-medium leading-[1.45] text-mara-ink">
+                  What {agent.pronoun} is missing
+                </p>
+                <p className="meta text-mara-ink-3">{openGaps.length} OPEN</p>
               </div>
-            ) : null}
+
+              {openGaps.length === 0 ? (
+                <p className="py-2.5 text-[12px] leading-[1.5] text-mara-ink-2">
+                  Nothing. {agent.name} has everything {agent.pronoun} asks
+                  for.
+                </p>
+              ) : (
+                openGaps.map((gap) => (
+                  <div
+                    key={gap.kind}
+                    className="flex items-start gap-2.5 border-t border-mara-rule py-2.5 first:border-t-0"
+                  >
+                    <span
+                      aria-hidden
+                      className="mt-[5px] size-[7px] shrink-0 rounded-full bg-mara-warn"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13px] leading-[1.45] text-mara-ink">
+                        {gap.question}
+                      </span>
+                      <span className="block text-[11px] leading-[1.45] text-mara-ink-3">
+                        {gap.consequence}
+                      </span>
+                    </span>
+                    <button
+                      onClick={() => setChosen(gap)}
+                      className="settle shrink-0 rounded-control border border-mara-violet-edge bg-mara-violet-soft px-3 py-1 text-[11px] font-medium leading-[1.45] text-mara-violet-deep hover:brightness-95"
+                    >
+                      Answer
+                    </button>
+                  </div>
+                ))
+              )}
+
+              {/* Synced, never asked for. Green because it is a filled state,
+                  and the word "Synced" says why no question is being put. */}
+              {clientCount > 0 ? (
+                <div className="flex items-start gap-2.5 border-t border-mara-rule py-2.5">
+                  <span
+                    aria-hidden
+                    className="mt-[5px] size-[7px] shrink-0 rounded-full bg-mara-good"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] leading-[1.45] text-mara-ink">
+                      Who is already a client, so {agent.pronoun} never pitches
+                      them?
+                    </span>
+                    <span className="block text-[11px] leading-[1.45] text-mara-ink-3">
+                      Synced from your client list, {clientCount}{" "}
+                      {clientCount === 1 ? "company" : "companies"}
+                    </span>
+                  </span>
+                  <button
+                    onClick={() => {
+                      close();
+                      router.push("/companies");
+                    }}
+                    className="settle shrink-0 rounded-control border border-mara-rule bg-mara-sheet px-3 py-1 text-[11px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
+                  >
+                    Edit
+                  </button>
+                </div>
+              ) : null}
+
+              {answeredGaps.map((gap) => (
+                <div
+                  key={gap.kind}
+                  className="flex items-start gap-2.5 border-t border-mara-rule py-2.5"
+                >
+                  <span
+                    aria-hidden
+                    className="mt-[5px] size-[7px] shrink-0 rounded-full bg-mara-good"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] leading-[1.45] text-mara-ink">
+                      {gap.question}
+                    </span>
+                    <span className="block text-[11px] leading-[1.45] text-mara-ink-3">
+                      Answered. {agent.name} uses it on every answer.
+                    </span>
+                  </span>
+                  <button
+                    onClick={() => editGap(gap)}
+                    className="settle shrink-0 rounded-control border border-mara-rule bg-mara-sheet px-3 py-1 text-[11px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
+                  >
+                    Edit
+                  </button>
+                </div>
+              ))}
+            </div>
           </>
         ) : (
           <div className="flex flex-col gap-2.5">
@@ -200,12 +316,25 @@ export function TellMaraDrawer({
               value={body}
               onChange={(event) => setBody(event.target.value)}
               rows={6}
-              className="w-full resize-none rounded-shell border border-mara-rule bg-mara-sheet px-3 py-2.5 text-[13px] leading-[1.5] text-mara-ink outline-none focus:border-mara-violet"
+              className="w-full resize-none rounded-card border border-mara-rule bg-mara-sheet px-3 py-2.5 text-[13px] leading-[1.5] text-mara-ink outline-none focus:border-mara-violet"
               placeholder="In your own words."
             />
             <div className="flex items-center gap-2">
               <button
-                onClick={save}
+                onClick={() => {
+                  const existing = visible.find(
+                    (m) => m.kind === chosen.kind,
+                  );
+                  saveMemory({
+                    scope: chosen.scope,
+                    kind: chosen.kind,
+                    title: chosen.title,
+                    body,
+                    // Revising replaces the fact rather than stacking a
+                    // second copy of the same kind under it.
+                    id: existing?.id,
+                  });
+                }}
                 disabled={pending || body.trim().length === 0}
                 className="settle rounded-control bg-mara-violet px-3 py-1.5 text-[12px] font-medium leading-[1.45] text-white hover:brightness-110 disabled:opacity-60"
               >

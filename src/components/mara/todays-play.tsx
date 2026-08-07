@@ -10,29 +10,46 @@ import { agent } from "@/config/brand";
 /** A signal with its company resolved, which the row itself does not carry. */
 export type PlaySignal = SignalRow & { companyName: string };
 
-// PLS-112. "Today's play".
+// PLS-112, aligned to the frame in PLS-185. "Today's play".
 //
-// One card, one move. The Figma gives it the violet left rule and the only
-// filled button on the screen, which is the whole point: everything else on
-// this page is information, this is the thing to actually do.
+// One card, one move. The violet wash and the only filled button on the
+// screen, which is the whole point: everything else on this page is
+// information, this is the thing to actually do.
+//
+// The frame's two actions: "Draft the approach" fires the strategist at the
+// outreach itself, and "Why this one" opens the reasoning in place rather
+// than asking anyone to trust an unexplained recommendation. "Put it on my
+// list" stays as the quiet third action because it is what feeds the ledger,
+// and a play you cannot promise to run is advice, not coaching.
 //
 // The play is derived from the freshest undismissed signal rather than
 // generated. A model call to decide what a recruiter should do today would
 // spend credits on every page load, and AI.md is explicit that a paid call
-// happens on an ask, not on a render. So the card reads the top signal and
-// says plainly where it came from. When there is no signal it says there is no
-// signal, rather than inventing a play.
+// happens on an ask, not on a render. When there is no signal it says there
+// is no signal, rather than inventing a play.
+
+const KIND_WORD: Record<string, string> = {
+  open_role: "an open-roles signal",
+  funding: "a funding signal",
+  leadership: "a leadership change",
+  promotion: "a promotion signal",
+  expansion: "an expansion signal",
+};
 
 export function TodaysPlay({ signal }: { signal: PlaySignal | null }) {
   const router = useRouter();
   const { notify } = useToast();
   const [pending, startTransition] = useTransition();
   const [taken, setTaken] = useState(false);
+  const [whyOpen, setWhyOpen] = useState(false);
 
   if (!signal) {
     return (
       <section className="raised flex w-full flex-col gap-1.5 rounded-card border border-mara-rule bg-mara-sheet px-4 py-3.5">
-        <p className="meta text-mara-ink-3">TODAY&rsquo;S PLAY</p>
+        <p className="flex items-center gap-1.5 text-[12px] font-medium leading-[1.45] text-mara-violet-deep">
+          <span aria-hidden className="size-1.5 rounded-full bg-mara-violet" />
+          Today&rsquo;s play
+        </p>
         <p className="text-[13px] leading-[1.5] text-mara-ink-2">
           Nothing has moved on your patch yet. Add companies to your Dream 100
           and {agent.name} will have something to point at here.
@@ -41,16 +58,12 @@ export function TodaysPlay({ signal }: { signal: PlaySignal | null }) {
     );
   }
 
-  // The commitment is worded the way a recruiter would say it out loud, so it
-  // reads correctly back in the ledger tomorrow morning.
-  const body = `Reach out to ${signal.companyName} about ${signal.headline.toLowerCase()}`;
-
   // source_url is a link, not a provider name. The host is the honest thing
-  // to show: "FROM TECHCRUNCH.COM" is checkable, "FROM YOUR PATCH" is not.
-  let sourceLabel = "ON YOUR PATCH";
+  // to show: "techcrunch.com" is checkable, "your patch" is not.
+  let sourceHost: string | null = null;
   if (signal.source_url) {
     try {
-      sourceLabel = `FROM ${new URL(signal.source_url).hostname.replace(/^www\./, "").toUpperCase()}`;
+      sourceHost = new URL(signal.source_url).hostname.replace(/^www\./, "");
     } catch {
       // A malformed url is not worth failing a render over.
     }
@@ -58,7 +71,10 @@ export function TodaysPlay({ signal }: { signal: PlaySignal | null }) {
 
   const commit = () => {
     startTransition(async () => {
-      const result = await addCommitment(body, "play");
+      const result = await addCommitment(
+        `Reach out to ${signal.companyName} about ${signal.headline.toLowerCase()}`,
+        "play",
+      );
       if (!result.ok) {
         notify(result.error, "danger");
         return;
@@ -71,39 +87,76 @@ export function TodaysPlay({ signal }: { signal: PlaySignal | null }) {
 
   return (
     <section className="raised flex w-full flex-col gap-2 rounded-card border border-mara-violet-edge bg-mara-violet-soft px-4 py-3.5">
-            <div className="flex items-center justify-between">
-        <p className="meta text-mara-violet-deep">TODAY&rsquo;S PLAY</p>
-        <p className="meta text-mara-ink-3">{sourceLabel}</p>
-      </div>
-
-      <p className="text-[14px] font-medium leading-[1.45] text-mara-ink">
-        {signal.headline}
+      <p className="flex items-center gap-1.5 text-[12px] font-medium leading-[1.45] text-mara-violet-deep">
+        <span aria-hidden className="size-1.5 rounded-full bg-mara-violet" />
+        Today&rsquo;s play
       </p>
-      {signal.detail ? (
-        <p className="text-[12px] leading-[1.5] text-mara-ink-2">
-          {signal.detail}
-        </p>
-      ) : null}
 
-      <div className="flex items-center gap-2 pt-1">
-        <button
-          onClick={commit}
-          disabled={pending || taken}
-          className="settle rounded-control bg-mara-violet px-3 py-1.5 text-[12px] font-medium leading-[1.45] text-white hover:brightness-110 disabled:opacity-60"
-        >
-          {taken ? "On your list" : pending ? "Saving" : "I'll do this"}
-        </button>
+      {/* One paragraph, as the frame writes it: WHO first, then the fact and
+          why it is yours. A play that does not name the company is a
+          recommendation nobody can act on. */}
+      <p className="text-[14px] leading-[1.5] text-mara-ink">
+        <span className="font-medium">{signal.companyName}</span> ·{" "}
+        {signal.headline}
+        {signal.detail ? `. ${signal.detail}` : ""}
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2 pt-1">
         <button
           onClick={() =>
             router.push(
-              `/market?q=${encodeURIComponent(`What should I say to ${signal.companyName} about ${signal.headline}?`)}`,
+              `/market?q=${encodeURIComponent(`Draft my approach to ${signal.companyName}: ${signal.headline}. Use what you know about my agency.`)}`,
             )
           }
+          className="settle rounded-control bg-mara-violet px-3 py-1.5 text-[12px] font-medium leading-[1.45] text-white hover:brightness-110"
+        >
+          Draft the approach
+        </button>
+        <button
+          onClick={() => setWhyOpen((open) => !open)}
+          aria-expanded={whyOpen}
           className="settle rounded-control border border-mara-rule bg-mara-sheet px-3 py-1.5 text-[12px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
         >
-          Ask {agent.name} how
+          Why this one
+        </button>
+        <button
+          onClick={commit}
+          disabled={pending || taken}
+          className="settle ml-auto text-[11px] leading-[1.45] text-mara-ink-3 underline-offset-2 hover:text-mara-violet hover:underline disabled:opacity-60 disabled:no-underline"
+        >
+          {taken ? "On your list" : pending ? "Saving" : "Put it on my list"}
         </button>
       </div>
+
+      {whyOpen ? (
+        // The reasoning is derived, so it says only derivable things: what
+        // kind of signal, how fresh, and where it came from. No claim a table
+        // cannot back.
+        <div className="border-t border-mara-violet-edge pt-2 text-[12px] leading-[1.5] text-mara-ink-2">
+          The freshest signal on your patch: {KIND_WORD[signal.kind] ?? "a signal"}{" "}
+          at {signal.companyName}, picked up{" "}
+          {new Date(signal.detected_at).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "long",
+          })}
+          {sourceHost ? (
+            <>
+              {" "}
+              from{" "}
+              <a
+                href={signal.source_url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-mara-violet"
+              >
+                {sourceHost}
+              </a>
+            </>
+          ) : null}
+          . Companies move like this before they brief agencies, which is the
+          window this card exists to catch.
+        </div>
+      ) : null}
     </section>
   );
 }
