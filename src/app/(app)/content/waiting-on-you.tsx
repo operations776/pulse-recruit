@@ -46,7 +46,7 @@ export function waitingRows(
       rows.push({
         post,
         reason: post.publish_error || "LinkedIn refused this one.",
-        word: "Failed",
+        word: "Did not send",
         tone: "text-red",
         dot: "bg-red",
         primary: { label: "Try again", kind: "retry" },

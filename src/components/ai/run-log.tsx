@@ -67,7 +67,7 @@ export function RunLog({
       {steps.length > 0 ? (
         <ul className="flex flex-col">
           {steps.map((step, i) => {
-            const failed = step.label === "Failed";
+            const failed = step.label === "No result";
             const Icon = failed ? AlertTriangle : SourceIcon;
             return (
               <li

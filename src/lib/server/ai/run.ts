@@ -335,7 +335,10 @@ async function runToolSafely(
       }),
       steps: [
         {
-          label: "Failed",
+          // Not "Failed": the rule is to say what needs attention and why. The
+          // run-log matches this exact string to pick its icon, so the two
+          // move together or the warning triangle silently stops appearing.
+          label: "No result",
           detail: `${call.function.name} did not return`,
         },
       ],

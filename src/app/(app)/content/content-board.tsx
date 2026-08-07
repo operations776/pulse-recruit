@@ -47,7 +47,7 @@ const COLUMN_DOT: Record<string, string> = {
 const CARD_STATE: Partial<
   Record<PostStatus, { word: string; tone: string; Icon: typeof XCircle }>
 > = {
-  failed: { word: "Failed", tone: "text-red", Icon: XCircle },
+  failed: { word: "Did not send", tone: "text-red", Icon: XCircle },
   needs_attention: { word: "Needs attention", tone: "text-amber-text", Icon: AlertTriangle },
   needs_review: { word: "Review", tone: "text-amber-text", Icon: Eye },
   publishing: { word: "Sending", tone: "text-amber-text", Icon: Loader },

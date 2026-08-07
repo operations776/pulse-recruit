@@ -31,7 +31,7 @@ function statusOf(post: PostRow): { word: string; dot: string; tone: string } {
     case "needs_attention":
       return { word: "Needs attention", dot: "bg-amber", tone: "text-amber-text" };
     case "failed":
-      return { word: "Failed", dot: "bg-red", tone: "text-red" };
+      return { word: "Did not send", dot: "bg-red", tone: "text-red" };
     default:
       return { word: "Draft", dot: "bg-ink-3", tone: "text-ink-2" };
   }

@@ -51,7 +51,7 @@ const STATUS_CHIP: Record<PostRow["status"], { tone: Tone; word: string }> = {
   publishing: { tone: "attention", word: "Publishing" },
   published: { tone: "on", word: "Published" },
   needs_attention: { tone: "attention", word: "Needs attention" },
-  failed: { tone: "danger", word: "Failed" },
+  failed: { tone: "danger", word: "Did not send" },
 };
 
 type Local = PostAsset & { pending?: boolean };
