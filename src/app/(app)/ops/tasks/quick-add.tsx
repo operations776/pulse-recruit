@@ -112,12 +112,15 @@ export function QuickAdd({
       </div>
 
       {chips.length > 0 || parsed.unknownHandles.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-1.5 border-t border-rule px-3.5 py-2.5">
-          <span className="legend mr-1 text-ink-3">Reads as</span>
+        // The violet wash strip from the frame: the parse preview is the one
+        // promissory surface on the screen, and the tint is what separates
+        // "what will happen" from the rows of what already exists.
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-violet-100 bg-violet-wash px-3.5 py-2.5">
+          <span className="legend mr-1 text-violet-deep">Reads as</span>
           {chips.map((chip) => (
             <span
               key={chip.key}
-              className="legend rounded-chip border border-rule bg-well px-2 py-1 text-ink-2"
+              className="legend rounded-chip border border-violet-100 bg-sheet px-2 py-1 text-violet-deep"
             >
               {chip.label}
             </span>

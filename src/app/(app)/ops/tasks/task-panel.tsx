@@ -124,7 +124,7 @@ export function TaskPanel({
       </div>
 
       <div className="border-b border-rule px-4 py-3">
-        <h2 className="text-[15px] font-medium leading-[1.4] text-ink">
+        <h2 className="text-[17px] font-medium leading-[1.4] text-ink">
           {task.title}
         </h2>
         {task.detail ? (

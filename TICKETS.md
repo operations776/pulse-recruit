@@ -1316,3 +1316,27 @@ the system prompt.
 | Piece | State |
 | --- | --- |
 | PLS-185 | The four BD frames closed, screenshotted both themes | done |
+
+## PLS-181: Tasks against its six frames
+
+Daniyal sent the Tasks frames with "tasks should look exactly like this".
+The audit found the behavioural sheets already implemented: the completion
+choreography (optimistic flip, count decrements on click, 4s grace with
+Undo in the row, 200ms height and 120ms opacity collapse, Cmd+Z, e on the
+focused row, reduced motion skips the collapse), the completed list (10 per
+page, grouped by completion date newest first, neutral grey checkbox,
+reopening restores the original due date, never deleted), the comments
+matrix (author edits forever with EDITED, admins delete never edit, no
+modal delete with a 3s in-place commit, tombstones only under replies,
+@ mentions add watchers, system and Claude entries immutable, oldest
+first), the quick-add parse preview with the unknown-handle warning, and
+the rail with By person and both saved views.
+
+What actually diverged was visual, now closed: the page title is the serif,
+the checkboxes are circles (Rev E restored them for exactly this control),
+the reads-as strip sits on the violet wash with violet chips, and the panel
+title stepped up to 17px.
+
+| Piece | State |
+| --- | --- |
+| PLS-181 | Tasks aligned to the six frames, behaviour audited, visuals closed | done |

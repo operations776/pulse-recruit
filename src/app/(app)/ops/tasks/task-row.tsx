@@ -111,7 +111,9 @@ export function TaskListRow({
             className="group -my-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control"
           >
             <span
-              className={`settle flex size-4 items-center justify-center rounded-control border-2 group-hover:border-[3px] ${
+              // A circle, per every frame in the spec sheet. Rev E restored
+              // circles for exactly this control.
+              className={`settle flex size-4 items-center justify-center rounded-full border-2 group-hover:border-[3px] ${
                 done
                   ? graced
                     ? "border-violet bg-violet text-on-violet"

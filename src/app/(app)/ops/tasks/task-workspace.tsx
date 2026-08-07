@@ -491,7 +491,9 @@ export function TaskWorkspace({
         <header className="border-b border-rule px-6 py-3">
           <div className="mx-auto flex w-full max-w-[900px] items-center justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="display text-[18px] leading-none">{heading}</h1>
+            {/* The serif, per the frame and DESIGN.md 4z: page titles are
+                Newsreader, everywhere. */}
+            <h1 className="page-title text-ink">{heading}</h1>
             <p className="meta mt-1.5 text-ink-2">
               {openCount} open{overdueCount > 0 ? `, ${overdueCount} of them overdue` : ""}
             </p>
