@@ -365,6 +365,12 @@ export async function getMaraBoard() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
   const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
 
+  // Already answered today. "Still chasing" leaves the commitment open on
+  // purpose, so it stays in the ledger, but re-asking about it the same
+  // evening is the product not listening. The unique index makes the write
+  // idempotent; this makes the question stop.
+  const askedToday = new Date().toISOString().slice(0, 10);
+
   const [
     commitments,
     dream,
@@ -372,6 +378,7 @@ export async function getMaraBoard() {
     newDream,
     signals,
     quiet,
+    debriefedToday,
   ] = await Promise.all([
     supabase
       .from("bd_commitments")
@@ -406,6 +413,10 @@ export async function getMaraBoard() {
       .from("dream_companies")
       .select("id", { count: "exact", head: true })
       .or(`last_signal_at.is.null,last_signal_at.lt.${ninetyDaysAgo}`),
+    supabase
+      .from("bd_debriefs")
+      .select("commitment_id")
+      .eq("asked_on", askedToday),
   ]);
 
   // Signals carry a dream_company_id, not a name, and the card and the play
@@ -430,9 +441,17 @@ export async function getMaraBoard() {
     companyName: namesById.get(row.dream_company_id) ?? "an account on your patch",
   }));
 
+  const answeredIds = new Set(
+    (debriefedToday.data ?? []).map((row) => row.commitment_id as string),
+  );
+
   return {
     session,
     commitments: (commitments.data ?? []) as BDCommitmentRow[],
+    /** Open, and not already answered this evening. */
+    debriefCandidates: ((commitments.data ?? []) as BDCommitmentRow[]).filter(
+      (row) => !answeredIds.has(row.id),
+    ),
     signals: withNames,
     counts: {
       patch: dream.count ?? 0,

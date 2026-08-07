@@ -63,7 +63,7 @@ export default async function BDStrategistPage({
 
   const configured = hasModelKey() && hasResearchKey();
 
-  const { counts, commitments, signals } = board;
+  const { counts, commitments, signals, debriefCandidates } = board;
 
   const metrics: Metric[] = [
     {
@@ -172,6 +172,17 @@ export default async function BDStrategistPage({
       domains={domains}
       firstName={firstName}
       serverHour={serverHour}
+      // From 17:00 London, and only for a promise made before today's
+      // afternoon: asking at 5pm about something committed at 4:55pm is not a
+      // debrief, it is nagging. Commitments come oldest first, so [0] is the
+      // one that has been outstanding longest.
+      debriefDue={
+        serverHour >= 17 &&
+        debriefCandidates[0] &&
+        nowMs - new Date(debriefCandidates[0].said_at).getTime() > 3 * 3_600_000
+          ? debriefCandidates[0]
+          : null
+      }
       nowMs={nowMs}
       lastRead={humanise(lastAnswer?.created_at ?? null, nowMs)}
       // Agency strategy is shared by everyone, so changing it is an

@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { Briefing, parseBriefing } from "@/components/ai/briefing";
 import { ChatPanel } from "@/components/ai/chat-panel";
 import type { MaraState } from "@/components/mara/avatar";
+import { DebriefCard } from "@/components/mara/debrief";
 import { CommitmentsLedger } from "@/components/mara/ledger";
 import { MetricsStrip, type Metric } from "@/components/mara/metrics";
 import { PersonaPanel, type Domain } from "@/components/mara/persona-panel";
@@ -59,6 +60,7 @@ export function MaraStage({
   domains,
   firstName,
   serverHour,
+  debriefDue,
   nowMs,
   lastRead,
   canManageAgency,
@@ -83,6 +85,8 @@ export function MaraStage({
   firstName: string;
   /** London hour, resolved server-side so the greeting cannot flip on hydration. */
   serverHour: number;
+  /** The promise Mara asks about after 17:00, or null when there is nothing to ask. */
+  debriefDue: BDCommitmentRow | null;
   nowMs: number;
   lastRead: string;
   canManageAgency: boolean;
@@ -174,6 +178,11 @@ export function MaraStage({
                 </p>
               </div>
             ) : null}
+
+            {/* Evening only, and above the ledger: at 5pm the useful thing is
+                not the list, it is the one question about the promise you
+                made this morning. */}
+            {!started ? <DebriefCard commitment={debriefDue} /> : null}
 
             <div className="mara-in mara-in-1">
               <CommitmentsLedger commitments={commitments} nowMs={nowMs} />
