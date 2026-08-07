@@ -40,7 +40,7 @@ export default function PricingPage() {
               {PRICING.badge}
             </span>
 
-            <p className="display mt-6 flex items-baseline gap-2 text-[3.5rem] leading-none text-white">
+            <p className="display-lg mt-6 flex items-baseline gap-2 text-[3.5rem] leading-none text-white">
               {PRICING.amount}
               <span className="text-[1rem] font-medium text-[#b6acce]">
                 {PRICING.period}

@@ -89,7 +89,7 @@ export default function FeaturesPage() {
               }`}
             >
               <div>
-                                <h2 className="display mt-3 text-[clamp(1.5rem,3vw,2rem)]">
+                                <h2 className="display-lg mt-3 text-[clamp(1.5rem,3vw,2rem)]">
                   {row.title}
                 </h2>
                 <p className="mt-3.5 text-[15px] leading-[1.65] text-ink-2">

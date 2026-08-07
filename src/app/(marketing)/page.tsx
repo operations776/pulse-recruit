@@ -20,16 +20,19 @@ import { HeroWord } from "./hero-word";
 export default function MarketingPage() {
   return (
     <>
+      {/* PLS-173. The page's one authored entrance, per DESIGN.md 10a.
+          Headline, then sub-line, then the controls mount onto the surface
+          last: the order the thing would actually be assembled in. */}
       <section className="py-24 text-center">
         <Wrap>
           <div>
-            <h1 className="display mx-auto max-w-[20ch] text-[clamp(2.3rem,5.6vw,3.8rem)] leading-[1.05]">
+            <h1 className="mount mount-1 display-lg mx-auto max-w-[20ch] text-[clamp(2.3rem,5.6vw,3.8rem)]">
               {HERO.headline} <HeroWord words={[...HERO.cycle]} />
             </h1>
-            <p className="mx-auto mt-6 max-w-[54ch] text-[clamp(1rem,1.6vw,1.2rem)] leading-[1.6] text-ink-2">
+            <p className="mount mount-2 mx-auto mt-6 max-w-[54ch] text-[clamp(1rem,1.6vw,1.2rem)] leading-[1.6] text-ink-2">
               {HERO.sub}
             </p>
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+            <div className="mount mount-3 mt-9 flex flex-wrap items-center justify-center gap-3">
               <PrimaryLink href="/signup">Start your pilot</PrimaryLink>
               <GhostLink href="#how-it-works">See how it works</GhostLink>
               <GhostLink href="/pricing">Pricing</GhostLink>

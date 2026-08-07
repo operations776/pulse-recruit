@@ -33,7 +33,7 @@ export function Hero({
     <section className="py-20 text-center">
       <Wrap>
         <div>
-          <h1 className="display mx-auto max-w-[18ch] text-[clamp(2.2rem,5.4vw,3.6rem)] leading-[1.05]">
+          <h1 className="display-lg mx-auto max-w-[18ch] text-[clamp(2.2rem,5.4vw,3.6rem)]">
             {title}
           </h1>
           {sub ? (
@@ -60,7 +60,7 @@ export function SectionHead({
 }) {
   return (
     <div className="mx-auto mb-11 max-w-[60ch] text-center">
-      <h2 className="display text-[clamp(1.8rem,4vw,2.5rem)] leading-[1.15]">
+      <h2 className="display-lg text-[clamp(1.8rem,4vw,2.5rem)] leading-[1.15]">
         {title}
       </h2>
       {sub ? (
@@ -136,7 +136,7 @@ export function ClosingCta({
   return (
     <Band alt>
       <div className="mx-auto max-w-[60ch] text-center">
-        <h2 className="display text-[clamp(1.8rem,4vw,2.5rem)]">{title}</h2>
+        <h2 className="display-lg text-[clamp(1.8rem,4vw,2.5rem)]">{title}</h2>
         <p className="mt-3.5 text-[15px] leading-[1.6] text-ink-2">{sub}</p>
         <div className="mt-7">
           <PrimaryLink href="/signup">Start your pilot</PrimaryLink>
