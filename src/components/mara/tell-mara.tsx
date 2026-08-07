@@ -94,6 +94,7 @@ export function TellMaraDrawer({
       .map((m) => m.kind),
   );
   const openGaps = GAPS.filter((gap) => !filled.has(gap.kind));
+  const filledGaps = GAPS.filter((gap) => filled.has(gap.kind));
 
   const close = () => {
     setChosen(null);
@@ -162,20 +163,24 @@ export function TellMaraDrawer({
               </p>
             )}
 
-            <div className="flex flex-col gap-2 border-t border-mara-rule pt-3">
-              <p className="meta text-mara-ink-3">OR SOMETHING ELSE</p>
-              <div className="flex flex-wrap gap-1.5">
-                {GAPS.filter((gap) => filled.has(gap.kind)).map((gap) => (
-                  <button
-                    key={gap.kind}
-                    onClick={() => setChosen(gap)}
-                    className="settle rounded-[20px] border border-mara-rule bg-mara-sheet px-2.5 py-1 text-[11px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
-                  >
-                    {gap.label}
-                  </button>
-                ))}
+            {/* Only when there is something to revise. A heading with an empty
+                list under it is a promise the drawer does not keep. */}
+            {filledGaps.length > 0 ? (
+              <div className="flex flex-col gap-2 border-t border-mara-rule pt-3">
+                <p className="meta text-mara-ink-3">OR REVISE</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {filledGaps.map((gap) => (
+                    <button
+                      key={gap.kind}
+                      onClick={() => setChosen(gap)}
+                      className="settle rounded-[20px] border border-mara-rule bg-mara-sheet px-2.5 py-1 text-[11px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
+                    >
+                      {gap.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
           </>
         ) : (
           <div className="flex flex-col gap-2.5">
