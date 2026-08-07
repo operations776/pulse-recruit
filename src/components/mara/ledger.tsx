@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/toast";
 import { settleCommitment } from "@/lib/actions";
 import type { BDCommitmentRow } from "@/lib/supabase/types";
 
+import { agent } from "@/config/brand";
 // PLS-112. "You said you'd" — the commitments ledger.
 //
 // This is the part that makes Mara a coach. It is deliberately the second
@@ -53,7 +54,7 @@ export function CommitmentsLedger({
         notify(result.error, "danger");
         return;
       }
-      notify(`Done. Mara has it off your list.`);
+      notify(`Done. ${agent.name} has it off your list.`);
       router.refresh();
     });
   };
@@ -73,7 +74,7 @@ export function CommitmentsLedger({
         // Not an empty card. One honest line on the shared rule, because an
         // empty ledger is a good state and should not shout about itself.
         <p className="border-t border-mara-rule py-2.5 text-[12px] leading-[1.45] text-mara-ink-3">
-          Nothing outstanding. Mara logs a commitment when you say you will do
+          Nothing outstanding. {agent.name} logs a commitment when you say you will do
           something.
         </p>
       ) : (

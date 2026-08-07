@@ -23,6 +23,7 @@ import type {
 import { AnswerFeedback } from "@/app/(app)/market/answer-feedback";
 import { ConversationList } from "@/app/(app)/market/conversation-list";
 
+import { agent } from "@/config/brand";
 // PLS-112. Mara's screen.
 //
 // Two columns: the stage and the persona panel. The stage runs greeting,
@@ -264,7 +265,7 @@ export function MaraStage({
             resetsAt={resetsAt ?? new Date().toISOString()}
             configured={configured}
             unconfiguredReason={unconfiguredReason}
-            placeholder="Ask Mara about the companies you want to win"
+            placeholder={`Ask ${agent.name} about the companies you want to win`}
             emptyTitle=""
             emptyBody=""
             suggestions={SUGGESTIONS}

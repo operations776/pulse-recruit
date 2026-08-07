@@ -12,6 +12,7 @@ import { decodeEvents, type RunPhase } from "@/lib/ai-events";
 import type { ChatRow, ChatSource, ChatSurface } from "@/lib/supabase/types";
 import { formatDate } from "@/lib/time";
 
+import { DictateButton } from "@/components/ai/dictate";
 // One panel, two surfaces. The surface decides the tool set on the server and
 // the wording here; the behaviour is identical on purpose, because two chat
 // screens that drift apart is how a product starts feeling unfinished.
@@ -446,9 +447,18 @@ export function ChatPanel({
               ? "Cmd + Enter to ask"
               : `${available} of ${weeklyAllowance} credits left, resets ${formatDate(resetsAt)}. Cmd + Enter to ask`}
           </p>
-          <Button variant="primary" type="submit" disabled={!canAsk}>
-            {busy ? "Working" : "Ask"}
-          </Button>
+          <span className="flex items-center gap-2">
+            {/* PLS-135. Dictation writes into the same draft the keyboard
+                does, so everything downstream, the Enter key, the disabled
+                state, the ask itself, is unchanged and unaware. */}
+            <DictateButton
+              disabled={!configured || busy}
+              onTranscript={(text) => setDraft(text)}
+            />
+            <Button variant="primary" type="submit" disabled={!canAsk}>
+              {busy ? "Working" : "Ask"}
+            </Button>
+          </span>
         </div>
       </form>
     </section>

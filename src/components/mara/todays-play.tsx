@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/toast";
 import { addCommitment } from "@/lib/actions";
 import type { SignalRow } from "@/lib/supabase/types";
 
+import { agent } from "@/config/brand";
 /** A signal with its company resolved, which the row itself does not carry. */
 export type PlaySignal = SignalRow & { companyName: string };
 
@@ -34,7 +35,7 @@ export function TodaysPlay({ signal }: { signal: PlaySignal | null }) {
         <p className="meta text-mara-ink-3">TODAY&rsquo;S PLAY</p>
         <p className="text-[13px] leading-[1.5] text-mara-ink-2">
           Nothing has moved on your patch yet. Add companies to your Dream 100
-          and Mara will have something to point at here.
+          and {agent.name} will have something to point at here.
         </p>
       </section>
     );
@@ -63,7 +64,7 @@ export function TodaysPlay({ signal }: { signal: PlaySignal | null }) {
         return;
       }
       setTaken(true);
-      notify("Logged. Mara will ask you about it.");
+      notify(`Logged. ${agent.name} will ask you about it.`);
       router.refresh();
     });
   };
@@ -107,7 +108,7 @@ export function TodaysPlay({ signal }: { signal: PlaySignal | null }) {
           }
           className="settle rounded-control border border-mara-rule bg-mara-sheet px-3 py-1.5 text-[12px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
         >
-          Ask Mara how
+          Ask {agent.name} how
         </button>
       </div>
     </section>

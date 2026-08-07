@@ -3,7 +3,9 @@
 import { MaraAvatar, type MaraState } from "@/components/mara/avatar";
 import type { BDAgentMemoryRow } from "@/lib/supabase/types";
 
-// PLS-111. The right panel: who Mara is, what she is watching, what she knows.
+import { agent } from "@/config/brand";
+// PLS-111. The right panel: who the strategist is, what he is watching,
+// what he knows.
 //
 // Three sections separated by 1px rules, exactly as the Figma has them. The
 // dot on each advisory domain is colour PLUS a word in the copy beneath it,
@@ -47,10 +49,10 @@ export function PersonaPanel({
       <div className="flex flex-col items-center gap-1.5">
         <MaraAvatar state={state} size={92} ring />
         <p className="mt-1.5 text-[16px] font-medium leading-[1.45] text-mara-ink">
-          Mara
+          {agent.name}
         </p>
         <p className="text-[12px] leading-[1.45] text-mara-ink-2">
-          your BD strategist
+          {agent.role}
         </p>
         <span className="flex items-center gap-1.5 pt-0.5">
           <span
@@ -65,10 +67,10 @@ export function PersonaPanel({
         </span>
       </div>
 
-      {/* What Mara is watching */}
+      {/* What the strategist is watching */}
       <div className="flex flex-col border-t border-mara-rule pt-4">
         <p className="text-[11px] leading-[1.45] text-mara-ink-3">
-          What Mara is watching
+          What {agent.name} is watching
         </p>
 
         {domains.map((domain, index) => (
@@ -94,10 +96,10 @@ export function PersonaPanel({
         ))}
       </div>
 
-      {/* What Mara knows about you */}
+      {/* What {agent.name} knows about you */}
       <div className="flex flex-col gap-2.5 border-t border-mara-rule pt-4">
         <div className="flex items-center justify-between text-[11px] leading-[1.45]">
-          <span className="text-mara-ink-3">What Mara knows about you</span>
+          <span className="text-mara-ink-3">What {agent.name} knows about you</span>
           <button
             onClick={onManage}
             className="text-mara-violet hover:underline"
@@ -135,7 +137,7 @@ export function PersonaPanel({
           >
             <span className="text-[12px] font-medium text-mara-violet">+</span>
             <span className="text-[11px] text-mara-violet-deep">
-              Tell Mara something
+              Tell {agent.name} something
             </span>
           </button>
         </div>

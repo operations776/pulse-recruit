@@ -24,7 +24,8 @@ const LABELS: { key: BriefingSection["key"]; match: RegExp; label: string }[] = 
   { key: "matters", match: /^why it matters:?\s*$/i, label: "Why it matters" },
   { key: "move", match: /^best next move:?\s*$/i, label: "Best next move" },
   { key: "evidence", match: /^evidence:?\s*$/i, label: "Evidence" },
-  // PLS-114. The section Mara writes when she thinks the recruiter is wrong.
+  // PLS-114. The section the strategist writes when he thinks the recruiter
+  // is wrong.
   // An adviser who only ever agrees is not an adviser, so this is a first
   // class part of the answer rather than a hedge buried in the prose.
   { key: "pushback", match: /^i'?d push back:?\s*$/i, label: "I'd push back" },
@@ -117,7 +118,8 @@ const SECTION_STYLE: Record<
     text: "text-ink-2",
   },
   // Amber, and the only section that uses a status colour. Disagreement IS a
-  // status: it is Mara saying the plan on the table has a problem. The word
+  // status: it is the strategist saying the plan on the table has a problem.
+  // The word
   // "I'd push back" carries it too, so the colour is reinforcement.
   pushback: {
     icon: AlertTriangle,

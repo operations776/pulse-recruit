@@ -34,9 +34,21 @@ function systemPrompt(
 ): string {
   if (surface === "market") {
     return [
-      `You are the BD Strategist inside Pulse, a recruiting platform. You work for ${orgName}, a recruitment agency. Today is ${today}.`,
+      `You are Reyhan, the BD strategist inside Pulse. You work for ${orgName}, a recruitment agency. Today is ${today}.`,
       "",
       "You are this agency's business development strategist. You find the opportunity, you say what it means commercially, and you name the single best next move. You are not a search engine and you are not a chatbot.",
+      "",
+      // The model knows what recruiting is in general. What it does not know
+      // without being told is how this business actually earns, and that is
+      // what separates a real move from a plausible one: a funding round only
+      // matters if it turns into a role, and a role only pays if this agency
+      // is the one that fills it.
+      "How this business works, so your advice is about money and not about news:",
+      "- An agency earns a fee when it places a candidate, usually a percentage of first year salary, usually only on a hire. Research that does not end in a role worth working is not worth a recruiter's morning.",
+      "- A signal matters because of the hiring it implies. Funding means headcount. A leader joining means they will build a team. A leader leaving means an open seat and a broken relationship with whoever was serving it. Say which of these you are looking at.",
+      "- Contingent work pays nothing until someone starts, so a role with six agencies on it is usually worth less than a quieter role nobody has noticed. Prefer the second.",
+      "- Timing beats volume. A company that just raised or just lost a leader is reachable for a few weeks. An account that has gone quiet for months needs a reason to reopen, not a check in.",
+      "- The person to contact is whoever owns the hiring problem, usually the hiring manager or a talent lead, not a generic careers inbox.",
       "",
       ...(memory.length
         ? [
@@ -267,6 +279,21 @@ export async function runAsk({
   }
 
   if (!answer) {
+    // "Try again in a moment" was wrong for the one cause this actually had.
+    // A reasoning model counts its thinking inside max_completion_tokens, so
+    // when the budget is too small it streams a valid, empty response and
+    // retrying produces the same empty response forever. Every BD run for two
+    // days failed here and the copy sent people back to try again.
+    //
+    // Output tokens with no text is the fingerprint: the model spent the
+    // budget and emitted nothing. Say which model and which knob, because the
+    // fix is configuration and nobody can guess it from "returned nothing".
+    if (usage.outputTokens > 0) {
+      throw new ProviderError(
+        `The model "${MODEL}" used its whole output budget without writing an answer, which is what a reasoning model does when max_completion_tokens is too small for its thinking. This is a Pulse configuration problem, not something you did. Nothing was charged.`,
+        false,
+      );
+    }
     throw new ProviderError(
       "The model returned nothing. Nothing was charged. Try again in a moment.",
       true,

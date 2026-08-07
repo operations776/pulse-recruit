@@ -1,5 +1,7 @@
 "use client";
 
+import { agent } from "@/config/brand";
+
 // PLS-110. Mara's face.
 //
 // Five states in the Figma, and comparing the exported SVGs showed they share
@@ -61,7 +63,7 @@ export function MaraAvatar({
       viewBox="0 0 64 64"
       fill="none"
       role="img"
-      aria-label={`Mara, ${state}`}
+      aria-label={`${agent.name}, ${state}`}
       className={`${state === "idle" ? "mara-breathe" : ""} ${className}`}
     >
       {ring ? (

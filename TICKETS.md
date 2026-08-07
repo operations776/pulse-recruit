@@ -794,3 +794,46 @@ about it.
 drawer picked whichever button was second in the DOM, which was not a
 conversation row, and the shot came back as the landing state while reporting
 success.
+
+## PLS-134, PLS-135: the chat actually answers, and it has a name
+
+**The BD chat had been dead for two days and the error copy hid it.** Every run
+since the model default moved to gpt-5 failed with "The model returned nothing.
+Nothing was charged. Try again in a moment." Both keys were set on production
+the whole time, so this was never configuration in the way it looked.
+
+gpt-5 is a reasoning model, and its reasoning tokens are billed and counted
+inside `max_completion_tokens`. On this surface's budget it spent the entire
+allowance thinking and streamed no text: HTTP 200, a valid stream, empty
+content. Nothing in the error path fires on a successful empty response, so it
+fell through to the generic message, which told people to try again. Retrying
+produced the same empty response every time.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-134 | Model to `gpt-4.1`, `MODEL_RATES` to $2.00 in / $8.00 out in the same commit. An empty response with output tokens spent now names the model and the knob instead of saying "try again" | done |
+| PLS-135 | Dictation: a mic on the composer, browser SpeechRecognition, no key and no per-call cost | done |
+| PLS-136 | The strategist is Reyhan, not Mara. Name, role and pronoun live in `config/brand.ts` beside the product name | done |
+
+**Rates changed with the model, in the same commit**, per the hard rule. Input
+is dearer than gpt-5 ($1.25 to $2.00), output is cheaper ($10.00 to $8.00), and
+output dominates a briefing, so a typical run lands slightly cheaper. The
+direction that matters is that it lands at all.
+
+**The prompt now carries how a recruitment agency earns.** The model knows what
+recruiting is; it did not know that a fee arrives on a hire, that a role with
+six agencies on it is worth less than a quiet one, or that a signal only counts
+when it implies hiring. Without that, "a company raised money" reads as news
+rather than as a role worth working.
+
+**Reyhan is RecruiterGTM's CEO**, used deliberately as branding on Daniyal's
+call. The copy said "she" throughout about an invented persona; a real person's
+name carries real pronouns, so it now says he and his.
+
+Caught by the screenshot after the sweep looked clean: "Ask Mara how" on the
+play card and one line of empty-state copy. A find-and-replace over strings
+missed both because they are JSX text nodes, not string literals.
+
+**Voice is half built.** Speaking to it works. Having it speak back was scoped
+out for now: browser synthesis is free but sounds robotic, and an OpenAI voice
+needs a credit rule before anything bills for it.

@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { Drawer } from "@/components/ui/overlay";
 import { useToast } from "@/components/ui/toast";
 import { saveBDMemory } from "@/lib/actions";
+import { agent } from "@/config/brand";
 import type {
   BDAgentMemoryRow,
   BDMemoryKind,
@@ -60,7 +61,7 @@ const GAPS: Gap[] = [
     kind: "preference",
     label: "How you like to work",
     question:
-      "Anything Mara should know about how you want to be advised? Blunt, cautious, evidence first?",
+      `Anything ${agent.name} should know about how you want to be advised? Blunt, cautious, evidence first?`,
     title: "How I work",
     scope: "personal",
   },
@@ -121,22 +122,22 @@ export function TellMaraDrawer({
         notify(result.error, "danger");
         return;
       }
-      notify("Mara has it.");
+      notify(`${agent.name} has it.`);
       close();
       router.refresh();
     });
   };
 
   return (
-    <Drawer open={open} onClose={close} label="Tell Mara something">
+    <Drawer open={open} onClose={close} label={`Tell ${agent.name} something`}>
       <div className="flex flex-col gap-4 p-5">
         <div className="flex flex-col gap-1">
           <p className="text-[15px] font-medium leading-[1.45] text-mara-ink">
-            Tell Mara something
+            Tell {agent.name} something
           </p>
           <p className="text-[12px] leading-[1.5] text-mara-ink-2">
-            She uses this on every answer. The more she knows about your
-            business, the less generic her advice is.
+            He uses this on every answer. The more she knows about your
+            business, the less generic his advice is.
           </p>
         </div>
 
@@ -144,7 +145,7 @@ export function TellMaraDrawer({
           <>
             {openGaps.length > 0 ? (
               <div className="flex flex-col gap-2">
-                <p className="meta text-mara-ink-3">SHE IS MISSING</p>
+                <p className="meta text-mara-ink-3">HE IS MISSING</p>
                 <div className="flex flex-wrap gap-1.5">
                   {openGaps.map((gap) => (
                     <button
@@ -159,7 +160,7 @@ export function TellMaraDrawer({
               </div>
             ) : (
               <p className="text-[12px] leading-[1.5] text-mara-ink-2">
-                She has everything she asks for. Add anything else below.
+                He has everything he asks for. Add anything else below.
               </p>
             )}
 

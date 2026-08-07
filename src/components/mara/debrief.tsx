@@ -29,7 +29,7 @@ const OPTIONS: { outcome: BDDebriefOutcome; label: string; hint: string }[] = [
   {
     outcome: "dead_end",
     label: "Dead end",
-    hint: "Dropped, and she stops suggesting it.",
+    hint: "Dropped, and he stops suggesting it.",
   },
   { outcome: "skipped", label: "Not today", hint: "Stays open, no judgement." },
 ];

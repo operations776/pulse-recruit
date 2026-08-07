@@ -9,6 +9,7 @@
 
 import type { SignalRow } from "@/lib/supabase/types";
 
+import { agent } from "@/config/brand";
 const URGENCY: Record<string, { label: string; tone: string }> = {
   open_role: { label: "ACT NOW", tone: "bg-mara-violet" },
   funding: { label: "WATCH", tone: "bg-mara-good" },
@@ -29,7 +30,7 @@ export function SignalsFeed({ signals }: { signals: SignalRow[] }) {
 
       {signals.length === 0 ? (
         <p className="border-t border-mara-rule py-2.5 text-[12px] leading-[1.45] text-mara-ink-3">
-          Nothing yet. Add companies to your Dream 100 and Mara watches them
+          Nothing yet. Add companies to your Dream 100 and {agent.name} watches them
           for funding, hiring and leadership moves.
         </p>
       ) : (

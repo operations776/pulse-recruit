@@ -12,18 +12,25 @@ export const CREDITS_PER_USD = 100;
 // USD per 1,000,000 tokens. Override the model with OPENAI_MODEL and update
 // these two numbers in the same change, or the meter silently lies.
 //
-// gpt-5, confirmed against OpenAI's pricing page on 2026-08-05: $1.25 in,
-// $10.00 out. PLS-94 moved the default off gpt-4o ($2.50 in) because the BD
-// Strategist reasons across research results, which is exactly the work a
-// frontier model is worth paying for. Input got CHEAPER in the process, so a
-// typical research run costs less than it did on gpt-4o, not more.
+// gpt-4.1: $2.00 in, $8.00 out.
 //
-// Cached input is billed at $0.125 per million, a tenth of the standard rate.
-// We do not model that discount: it would make the meter optimistic, and
-// under-charging our own ledger is the safer direction to be wrong in.
+// PLS-134 moved off gpt-5 because it did not work. gpt-5 is a reasoning model
+// and its reasoning tokens are billed and counted inside
+// max_completion_tokens, so on this surface's budget it spent the whole
+// allowance thinking and streamed no text at all. Every BD run since the
+// default changed failed with "the model returned nothing", HTTP 200, zero
+// charged. A model that cannot answer is not worth a better reasoning score.
+//
+// Input is dearer than gpt-5 ($1.25) and output is cheaper ($10.00). Output
+// dominates a briefing, so a typical run lands slightly cheaper, and the
+// direction that matters is that it lands at all.
+//
+// Cached input is billed at a discount. We do not model it: it would make the
+// meter optimistic, and under-charging our own ledger is the safer direction
+// to be wrong in.
 export const MODEL_RATES = {
-  inputPerMillionUsd: 1.25,
-  outputPerMillionUsd: 10,
+  inputPerMillionUsd: 2,
+  outputPerMillionUsd: 8,
 } as const;
 
 // USD per unit of research.

@@ -5,7 +5,8 @@ import { getBDWorkspace, getMaraBoard } from "@/lib/data";
 import { hasResearchKey } from "@/lib/server/ai/exa";
 import { hasModelKey } from "@/lib/server/ai/openai";
 
-// Pillar 1. Mara, the BD strategist.
+import { agent } from "@/config/brand";
+// Pillar 1. The BD strategist. Named in config/brand.ts, currently Reyhan.
 //
 // It researches with Exa, reasons over what it finds, and remembers the
 // strategy and coaching this agency has told it. The answer is only worth as
@@ -92,7 +93,7 @@ export default async function BDStrategistPage({
     { label: "BD time", value: "--", pending: true },
   ];
 
-  // Each domain says what Mara can actually see. "Unknown" is a real state and
+  // Each domain says what the strategist can actually see. "Unknown" is a real state and
   // reads as one: she has not been told, so she does not pretend to a view.
   const has = (kind: string) => memories.some((memory) => memory.kind === kind);
   const domains: Domain[] = [
@@ -109,7 +110,7 @@ export default async function BDStrategistPage({
       key: "offer",
       label: "Your offer",
       read: has("offer")
-        ? "She knows how you charge."
+        ? "He knows how you charge."
         : "No price anchor. Weakest link right now.",
       tone: has("offer") ? "good" : "warn",
     },
@@ -117,8 +118,8 @@ export default async function BDStrategistPage({
       key: "ideal_client",
       label: "Who you win",
       read: has("ideal_client")
-        ? "She knows who you are best for."
-        : "Not told yet, so her targeting is generic.",
+        ? "He knows who you are best for."
+        : "Not told yet, so his targeting is generic.",
       tone: has("ideal_client") ? "good" : "watch",
     },
     {
@@ -126,7 +127,7 @@ export default async function BDStrategistPage({
       label: "How you work",
       read: memories.some((memory) => memory.source === "feedback")
         ? "Learning from the answers you rate."
-        : "Rate an answer and she adjusts.",
+        : "Rate an answer and he adjusts.",
       tone: memories.some((memory) => memory.source === "feedback")
         ? "good"
         : "unknown",
@@ -195,8 +196,8 @@ export default async function BDStrategistPage({
       configured={configured}
       unconfiguredReason={
         hasModelKey()
-          ? "Pulse has no research provider configured yet, so Mara cannot check anything. This is a Pulse setup step, not something you need to do."
-          : "Pulse has no model configured yet, so Mara cannot answer. This is a Pulse setup step, not something you need to do."
+          ? `Pulse has no research provider configured yet, so ${agent.name} cannot check anything. This is a Pulse setup step, not something you need to do.`
+          : `Pulse has no model configured yet, so ${agent.name} cannot answer. This is a Pulse setup step, not something you need to do.`
       }
       conversations={conversations}
       activeConversationId={activeConversationId}

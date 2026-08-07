@@ -18,7 +18,12 @@ const ENDPOINT = "https://api.openai.com/v1/chat/completions";
 //
 // Still an env var, deliberately. A later model may be a better cost-quality
 // trade, and this should be one variable and two rates, not a code change.
-export const MODEL = process.env.OPENAI_MODEL ?? "gpt-5";
+// gpt-4.1, not gpt-5. A reasoning model bills and counts its thinking inside
+// max_completion_tokens, so on this surface's budget gpt-5 consumed the whole
+// allowance reasoning and returned empty content: HTTP 200, valid stream, no
+// text. Change this and MODEL_RATES in the same commit, and check the model is
+// not a reasoning model or raise the budgets to match.
+export const MODEL = process.env.OPENAI_MODEL ?? "gpt-4.1";
 
 export type ToolCall = {
   id: string;
