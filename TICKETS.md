@@ -729,3 +729,32 @@ Week 2: enrichment credits end to end (waterfall email and phone, per-plan caps)
 Week 3: Claude in Pulse (chat, tasks, morning workflow), scheduling port with routing questions.
 Week 4 (phase C): publishing through Unipile is built, see PLS-87 to PLS-89
 above. What is left of this line is billing on at the $50 founding price.
+
+## PLS-133: the landing state is one scroll, not two
+
+Daniyal's screenshot after the Rev D deploy: the stage squeezed into a short
+box with its own scrollbar, ~400px of chrome pinned beneath it, and the signals
+feed unreachable on a normal window.
+
+The earlier fix was half of one. Collapsing the empty transcript stopped the
+blank region but left the stage as `flex-1 overflow-y-auto` with the whole
+ChatPanel shell, banner, suggestions and composer, unshrinkable below it. Two
+competing scroll regions again, just a different pair.
+
+`ChatPanel` takes a `chromeless` flag. Chromeless it drops the card shell and
+renders only the composer, because anything it stacks while pinned to the
+bottom costs the stage that height on every screen. The banner and the
+suggestion chips move into the stage's own scroll region: they are content, not
+furniture. `ask` owns the run lifecycle so it cannot leave ChatPanel, and is
+published through `onReady` into a ref so a chip the stage renders fires a real
+run without re-rendering the stage.
+
+Checked at 1440x820, the height that showed the bug, in both themes. The
+conversation view was photographed separately because it uses the other branch
+of every layout switch this touched, so a landing-state shot proves nothing
+about it.
+
+`shot-mara-thread.mjs` goes to the thread by id. Clicking through the history
+drawer picked whichever button was second in the DOM, which was not a
+conversation row, and the shot came back as the landing state while reporting
+success.

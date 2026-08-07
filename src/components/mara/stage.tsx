@@ -2,7 +2,7 @@
 
 import { History, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Briefing, parseBriefing } from "@/components/ai/briefing";
 import { ChatPanel } from "@/components/ai/chat-panel";
 import type { MaraState } from "@/components/mara/avatar";
@@ -106,6 +106,14 @@ export function MaraStage({
   const [tellOpen, setTellOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
 
+  // ChatPanel owns the run lifecycle, so it hands `ask` back here and the
+  // suggestion chips live in the scroll region above rather than in the pinned
+  // composer block. Held in a ref: calling it must not re-render the stage.
+  const askRef = useRef<((text: string) => void) | null>(null);
+  const onReady = useCallback((ask: (text: string) => void) => {
+    askRef.current = ask;
+  }, []);
+
   // A run in flight is the only thing that should animate the avatar. Anything
   // else would be a mood with no cause behind it.
   const state: MaraState = useMemo(() => {
@@ -139,7 +147,11 @@ export function MaraStage({
               ? // Pinned. The ledger stays because an open promise is the one
                 // thing worth interrupting a conversation for.
                 "shrink-0 border-b border-mara-rule px-7 pb-3 pt-4"
-              : "min-h-0 flex-1 overflow-y-auto px-7 pb-4 pt-7"
+              : // One scroll for the whole landing state. The composer is the
+                // only thing pinned under it, so a short window scrolls the
+                // page rather than squeezing the stage into a box with its own
+                // scrollbar and a slab of chrome beneath.
+                "min-h-0 flex-1 overflow-y-auto px-7 pb-2 pt-7"
           }
         >
           <div className="mx-auto flex w-full max-w-[720px] flex-col gap-3">
@@ -179,6 +191,19 @@ export function MaraStage({
               </div>
             ) : null}
 
+            {!started && !configured ? (
+              <div className="mara-in flex items-start gap-2.5 rounded-shell border border-mara-amber-edge bg-mara-amber-bg px-3 py-2.5">
+                <span className="min-w-0">
+                  <span className="meta block text-mara-amber-ink">
+                    NOT AVAILABLE
+                  </span>
+                  <span className="mt-1 block text-[12px] leading-[1.5] text-mara-ink">
+                    {unconfiguredReason}
+                  </span>
+                </span>
+              </div>
+            ) : null}
+
             {/* Evening only, and above the ledger: at 5pm the useful thing is
                 not the list, it is the one question about the promise you
                 made this morning. */}
@@ -199,6 +224,24 @@ export function MaraStage({
                 <div className="mara-in mara-in-3">
                   <SignalsFeed signals={signals} />
                 </div>
+
+                {/* Both of these used to sit in the pinned composer block,
+                    where they cost the stage ~250px on every screen and
+                    pushed the signals feed out of view on a short window.
+                    They are content, so they scroll with the content. */}
+                {configured ? (
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {SUGGESTIONS.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        onClick={() => askRef.current?.(suggestion)}
+                        className="settle rounded-control border border-mara-rule bg-mara-sheet px-2.5 py-1.5 text-left text-[12px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </>
             ) : null}
           </div>
@@ -208,10 +251,12 @@ export function MaraStage({
           className={
             started
               ? "flex min-h-0 flex-1 flex-col overflow-hidden"
-              : "flex shrink-0 flex-col"
+              : "flex shrink-0 flex-col border-t border-mara-rule px-7 pb-4 pt-3"
           }
         >
           <ChatPanel
+            chromeless={!started}
+            onReady={onReady}
             surface="market"
             messages={messages}
             available={available}
@@ -222,7 +267,7 @@ export function MaraStage({
             placeholder="Ask Mara about the companies you want to win"
             emptyTitle=""
             emptyBody=""
-            suggestions={started ? [] : SUGGESTIONS}
+            suggestions={SUGGESTIONS}
             conversationId={activeConversationId}
             onOpened={(id) => {
               if (id !== activeConversationId) router.replace(`/market?c=${id}`);
