@@ -1,5 +1,6 @@
 "use client";
 
+import { History, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Briefing, parseBriefing } from "@/components/ai/briefing";
@@ -11,6 +12,7 @@ import { PersonaPanel, type Domain } from "@/components/mara/persona-panel";
 import { SignalsFeed } from "@/components/mara/signals-feed";
 import { TellMaraDrawer } from "@/components/mara/tell-mara";
 import { TodaysPlay, type PlaySignal } from "@/components/mara/todays-play";
+import { Drawer } from "@/components/ui/overlay";
 import type {
   BDAgentMemoryRow,
   BDCommitmentRow,
@@ -18,6 +20,7 @@ import type {
   ChatRow,
 } from "@/lib/supabase/types";
 import { AnswerFeedback } from "@/app/(app)/market/answer-feedback";
+import { ConversationList } from "@/app/(app)/market/conversation-list";
 
 // PLS-112. Mara's screen.
 //
@@ -65,7 +68,10 @@ export function MaraStage({
   resetsAt,
   configured,
   unconfiguredReason,
+  conversations,
   activeConversationId,
+  todayKey,
+  yesterdayKey,
 }: {
   messages: ChatRow[];
   memories: BDAgentMemoryRow[];
@@ -88,9 +94,13 @@ export function MaraStage({
   unconfiguredReason: string;
   conversations: ChatConversationRow[];
   activeConversationId: string | null;
+  /** Fixed on the server so Today/Yesterday cannot disagree after hydration. */
+  todayKey: string;
+  yesterdayKey: string;
 }) {
   const router = useRouter();
   const [tellOpen, setTellOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // A run in flight is the only thing that should animate the avatar. Anything
   // else would be a mood with no cause behind it.
@@ -109,16 +119,49 @@ export function MaraStage({
   return (
     <main className="flex min-w-0 flex-1 overflow-hidden bg-mara-ground">
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {/*
+          Two scroll regions competing for one screen is what buried the
+          signals feed below the fold: the stage and the transcript were both
+          flex-1, so each got half the height and each scrolled separately.
+
+          On the landing state the stage is the only thing above the composer,
+          so it takes the scroll and the transcript takes none. Inside a
+          conversation that reverses: the ledger pins to the top at its natural
+          height and the transcript gets everything else.
+        */}
         <div
           className={
             started
-              ? // Collapsed. The ledger stays because an open promise is the
-                // one thing worth interrupting a conversation for.
-                "shrink-0 overflow-y-auto border-b border-mara-rule px-7 pb-3 pt-4"
-              : "flex-1 overflow-y-auto px-7 pb-4 pt-7"
+              ? // Pinned. The ledger stays because an open promise is the one
+                // thing worth interrupting a conversation for.
+                "shrink-0 border-b border-mara-rule px-7 pb-3 pt-4"
+              : "min-h-0 flex-1 overflow-y-auto px-7 pb-4 pt-7"
           }
         >
           <div className="mx-auto flex w-full max-w-[720px] flex-col gap-3">
+            {/* The rail used to hold history. This screen is two columns, so
+                past threads live behind a button rather than a third strip. */}
+            <div className="flex items-center justify-end gap-1.5">
+              {started ? (
+                <button
+                  onClick={() => router.push("/market?c=new")}
+                  className="settle flex items-center gap-1.5 rounded-control border border-mara-rule bg-mara-sheet px-2.5 py-1 text-[11px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
+                >
+                  <Plus size={13} strokeWidth={1.75} aria-hidden />
+                  New
+                </button>
+              ) : null}
+              {conversations.length > 0 ? (
+                <button
+                  onClick={() => setHistoryOpen(true)}
+                  className="settle flex items-center gap-1.5 rounded-control border border-mara-rule bg-mara-sheet px-2.5 py-1 text-[11px] leading-[1.45] text-mara-ink-2 hover:border-mara-violet hover:text-mara-violet"
+                >
+                  <History size={13} strokeWidth={1.75} aria-hidden />
+                  Past conversations
+                </button>
+              ) : null}
+            </div>
+
             {!started ? (
               <div className="mara-in flex flex-col gap-1">
                 <h1 className="text-[22px] font-medium leading-[1.35] tracking-[-0.4px] text-mara-ink">
@@ -152,7 +195,13 @@ export function MaraStage({
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div
+          className={
+            started
+              ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+              : "flex shrink-0 flex-col"
+          }
+        >
           <ChatPanel
             surface="market"
             messages={messages}
@@ -200,6 +249,28 @@ export function MaraStage({
         onManage={() => router.push("/market?memory=1")}
         onTellHer={() => setTellOpen(true)}
       />
+
+      <Drawer
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        label="Past conversations"
+      >
+        <ConversationList
+          conversations={conversations}
+          activeId={activeConversationId}
+          meId={meId}
+          todayKey={todayKey}
+          yesterdayKey={yesterdayKey}
+          onSelect={(id) => {
+            setHistoryOpen(false);
+            router.push(`/market?c=${id}`);
+          }}
+          onNew={() => {
+            setHistoryOpen(false);
+            router.push("/market?c=new");
+          }}
+        />
+      </Drawer>
 
       <TellMaraDrawer
         open={tellOpen}

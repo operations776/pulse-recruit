@@ -69,7 +69,15 @@ export default async function BDStrategistPage({
     {
       label: "Accounts on patch",
       value: String(counts.patch),
-      delta: counts.patchNew > 0 ? `+${counts.patchNew} this week` : undefined,
+      // "+8 this week" against a patch of 8 is not growth, it is the whole
+      // list restating itself, which is exactly what a freshly seeded or
+      // freshly imported workspace looks like. A delta only means anything
+      // when there is a before, so it appears only when some of the patch is
+      // older than the window.
+      delta:
+        counts.patchNew > 0 && counts.patchNew < counts.patch
+          ? `+${counts.patchNew} this week`
+          : undefined,
       tone: "good",
     },
     { label: "Roles live", value: String(counts.rolesLive) },
@@ -181,6 +189,8 @@ export default async function BDStrategistPage({
       }
       conversations={conversations}
       activeConversationId={activeConversationId}
+      todayKey={renderedAt.toISOString().slice(0, 10)}
+      yesterdayKey={new Date(nowMs - 86_400_000).toISOString().slice(0, 10)}
     />
   );
 }

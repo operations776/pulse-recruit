@@ -274,11 +274,14 @@ export async function getBDWorkspace(
     .limit(40);
 
   const conversations = (threadRows ?? []) as ChatConversationRow[];
+  // Only an explicitly requested thread opens. This used to fall back to the
+  // most recent one, which meant /market re-opened last week's transcript and
+  // the briefing pushed Mara's whole stage, the greeting, the play, the
+  // metrics and the signals, off the top of the screen. Landing on the module
+  // is landing on the stage; a conversation is something you choose to open.
   const active = startFresh
     ? null
-    : (conversations.find((c) => c.id === conversationId) ??
-      conversations[0] ??
-      null);
+    : (conversations.find((c) => c.id === conversationId) ?? null);
 
   const [messages, credits, memories] = await Promise.all([
     // Scoped to the open thread. This is what the 60-row cap was standing in
