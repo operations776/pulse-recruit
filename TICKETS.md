@@ -457,9 +457,9 @@ now likely never will, because the screen it changed is being replaced.
 | PLS-115 | Migration: `commitments`. A promise, when it was made, and whether it closed | | todo |
 | PLS-116 | Migration: `context_gaps`, the questions Mara knows she cannot answer yet | | todo |
 | PLS-117 | The five-room rail replaces the pillar rail, across all five modules | PLS-111 | todo |
-| PLS-118 | `MetricCard` and the metrics strip. Nodes `4:2`, `4:3`, `4:8`, `4:13`, `4:18` | PLS-111 | built, not composed: the component exists and passes every gate, but nothing renders it yet so there is no screen to screenshot |
-| PLS-119 | `SignalRow` and the signals feed. Nodes `4:23`, `4:27`, `4:33`, `4:39` | PLS-111 | built, not composed. The name collision with the Postgres row type stands: they are in different modules and nothing imports both, so neither is renamed and a file needing both must alias one |
-| PLS-120 | `AdvisoryDomain`. Nodes `4:51`, `4:53`, `4:58`, `4:63`, `4:68`, `4:73` | PLS-111 | built, not composed. The design's per-domain hue became a `status` prop: those colours are readings that change with the data, not domain identities |
+| PLS-118 | `MetricCard` and the metrics strip. Nodes `4:2`, `4:3`, `4:8`, `4:13`, `4:18` | PLS-111 | done: composed on the `/design` component sheet and APPROVED at 1440 light, 1440 dark and 900 |
+| PLS-119 | `SignalRow` and the signals feed. Nodes `4:23`, `4:27`, `4:33`, `4:39` | PLS-111 | done: APPROVED on `/design`. The name collision with the Postgres row type stands, they are in different modules and nothing imports both, so a file needing both must alias one |
+| PLS-120 | `AdvisoryDomain`. Nodes `4:51`, `4:53`, `4:58`, `4:63`, `4:68`, `4:73` | PLS-111 | done: APPROVED on `/design`. The design's per-domain hue became a `status` prop, because those colours are readings that change with the data rather than domain identities |
 | PLS-121 | `PersonaPanel` and the avatar states. Node `1:7`, states from spec frame `2:44` | PLS-113, PLS-120 | todo |
 | PLS-122 | The commitments ledger. Node `9:2` | PLS-115 | todo |
 | PLS-123 | Tell Mara something: the drawer and the gap list. Nodes `5:8`, `5:19` to `5:40` | PLS-116 | todo |
@@ -543,6 +543,28 @@ PLS-118 and PLS-122 are built:
 The four-severity version resolves the earlier question in favour of the
 original brief: `act | recover | watch | note` is right, and `note` is grey
 rather than a state colour. That is the version PLS-119 builds.
+
+### The component sheet exists now
+
+`/design` was referenced by the design-review skill and recorded as shipped in
+PLS-4, and did not exist. It does now, holding the Rev D components with the
+Figma file's own sample copy.
+
+It sits outside the `(app)` group on purpose: a route added inside it with no
+entry in `modules.ts` falls through `moduleForPath` to TALENT, which is the
+defect the `SETTINGS_MODULE` comment records. And it is public on purpose,
+because it holds no tenant data and being reachable without a session is the
+only reason the gate could photograph it at all. It carries `noindex`.
+
+That unblocked the first real screenshot pass of the session, which found two
+defects the mechanical checks passed clean:
+
+1. The advisory shell stretched to the page while its content was 320px, so
+   most of a panel sat empty. The width belonged on the shell, not inside it.
+2. The first advisory row drew a rule the design does not have. Figma `4:53`
+   carries no top border and `4:58` onward do.
+
+Both fixed and re-reviewed. APPROVED at 1440 light, 1440 dark, and 900.
 
 ### Open questions
 

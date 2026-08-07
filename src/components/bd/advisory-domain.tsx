@@ -38,7 +38,12 @@ export function AdvisoryDomain({
   status?: DomainReading;
 }) {
   return (
-    <div className="flex items-start gap-3 border-t border-rule px-4 py-3">
+    // first:border-t-0 because the design rules BETWEEN rows, not above the
+    // first one: Figma 4:53 carries no top border and 4:58 onward do. Without
+    // this the section title gets a second hairline under it. It works because
+    // AdvisoryDomains puts the rows in their own wrapper, so :first-child is a
+    // row rather than the title.
+    <div className="flex items-start gap-3 border-t border-rule px-4 py-3 first:border-t-0">
       <span
         aria-hidden
         className={`mt-1 inline-block size-1.5 shrink-0 rounded-full ${TONE_DOT[status]}`}
@@ -68,7 +73,10 @@ export function AdvisoryDomains({
       <p className="px-4 pt-5 pb-1 text-[11px] leading-[1.45] text-ink-3">
         {title}
       </p>
-      {children}
+      {/* The rows get their own wrapper so the first-row rule reset above has
+          a :first-child to match. With the title as a sibling it would target
+          the title instead and the extra hairline would survive the fix. */}
+      <div className="flex flex-col">{children}</div>
     </section>
   );
 }
