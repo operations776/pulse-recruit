@@ -48,6 +48,8 @@ export function ChatPanel({
   suggestions = [],
   emptyTitle,
   emptyBody,
+  chromeless = false,
+  onReady,
   headerRight,
   renderAnswer,
   answerFooter,
@@ -69,6 +71,25 @@ export function ChatPanel({
   suggestions?: string[];
   emptyTitle: string;
   emptyBody: string;
+  /**
+   * Drop the card shell and let the caller own the scroll.
+   *
+   * With no transcript there is nothing for a bordered box to contain, and a
+   * box that cannot shrink turns the page into two competing scroll regions:
+   * a short stage scrolling inside a frame, with a tall slab of chrome pinned
+   * under it. Chromeless, the panel contributes only the composer, and the
+   * stage above it scrolls as one page.
+   */
+  chromeless?: boolean;
+  /**
+   * Hand the caller a way to fire a question.
+   *
+   * `ask` owns the whole run lifecycle, so it has to stay in here. Chromeless
+   * the panel is pinned to the bottom of the screen and anything it stacks
+   * there costs the stage that height, so the caller puts the suggestion chips
+   * in its own scroll region and calls back in through this.
+   */
+  onReady?: (ask: (text: string) => void) => void;
   headerRight?: ReactNode;
   /**
    * Render a settled assistant turn. Omitted, the answer is a plain paragraph.
@@ -229,6 +250,13 @@ export function ChatPanel({
     [router, run, surface, conversationId, onOpened],
   );
 
+  // Publish `ask` so a chromeless caller can fire a suggestion it renders in
+  // its own scroll region. In an effect, not during render, and keyed on the
+  // identity of `ask` so it re-publishes when the callback changes.
+  useEffect(() => {
+    onReady?.((text) => void ask(text));
+  }, [onReady, ask]);
+
   const submit = () => {
     void ask(draft);
   };
@@ -236,7 +264,13 @@ export function ChatPanel({
   const canAsk = configured && !busy && draft.trim().length > 0;
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-shell border border-rule bg-sheet">
+    <section
+      className={
+        chromeless
+          ? "flex shrink-0 flex-col"
+          : "flex min-h-0 flex-1 flex-col overflow-hidden rounded-shell border border-rule bg-sheet"
+      }
+    >
       {headerRight ? (
         <div className="flex items-start justify-between gap-4 border-b border-rule px-4 py-3">
           <p className="legend text-ink-3">Conversation</p>
@@ -244,7 +278,7 @@ export function ChatPanel({
         </div>
       ) : null}
 
-      {!configured ? (
+      {!configured && !chromeless ? (
         <div className="flex items-start gap-2.5 border-b border-rule bg-amber-bg px-4 py-3">
           <AlertTriangle size={16} strokeWidth={1.5} className="mt-0.5 shrink-0 text-amber" />
           <div>
@@ -258,7 +292,7 @@ export function ChatPanel({
 
       {/* Suggestions are scaffolding for an empty screen, not furniture. Once
           there is a transcript they are in the way. */}
-      {suggestions.length > 0 && messages.length === 0 && !busy ? (
+      {suggestions.length > 0 && messages.length === 0 && !busy && !chromeless ? (
         <div className="border-b border-rule px-4 py-3">
           <p className="legend text-ink-3">Start with one of these</p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -281,9 +315,15 @@ export function ChatPanel({
       <div
         ref={transcriptRef}
         className={
-          messages.length === 0 && !busy && !failure && !emptyTitle
-            ? "flex flex-col"
-            : "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
+          // Chromeless there is no card to fill and the caller owns the
+          // scroll, so this region is always exactly as tall as its contents.
+          // Without this a single failure banner claimed flex-1 and became a
+          // full-height slab under the stage.
+          chromeless
+            ? "flex flex-col gap-3"
+            : messages.length === 0 && !busy && !failure && !emptyTitle
+              ? "flex flex-col"
+              : "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
         }
       >
         {messages.length === 0 && !busy && !failure && emptyTitle ? (
