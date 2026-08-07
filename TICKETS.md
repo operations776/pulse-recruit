@@ -944,3 +944,55 @@ still the version from PR #7; impeccable lives beside it under
 The 300 vendored files are excluded from eslint. Linting somebody else's
 source produced 302 warnings from files we do not maintain, which is precisely
 how a warning list stops being read. Zero came from our code.
+
+## PLS-138: what the detector found, and the six tokens behind it
+
+**First, a correction to PLS-137.** That ticket recorded the detector finding
+nothing in `src/components/mara/`. That result was worthless: `detect` reads
+rendered HTML and CSS, not React source, so it returns silence on any `.tsx`
+file whatever is in it. Proved by feeding it a deliberately broken component
+and getting exit 0. **The detector only means anything against a URL.**
+
+`scripts/detect-app.mjs` closes that gap for signed-in screens: it signs in,
+inlines the computed styles the rules actually read, and writes HTML the
+detector can scan. Its first version hung forever, because awaiting
+`getAnimations()` includes the pulse dot and the avatar breathe, whose
+`finished` promise never settles. It now awaits only finite animations.
+
+### The real numbers
+
+| | Before | After |
+| --- | --- | --- |
+| App screens (market, tasks, content, signals) | 213 | 112 |
+| Marketing (/, pricing, features, faq) | 111 | not yet addressed |
+
+**Two rules were 79% of it, and both were one token each.**
+
+`.meta` was **10px**, used in 44 files: 129 undersized-text findings from a
+single declaration. It carries "SAID 3 DAYS", "ACT NOW", credit counts and
+source labels, none of which are decorative. Now 11px.
+
+Contrast, all measured rather than eyeballed:
+
+| Token | Was | Measured | Now | Now measures |
+| --- | --- | --- | --- | --- |
+| `ink-3` light | `#8b84a0` | 3.26:1 | `#736d84` | 4.53 worst case |
+| `violet` dark | `#8b5cf6` | 4.23:1 white on it | `#8558ec` | 4.56 |
+| `mara-ink-3` light | `#9a96a8` | 2.70:1 | `#706d7b` | 4.53 worst case |
+
+`mara-ink-3` was mine, added for the Reyhan screen, and worse than the token it
+was modelled on.
+
+New `-deep` variants for the status colours. A base status colour is tuned for
+a 7px dot, where contrast is not the binding constraint; the same value as text
+measured 2.5:1. The metric deltas use the deep variants, the dots keep the
+base. In dark mode both are the same value, because the base already measures
+10:1 there.
+
+### Still open
+
+112 findings remain on the app screens: 27 `nested-cards`, 66 undersized text
+at genuine per-component sizes rather than one shared class, 13 contrast, plus
+`overused-font` (Inter) and two `flat-type-hierarchy`. The marketing site has
+its own 111, including `ai-color-palette` and `radial-spotlight-glow` on the
+landing hero, which are judgement calls about the rebrand rather than defects.

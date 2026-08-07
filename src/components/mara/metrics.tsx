@@ -16,10 +16,13 @@ export type Metric = {
   pending?: boolean;
 };
 
+// The -deep variants, not the base colours. A base status colour is tuned for
+// a 7px dot, where contrast is not the constraint; as text it measured 2.5:1
+// against a 4.5:1 requirement. The dots elsewhere still use the base.
 const TONE = {
-  good: "text-mara-good",
-  warn: "text-mara-warn",
-  bad: "text-mara-bad",
+  good: "text-mara-good-deep",
+  warn: "text-mara-warn-deep",
+  bad: "text-mara-bad-deep",
 } as const;
 
 export function MetricsStrip({ metrics }: { metrics: Metric[] }) {

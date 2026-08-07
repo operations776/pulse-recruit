@@ -21,7 +21,10 @@
   /* Ink */
   --color-ink: #1b1526;
   --color-ink-2: #585272;
-  --color-ink-3: #8b84a0;
+  /* Was #8b84a0, which measured 3.26:1 on paper against a 4.5:1 requirement.
+     This value passes on both surfaces it actually sits on: 4.94 on sheet,
+     4.53 on paper. Same hue, darker. */
+  --color-ink-3: #736d84;
   --color-rule: #e7e1f4;
 
   /* Action. `violet` is now violet: the name survives because it is the
@@ -90,11 +93,21 @@
 
   --color-mara-ink: #17151f;
   --color-mara-ink-2: #6b6779;
-  --color-mara-ink-3: #9a96a8;
+  /* Was #9a96a8, which measured 2.7:1 on the surfaces it sits on against a
+     4.5:1 requirement: worse than the ink-3 it was modelled on. This carries
+     the metric labels, the signal detail lines and the age stamps, all of
+     which are read, not decorative. 4.53 at worst now. */
+  --color-mara-ink-3: #706d7b;
   --color-mara-bubble: #f2f1f6;
 
   /* Signal and metric tones, straight from the Figma. */
   --color-mara-good: #10916b;
+  /* Text-safe variants of the status colours. A base status colour is tuned
+     for a 7px dot, where contrast is not the binding constraint; the same
+     value as text measured 2.5:1 to 3.5:1 against a 4.5:1 requirement. Dots
+     keep the base, text uses these. */
+  --color-mara-good-deep: #0e815f;
+  --color-mara-bad-deep: #c34746;
   --color-mara-warn: #da961b;
   --color-mara-warn-deep: #a4660e;
   --color-mara-bad: #cd4b4a;
@@ -134,7 +147,9 @@ html[data-theme="dark"] {
   --color-ink-3: #8b83a2;
   --color-rule: #2a2340;
 
-  --color-violet: #8b5cf6;
+  /* Was #8b5cf6: white text on it measured 4.23:1, which is every primary
+     button in dark mode failing AA. 4.56 now. */
+  --color-violet: #8558ec;
   --color-violet-hover: #7c3aed;
   --color-violet-edge: #6d28d9;
   --color-on-violet: #ffffff;
@@ -173,6 +188,10 @@ html[data-theme="dark"] {
   --color-mara-bubble: #241d3d;
 
   --color-mara-good: #34d399;
+  /* Already 10:1 on the dark ground, so deep is the same value here. The
+     alias exists so a component can name one token across both themes. */
+  --color-mara-good-deep: #34d399;
+  --color-mara-bad-deep: #f4a3ac;
   --color-mara-warn: #e2c37a;
   --color-mara-warn-deep: #e2c37a;
   --color-mara-bad: #f4a3ac;
@@ -219,9 +238,14 @@ body {
   }
 
   /* Counts and metadata */
+  /* 11px, not 10px. PLS-138: the detector counted 129 undersized-text
+     findings across the app and nearly all of them were this class. Functional
+     UI text below 11px fails on high-DPI and small viewports, and .meta is not
+     decorative: it carries "SAID 3 DAYS", "ACT NOW", credit counts and source
+     labels, all of which people are meant to read. */
   .meta {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1.4;
     font-weight: 400;
     font-variant-numeric: tabular-nums;
