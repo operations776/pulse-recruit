@@ -457,9 +457,9 @@ now likely never will, because the screen it changed is being replaced.
 | PLS-115 | Migration: `commitments`. A promise, when it was made, and whether it closed | | todo |
 | PLS-116 | Migration: `context_gaps`, the questions Mara knows she cannot answer yet | | todo |
 | PLS-117 | The five-room rail replaces the pillar rail, across all five modules | PLS-111 | todo |
-| PLS-118 | `MetricCard` and the metrics strip. Nodes `4:2`, `4:3`, `4:8`, `4:13`, `4:18` | PLS-111 | todo |
-| PLS-119 | `SignalRow` and the signals feed. Nodes `4:23`, `4:27`, `4:33`, `4:39`. The name already belongs to the Postgres row type in `lib/supabase/types`, so one of the two is renamed here | PLS-111 | todo |
-| PLS-120 | `AdvisoryDomain`. Nodes `4:51`, `4:53`, `4:58`, `4:63`, `4:68`, `4:73` | PLS-111 | todo |
+| PLS-118 | `MetricCard` and the metrics strip. Nodes `4:2`, `4:3`, `4:8`, `4:13`, `4:18` | PLS-111 | built, not composed: the component exists and passes every gate, but nothing renders it yet so there is no screen to screenshot |
+| PLS-119 | `SignalRow` and the signals feed. Nodes `4:23`, `4:27`, `4:33`, `4:39` | PLS-111 | built, not composed. The name collision with the Postgres row type stands: they are in different modules and nothing imports both, so neither is renamed and a file needing both must alias one |
+| PLS-120 | `AdvisoryDomain`. Nodes `4:51`, `4:53`, `4:58`, `4:63`, `4:68`, `4:73` | PLS-111 | built, not composed. The design's per-domain hue became a `status` prop: those colours are readings that change with the data, not domain identities |
 | PLS-121 | `PersonaPanel` and the avatar states. Node `1:7`, states from spec frame `2:44` | PLS-113, PLS-120 | todo |
 | PLS-122 | The commitments ledger. Node `9:2` | PLS-115 | todo |
 | PLS-123 | Tell Mara something: the drawer and the gap list. Nodes `5:8`, `5:19` to `5:40` | PLS-116 | todo |
@@ -484,6 +484,50 @@ The working assumption is that every value maps to an existing token, and the
 first design review will catch where it does not. The five rail icons render as
 plain circles in the export, so those are unidentified and will come from
 Lucide until somebody says otherwise.
+
+### The palette does not change, and here is the proof
+
+Read off the real nodes with a Full seat, not eyedropped from the export. Every
+Figma value is a near-miss of a token we already ship, all within a few
+percent, which is what a designer working from a screenshot produces rather
+than what a new ramp looks like. So nothing is re-pointed in `globals.css` and
+`src/components/bd/tone.ts` maps to tokens instead:
+
+| Role | Figma | Our token | Value |
+| --- | --- | --- | --- |
+| Body text | `#17151f` | `--color-ink` | `#1b1526` |
+| Secondary | `#9a96a8` | `--color-ink-3` | `#8b84a0` |
+| Meta, severity word | `#6b6779` | `--color-ink-2` | `#585272` |
+| Hairline | `#e5e3ec` | `--color-rule` | `#e7e1f4` |
+| Positive delta | `#10916b` | `--color-teal` | `#0f7a5f` |
+| Attention delta | `#da961b` | `--color-amber` | `#b8860b` |
+| Negative delta | `#cd4b4a` | `--color-red` | `#b02a37` |
+| Card fill | `#ffffff` | `--color-sheet` | `#ffffff` |
+
+The deciding argument is not fidelity, it is dark mode. A raw hex cannot flip,
+so pasting these would leave the BD screen in permanent light mode while every
+other screen follows the theme. That is the same class of bug as the top bar
+in PLS-104, which is the one a screenshot caught and three automated gates did
+not.
+
+### Six numeric deltas, snapped rather than adopted
+
+The components ship on the existing scale, and each of these is where the
+design and the scale disagree. None is a guess: the design value is on the
+left. PLS-111 decides whether DESIGN.md widens to meet any of them.
+
+| Where | Figma | Shipped | Why |
+| --- | --- | --- | --- |
+| Metric card radius | 12px | `--r-shell` 10px | Rule 1, the scale has no 12 |
+| Metric strip gap | 10px | 12px | 4px scale has no 10 |
+| Metric value size | 19px mono | 19px mono | Kept, but section 4 says metric numbers are Archivo 21px/700 |
+| Signal row padding | 9px | 12px | 4px scale has no 9 |
+| Domain row padding | 11px | 12px | 4px scale has no 11 |
+| Legend tracking | 0.04em | 0.12em | `.legend` is the shipped mono treatment |
+
+Secondary text is 11px throughout the design where section 4's table says
+12px. 11px is shipped, because section 2 sets the floor at 11px and the design
+is consistent about it, but it is a table change PLS-111 should record.
 
 ### The export and the live file disagree
 
