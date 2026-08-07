@@ -22,6 +22,15 @@ const PHASE_WORDS: Record<RunPhase, { market: string; ops: string }> = {
   settling: { market: "Settling credits", ops: "Settling credits" },
 };
 
+/**
+ * The phase in words, for a caller outside the transcript. PLS-110 shows it as
+ * the title of the rail's status indicator, so both places name a phase the
+ * same way rather than growing a second vocabulary for one run.
+ */
+export function phaseWord(phase: RunPhase, surface: ChatSurface) {
+  return PHASE_WORDS[phase][surface];
+}
+
 export function RunLog({
   surface,
   phase,

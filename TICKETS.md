@@ -361,7 +361,7 @@ schema: leaked password protection is disabled on the Supabase project.
 | ID | Ticket | Status |
 | --- | --- | --- |
 | PLS-109 | The `design-review` skill was judging Rev C screens against Rev A. It asked for `forest-900` chrome, `emerald-600` actions, Bricolage headings, JetBrains data literals, 11px micro labels, hue-tinted initials and `hueByIndex`: seven rules, zero occurrences of any of them in `src/`. It sent every route through `shot.mjs`, which cannot get past the session gate, and never opened dark mode at all. Rewritten to reference DESIGN.md section 11 rather than restate it, which is how it went stale in the first place | done |
-| PLS-110 | BD Strategist: the Ready/Thinking run-state indicator and the rail panel toggles | todo |
+| PLS-110 | BD Strategist: the Ready/Thinking run-state indicator and the rail panel toggles | review: typecheck, lint and production build are green, and the mechanical checks are clean. The screenshot pass has not run, see below |
 
 **The gate was the thing checking everything else.** It named a "Review
 checklist section" of DESIGN.md that does not exist, said "all ten checklist
@@ -369,6 +369,13 @@ items" over a list of eleven, and its mechanical grep flagged `text-[1[0-9]px]`,
 which matches `text-[12px]` and `text-[13px]`, the correct Rev C type scale.
 `strategy-rail.tsx` alone would have returned a dozen false findings, which is
 how a reviewer learns to skim the list.
+
+**PLS-110 has not had its screenshot pass.** `/market` is behind the session
+gate, so photographing it needs a sign-in against the shared Supabase project,
+and this session has the publishable pair only as a build-gate placeholder.
+Judging the change from the diff is the one thing the skill exists to forbid,
+so it stays at `review` rather than being called done. The commands are in the
+skill; running them needs `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
 Two DESIGN.md corrections are owed and are Daniyal's call, because it is the
 binding spec rather than a helper file. The skill documents both as carve-outs
