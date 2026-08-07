@@ -464,6 +464,33 @@ export async function getMaraBoard() {
   };
 }
 
+/**
+ * Credits available right now, and nothing else.
+ *
+ * PLS-179. The top bar shows sessions left, which is one number derived from
+ * this one. Calling getWorkspace for it would fetch every job and the whole
+ * membership list on every navigation in the product, which is the exact
+ * mistake getFirstJobId was written to undo.
+ *
+ * Reserved credits belong to a run in flight. Counting them as available is
+ * how you offer a session you cannot pay for.
+ */
+export async function getAvailableCredits(): Promise<number> {
+  await requireSession();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("credit_ledger")
+    .select("weekly_allowance,used_this_week,reserved_this_week")
+    .maybeSingle();
+  if (!data) return 0;
+  return Math.max(
+    0,
+    (data.weekly_allowance ?? 0) -
+      (data.used_this_week ?? 0) -
+      (data.reserved_this_week ?? 0),
+  );
+}
+
 export async function getTasks() {
   await requireSession();
   const supabase = await createClient();

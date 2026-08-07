@@ -1,11 +1,24 @@
 import Image from "next/image";
 import { AVATAR_TILE, initials } from "@/lib/hue";
 
-// DESIGN.md section 5: rounded squares at --r-card, never circles.
+// PLS-178. Circles, per DESIGN.md section 5 Rev E.
+//
+// This file used to say "rounded squares at --r-card, never circles", and Rev C
+// meant it: the square was doing real work stopping a flat violet product from
+// looking like every other dashboard. The warm palette and the elevation ramp
+// carry that job now, which is a stronger way to be distinctive than refusing a
+// shape.
+//
+// The size set matches the Figma's: 20/22/26/30 for inline use, 58/64 for the
+// identity block. `px` is passed to next/image so it fetches at the right
+// density rather than scaling a larger file down.
 const sizes = {
-  sm: { box: "size-5", text: "text-[9px]", px: 20 },
-  md: { box: "size-7", text: "text-[10px]", px: 28 },
-  lg: { box: "size-8", text: "text-[11px]", px: 32 },
+  xs: { box: "size-5", text: "text-[9px]", px: 20 },
+  sm: { box: "size-[22px]", text: "text-[9px]", px: 22 },
+  md: { box: "size-[26px]", text: "text-[10px]", px: 26 },
+  lg: { box: "size-[30px]", text: "text-[11px]", px: 30 },
+  xl: { box: "size-[58px]", text: "text-[18px]", px: 58 },
+  "2xl": { box: "size-16", text: "text-[20px]", px: 64 },
 } as const;
 
 export function Avatar({
@@ -26,7 +39,7 @@ export function Avatar({
         alt={name}
         width={s.px}
         height={s.px}
-        className={`${s.box} shrink-0 rounded-card object-cover`}
+        className={`${s.box} shrink-0 rounded-full object-cover`}
       />
     );
   }
@@ -34,7 +47,7 @@ export function Avatar({
   return (
     <span
       aria-hidden
-      className={`${s.box} ${s.text} ${AVATAR_TILE} flex shrink-0 items-center justify-center rounded-card font-mono tracking-[0.08em]`}
+      className={`${s.box} ${s.text} ${AVATAR_TILE} flex shrink-0 items-center justify-center rounded-full font-mono tracking-[0.08em]`}
     >
       {initials(name)}
     </span>

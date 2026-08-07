@@ -5,7 +5,8 @@ import { RailAside } from "@/components/shell/rail-aside";
 import { TopBar } from "@/components/shell/top-bar";
 import { ToastProvider } from "@/components/ui/toast";
 import { requireSession } from "@/lib/auth";
-import { getMyOrgs, getNotifications } from "@/lib/data";
+import { sessionsLeft } from "@/lib/server/ai/pricing";
+import { getAvailableCredits, getMyOrgs, getNotifications } from "@/lib/data";
 
 /**
  * The bell, resolved on its own.
@@ -26,7 +27,11 @@ async function Bell() {
 export default async function AppLayout({ children }: { children: ReactNode }) {
   // Both are already-cached reads behind the same session resolver, so the
   // pair costs one round trip rather than two sequential ones.
-  const [session, orgs] = await Promise.all([requireSession(), getMyOrgs()]);
+  const [session, orgs, credits] = await Promise.all([
+    requireSession(),
+    getMyOrgs(),
+    getAvailableCredits(),
+  ]);
 
   return (
     <ToastProvider>
@@ -35,6 +40,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           orgName={session.org.name}
           orgs={orgs}
           email={session.email}
+          sessions={sessionsLeft(credits)}
           bell={
             <Suspense fallback={<NotificationsBell notifications={[]} />}>
               <Bell />

@@ -9,6 +9,29 @@ import "server-only";
 
 export const CREDITS_PER_USD = 100;
 
+/**
+ * PLS-179. What one "session" costs, for the top bar only.
+ *
+ * AI.md 2a: a session is one question you ask, and it is a PRESENTATION of the
+ * allowance, never a second unit of account. Credits remain the truth and keep
+ * metering real spend; this constant only decides how the remaining allowance
+ * is phrased to somebody deciding whether they can ask another question.
+ *
+ * 12 is deliberately close to a real MARKET run rather than to its 25-credit
+ * ceiling. A ceiling-based number would understate what is left by half and
+ * make the product feel meaner than it is, and an optimistic number would
+ * promise a question the allowance cannot pay for. The count is floored, so
+ * the last session shown is always askable.
+ *
+ * Move this when the rates or the model move, the same way MODEL_RATES does.
+ */
+export const AVERAGE_ASK_CREDITS = 12;
+
+/** Sessions left, floored. Never stored, never reserved against. */
+export function sessionsLeft(availableCredits: number): number {
+  return Math.max(0, Math.floor(availableCredits / AVERAGE_ASK_CREDITS));
+}
+
 // USD per 1,000,000 tokens. Override the model with OPENAI_MODEL and update
 // these two numbers in the same change, or the meter silently lies.
 //
