@@ -13,62 +13,97 @@
  * on a screenshot.
  */
 @theme {
-  /* Ground and surfaces */
-  --color-paper: #f6f4fc;
-  --color-sheet: #ffffff;
-  --color-well: #f5f2fc;
+  /* Rev E, PLS-177. The warm system, from the Figma handoff. Surfaces are a
+     four-level ramp now: paper is the page, well is SUNKEN, sheet is RAISED,
+     and float is popover-only. The old names survive because they are the
+     roles, in 73 components and in DESIGN.md, and renaming them inside a
+     reskin would hide the colour change in a rename diff. */
+  --color-paper: #f6f2ec; /* surface-0, warm paper, the page canvas */
+  --color-well: #efeae2; /* surface-1, SUNKEN: kanban columns, inputs, beds */
+  --color-sheet: #fffcf8; /* surface-2, RAISED: cards, panels */
+  --color-float: #ffffff; /* surface-3, popovers, drawers, dragged items only */
 
   /* Ink */
-  --color-ink: #1b1526;
-  --color-ink-2: #585272;
-  /* Was #8b84a0, which measured 3.26:1 on paper against a 4.5:1 requirement.
-     This value passes on both surfaces it actually sits on: 4.94 on sheet,
-     4.53 on paper. Same hue, darker. */
-  --color-ink-3: #736d84;
-  --color-rule: #e7e1f4;
+  --color-ink: #1c1917;
+  --color-ink-2: #6b6259;
+  /* Figma says #96897b. That measures 2.85:1 on the sunken well against the
+     4.5:1 floor in DESIGN.md section 2, so it is darkened along its own hue
+     until it passes on all four surfaces: 4.55 at worst, 5.44 at best. The
+     Figma value is recorded here rather than in a commit message because the
+     next person to open this file is the one who needs to know. */
+  --color-ink-3: #72685e;
+  --color-rule: #e4dcd1;
+  --color-rule-strong: #d5cabb;
 
   /* Action. `violet` is now violet: the name survives because it is the
      role ("the one clickable verb") in 14 files and DESIGN.md rule 5, and
      renaming it in the same commit as a full reskin would have hidden the
      colour change inside a rename diff. It is renamed in PLS-105. */
-  --color-violet: #7c3aed;
-  --color-violet-hover: #6d28d9;
-  --color-violet-edge: #5b21b6;
-  --color-on-violet: #ffffff;
+  --color-violet: #6d3bf5;
+  --color-violet-hover: #5a2ee0;
+  --color-violet-edge: #4a28b0; /* brand-deep, and the keycap edge */
+  --color-on-violet: #fffcf8;
   --color-violet-3: #a855f7;
+  --color-violet-deep: #4a28b0; /* text on a light violet fill */
+  --color-violet-ink: #2e1a6b; /* darkest brand stop */
+  --color-violet-100: #dfd3fc; /* fills, avatars, progress tracks */
+  --color-violet-wash: #f3eefe; /* active nav, selected rows, hero cards */
 
   /* State. Teal and amber are re-tuned to sit on a violet-tinted ground
      rather than cream; the roles are untouched. */
-  --color-teal: #0f7a5f;
+  /* Semantic pairs. Text on a tinted fill always uses that family's dark
+     stop, never black and never grey. Two of these are darker than the Figma
+     for the same contrast reason as ink-3, noted inline. */
+  --color-teal: #0f7956; /* good. Figma #0f7a57 measured 4.45:1 */
   --color-teal-edge: #0a5240;
-  --color-teal-bg: #e3f6ef;
-  --color-teal-text: #085041;
+  --color-teal-bg: #e4f2ec;
+  --color-teal-text: #0f7956;
 
-  --color-amber: #b8860b;
-  --color-amber-bg: #fdf6ec;
-  --color-amber-text: #9a7a20;
+  --color-amber: #965d0d; /* attention. Figma #a8690f measured 3.74:1 */
+  --color-amber-bg: #faf0dc;
+  --color-amber-text: #965d0d;
+  --color-amber-edge: #e7c591;
 
-  --color-red: #b02a37;
-  --color-red-bg: #fdecee;
+  --color-info: #2563a8;
+  --color-info-bg: #e8f0fa;
+
+  --color-red: #b33a34; /* problem */
+  --color-red-bg: #fbeae7;
 
   /* Chat and field surfaces the rebrand names explicitly. */
-  --color-bubble-user: #ece4fb;
-  --color-field: #f5f2fc;
-  --color-rail: #efeaf9;
+  --color-bubble-user: #efeae2;
+  --color-field: #efeae2;
+  --color-rail: #fffcf8;
 
   /* The top bar is dark chrome in BOTH themes, so it needs its own tokens.
      It used to be `bg-ink text-sheet`, which inverted in dark mode: ink
      becomes near-white and sheet near-black, so the bar flipped to white with
      dark text while the app around it went dark. A bar that changes colour
      with the theme is a bar that is not chrome. */
-  --color-bar: #17132a;
-  --color-on-bar: #f4f1fb;
+  --color-bar: #12100c; /* Rev E: warm near-black, not purple-tinted */
+  --color-on-bar: #fffcf8;
+  --color-on-bar-2: #9894aa;
 
   /* Two accent washes that must follow the theme. They were hardcoded hexes
      from the light-only era, so on a dark ground the calendar's today cell
      stayed cream and the briefing's best-next-move stayed pink. */
-  --color-today: #fdf6ec;
-  --color-move: #f9edf7;
+  --color-today: #faf0dc;
+  --color-move: #f3eefe;
+
+  /* Rev E, PLS-177. The elevation ramp, DESIGN.md 6z.
+   *
+   * The shadow colour is rgb(58 38 84 / a), never neutral. A neutral shadow on
+   * a warm violet product reads grey and dead, which is most of why the
+   * shipped build felt flat.
+   *
+   * These are --shadow-* so Tailwind emits shadow-elev-1 .. shadow-elev-4. */
+  --shadow-elev-1: 0 1px 2px rgb(58 38 84 / 0.07);
+  --shadow-elev-2:
+    0 1px 2px rgb(58 38 84 / 0.07), 0 4px 10px rgb(58 38 84 / 0.07);
+  --shadow-elev-3:
+    0 2px 4px rgb(58 38 84 / 0.09), 0 10px 24px rgb(58 38 84 / 0.1);
+  --shadow-elev-4:
+    0 4px 8px rgb(58 38 84 / 0.11), 0 20px 44px rgb(58 38 84 / 0.15);
 
   /* PLS-110. Mara, the BD Strategist redesign.
    *
@@ -127,43 +162,62 @@
   /* Radius. The rebrand is a 6px system throughout, where Rev B ran 16 down
      to 6. Keeping the five names means no component has to change; they just
      compress. */
-  --radius-shell: 10px;
+  /* Rev E, PLS-177. 12px cards, 8px inner blocks, 6px controls, 20px chips.
+     Chips are pills now and avatars are circles: DESIGN.md section 5 records
+     why those two rules reversed. */
+  --radius-shell: 12px;
   --radius-panel: 8px;
-  --radius-card: 8px;
+  --radius-card: 12px;
   --radius-control: 6px;
-  --radius-chip: 6px;
+  --radius-chip: 20px;
 }
 
 /* Dark mode, straight from the rebrand. Opt-in via html[data-theme="dark"],
    never a bare prefers-color-scheme: a recruiter whose OS flipped to dark at
    sunset should not find the product changed underneath them mid-shift. */
 html[data-theme="dark"] {
-  --color-paper: #0d0918;
-  --color-sheet: #141026;
-  --color-well: #120c22;
+  /* Rev E, PLS-177. A WARM black, not the purple-black this used to be. The
+     light system is warm paper; a cool dark mode makes the two themes look
+     like different products. Same four-level ramp, inverted: well is still
+     the sunken one and sits DARKER than the page. */
+  --color-paper: #14110c;
+  --color-well: #100e0a;
+  --color-sheet: #1c1813;
+  --color-float: #242019;
 
-  --color-ink: #f2effa;
-  --color-ink-2: #bcb4d2;
-  --color-ink-3: #8b83a2;
-  --color-rule: #2a2340;
+  /* All three measured against every surface: 5.16 at worst, on ink-3. */
+  --color-ink: #f7f3ec;
+  --color-ink-2: #c9bfb1;
+  --color-ink-3: #9a9083;
+  --color-rule: #2f2a22;
+  --color-rule-strong: #453e33;
 
-  /* Was #8b5cf6: white text on it measured 4.23:1, which is every primary
-     button in dark mode failing AA. 4.56 now. */
-  --color-violet: #8558ec;
-  --color-violet-hover: #7c3aed;
-  --color-violet-edge: #6d28d9;
-  --color-on-violet: #ffffff;
+  /* #8558ec gave white 4.46:1 here, just under. 4.52 now. The light theme
+     keeps #6d3bf5, which measures 5.84 and needs no lift. */
+  --color-violet: #8457eb;
+  --color-violet-hover: #9470ef;
+  --color-violet-edge: #6d3bf5;
+  --color-on-violet: #fffcf8;
+  --color-violet-deep: #c6b6fa;
+  --color-violet-ink: #dfd3fc;
+  --color-violet-100: #2e1a6b;
+  --color-violet-wash: #1e1633;
 
-  --color-teal-bg: #0d2b22;
+  --color-teal: #6ee7b7;
+  --color-teal-bg: #0f2b22;
   --color-teal-text: #6ee7b7;
+  --color-amber: #e2c37a;
   --color-amber-bg: #2a2113;
   --color-amber-text: #e2c37a;
-  --color-red-bg: #2d1418;
+  --color-amber-edge: #4a3a1c;
+  --color-info: #8ab4e8;
+  --color-info-bg: #14243a;
+  --color-red-bg: #2d1a16;
   --color-red: #f4a3ac;
 
-  --color-bubble-user: #2a1f4c;
-  --color-field: #120c22;
-  --color-rail: #100c20;
+  --color-bubble-user: #262019;
+  --color-field: #100e0a;
+  --color-rail: #1c1813;
   --color-today: #241a10;
   --color-move: #2a1638;
 
