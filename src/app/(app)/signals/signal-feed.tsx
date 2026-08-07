@@ -142,7 +142,7 @@ export function SignalFeed({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                     <span className="legend text-ink-2">{kind.label}</span>
-                    <span className="text-[12px] font-semibold">
+                    <span className="text-[12px] font-medium">
                       {companyName}
                     </span>
                     {company ? (
@@ -150,7 +150,7 @@ export function SignalFeed({
                     ) : null}
                   </div>
 
-                  <h2 className="mt-1.5 text-[12px] font-semibold leading-5">
+                  <h2 className="mt-1.5 text-[12px] font-medium leading-5">
                     {signal.headline}
                   </h2>
                   <p className="mt-1 max-w-[70ch] text-[12px] leading-5 text-ink-2">
@@ -245,7 +245,7 @@ export function SignalFeed({
 
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    <span className="truncate text-[12px] font-semibold">
+                    <span className="truncate text-[12px] font-medium">
                       {company.name}
                     </span>
                     <span className="legend text-ink-3">T{company.tier}</span>

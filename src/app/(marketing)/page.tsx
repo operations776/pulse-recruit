@@ -79,7 +79,7 @@ export default function MarketingPage() {
                   : ""
               }`}
             >
-              <p className="text-[16px] font-semibold">{step.title}</p>
+              <p className="text-[16px] font-medium">{step.title}</p>
               <p className="mt-2.5 text-[13px] leading-[1.65] text-ink-2">
                 {step.body}
               </p>
@@ -99,7 +99,7 @@ export default function MarketingPage() {
               key={feature.title}
               className="settle lift rounded-card border border-rule bg-sheet p-5 hover:border-violet"
             >
-              <p className="text-[15px] font-semibold">{feature.title}</p>
+              <p className="text-[15px] font-medium">{feature.title}</p>
               <p className="mt-2 text-[13px] leading-[1.6] text-ink-2">
                 {feature.body}
               </p>
@@ -137,7 +137,7 @@ export default function MarketingPage() {
                   .map((part) => part[0])
                   .join("")}
               </span>
-              <p className="mt-4 text-[16px] font-semibold">{person.name}</p>
+              <p className="mt-4 text-[16px] font-medium">{person.name}</p>
               <p className="meta mt-1 text-ink-3">{person.role}</p>
               <p className="mt-3 text-[13px] leading-[1.65] text-ink-2">
                 {person.body}

@@ -173,7 +173,7 @@ export default function FeaturesPage() {
               key={feature.title}
               className="settle lift rounded-card border border-rule bg-sheet p-5 hover:border-violet"
             >
-              <p className="text-[15px] font-semibold">{feature.title}</p>
+              <p className="text-[15px] font-medium">{feature.title}</p>
               <p className="mt-2 text-[13px] leading-[1.6] text-ink-2">
                 {feature.body}
               </p>

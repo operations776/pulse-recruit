@@ -31,7 +31,7 @@ export function MetricsStrip({ metrics }: { metrics: Metric[] }) {
       {metrics.map((metric) => (
         <div
           key={metric.label}
-          className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-shell border border-mara-rule bg-mara-sheet px-3.5 py-3"
+          className="raised flex min-w-0 flex-1 flex-col gap-0.5 rounded-card border border-mara-rule bg-mara-sheet px-3.5 py-3"
         >
           <p className="flex items-center gap-1.5 text-[11px] leading-[1.45] text-mara-ink-3">
             {metric.label}

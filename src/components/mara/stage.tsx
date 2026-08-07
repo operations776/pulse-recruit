@@ -61,6 +61,7 @@ export function MaraStage({
   domains,
   firstName,
   serverHour,
+  todayLabel,
   debriefDue,
   nowMs,
   lastRead,
@@ -88,6 +89,8 @@ export function MaraStage({
   firstName: string;
   /** London hour, resolved server-side so the greeting cannot flip on hydration. */
   serverHour: number;
+  /** "Friday 7 August", formatted on the server for the same reason. */
+  todayLabel: string;
   /** The promise Mara asks about after 17:00, or null when there is nothing to ask. */
   debriefDue: BDCommitmentRow | null;
   nowMs: number;
@@ -199,9 +202,17 @@ export function MaraStage({
 
             {!started ? (
               <div className="mara-in flex flex-col gap-1">
-                <h1 className="text-[22px] font-medium leading-[1.35] tracking-[-0.4px] text-mara-ink">
-                  {greetingFor(serverHour)}, {firstName}.
-                </h1>
+                {/* PLS-180. The serif, per the Figma and DESIGN.md 4z. The date
+                    sits opposite it, which is the editorial move: a title and
+                    its dateline. */}
+                <div className="flex items-baseline justify-between gap-4">
+                  <h1 className="page-title text-mara-ink">
+                    {greetingFor(serverHour)}, {firstName}
+                  </h1>
+                  <p className="shrink-0 text-[12px] leading-[1.45] text-mara-ink-3">
+                    {todayLabel}
+                  </p>
+                </div>
                 <p className="text-[13px] leading-[1.5] text-mara-ink-2">
                   {commitments.length > 0
                     ? `You have ${commitments.length} open ${commitments.length === 1 ? "promise" : "promises"}. Let's start there.`

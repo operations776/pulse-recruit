@@ -115,40 +115,42 @@
    * Scoped with a `mara-` prefix so they cannot leak into the other four
    * pillars: this is one screen's palette, not a second design system.
    */
-  --color-mara-violet: #6d3bf5;
-  --color-mara-violet-soft: #f4f1fe;
-  --color-mara-violet-edge: #cabffb;
-  --color-mara-violet-deep: #38217e;
-  --color-mara-ring: #ded7fe;
+  /* PLS-178. The mara-* palette is now an ALIAS LAYER, not a second palette.
+   *
+   * PLS-110 forked it because the Figma ran different values from the product.
+   * Rev E adopted the Figma product-wide, so the fork became pure duplication,
+   * and it had already cost us once: PLS-138 fixed a contrast bug on
+   * --color-violet and left --color-mara-violet holding the failing value 22
+   * lines below its own warning comment.
+   *
+   * The names survive because they are in ~120 call sites across nine
+   * components. Renaming them is a separate mechanical commit; making them
+   * resolve to one source of truth is the fix that matters. */
+  --color-mara-violet: var(--color-violet);
+  --color-mara-violet-soft: var(--color-violet-wash);
+  --color-mara-violet-edge: var(--color-violet-100);
+  --color-mara-violet-deep: var(--color-violet-deep);
+  --color-mara-ring: var(--color-violet-100);
 
-  --color-mara-ground: #f7f6fa;
-  --color-mara-sheet: #ffffff;
-  --color-mara-rule: #e5e3ec;
-  --color-mara-bar: #12101c;
+  --color-mara-ground: var(--color-paper);
+  --color-mara-sheet: var(--color-sheet);
+  --color-mara-rule: var(--color-rule);
+  --color-mara-bar: var(--color-bar);
 
-  --color-mara-ink: #17151f;
-  --color-mara-ink-2: #6b6779;
-  /* Was #9a96a8, which measured 2.7:1 on the surfaces it sits on against a
-     4.5:1 requirement: worse than the ink-3 it was modelled on. This carries
-     the metric labels, the signal detail lines and the age stamps, all of
-     which are read, not decorative. 4.53 at worst now. */
-  --color-mara-ink-3: #706d7b;
-  --color-mara-bubble: #f2f1f6;
+  --color-mara-ink: var(--color-ink);
+  --color-mara-ink-2: var(--color-ink-2);
+  --color-mara-ink-3: var(--color-ink-3);
+  --color-mara-bubble: var(--color-bubble-user);
 
-  /* Signal and metric tones, straight from the Figma. */
-  --color-mara-good: #10916b;
-  /* Text-safe variants of the status colours. A base status colour is tuned
-     for a 7px dot, where contrast is not the binding constraint; the same
-     value as text measured 2.5:1 to 3.5:1 against a 4.5:1 requirement. Dots
-     keep the base, text uses these. */
-  --color-mara-good-deep: #0e815f;
-  --color-mara-bad-deep: #c34746;
-  --color-mara-warn: #da961b;
-  --color-mara-warn-deep: #a4660e;
-  --color-mara-bad: #cd4b4a;
-  --color-mara-amber-bg: #fcf3e2;
-  --color-mara-amber-edge: #efcd8b;
-  --color-mara-amber-ink: #854f0b;
+  --color-mara-good: var(--color-teal);
+  --color-mara-good-deep: var(--color-teal-text);
+  --color-mara-bad: var(--color-red);
+  --color-mara-bad-deep: var(--color-red);
+  --color-mara-warn: var(--color-amber);
+  --color-mara-warn-deep: var(--color-amber-text);
+  --color-mara-amber-bg: var(--color-amber-bg);
+  --color-mara-amber-edge: var(--color-amber-edge);
+  --color-mara-amber-ink: var(--color-amber-text);
 
   /* Faces. Archivo for display and Inter for body, both from the rebrand.
      IBM Plex Mono stays as the legend face: the rebrand uses JetBrains Mono,
@@ -156,6 +158,7 @@
      self-hosted through next/font, so swapping it would add a network font
      for a difference nobody can see at this size. */
   --font-display: var(--font-archivo);
+  --font-serif: var(--font-newsreader);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-plex-mono);
 
@@ -230,33 +233,34 @@ html[data-theme="dark"] {
      this token paints "I'll do this", the one filled button on the screen.
      Fixing one violet and leaving its twin is how a duplicated palette costs
      you. 4.56 now. */
-  --color-mara-violet: #8558ec;
-  --color-mara-violet-soft: #221a3d;
-  --color-mara-violet-edge: #3b2d6b;
-  --color-mara-violet-deep: #c9b8ff;
-  --color-mara-ring: #4c3a8a;
+  /* Aliases here too, for the same reason. The comment this replaces warned
+     that fixing one violet and leaving its twin is how a duplicated palette
+     costs you, which had already happened once. There is no twin now. */
+  --color-mara-violet: var(--color-violet);
+  --color-mara-violet-soft: var(--color-violet-wash);
+  --color-mara-violet-edge: var(--color-violet-100);
+  --color-mara-violet-deep: var(--color-violet-deep);
+  --color-mara-ring: var(--color-violet-100);
 
-  --color-mara-ground: #0d0918;
-  --color-mara-sheet: #141026;
-  --color-mara-rule: #2a2340;
-  --color-mara-bar: #0a0714;
+  --color-mara-ground: var(--color-paper);
+  --color-mara-sheet: var(--color-sheet);
+  --color-mara-rule: var(--color-rule);
+  --color-mara-bar: var(--color-bar);
 
-  --color-mara-ink: #f2effa;
-  --color-mara-ink-2: #bcb4d2;
-  --color-mara-ink-3: #8b83a2;
-  --color-mara-bubble: #241d3d;
+  --color-mara-ink: var(--color-ink);
+  --color-mara-ink-2: var(--color-ink-2);
+  --color-mara-ink-3: var(--color-ink-3);
+  --color-mara-bubble: var(--color-bubble-user);
 
-  --color-mara-good: #34d399;
-  /* Already 10:1 on the dark ground, so deep is the same value here. The
-     alias exists so a component can name one token across both themes. */
-  --color-mara-good-deep: #34d399;
-  --color-mara-bad-deep: #f4a3ac;
-  --color-mara-warn: #e2c37a;
-  --color-mara-warn-deep: #e2c37a;
-  --color-mara-bad: #f4a3ac;
-  --color-mara-amber-bg: #2a2113;
-  --color-mara-amber-edge: #4a3a1a;
-  --color-mara-amber-ink: #e2c37a;
+  --color-mara-good: var(--color-teal);
+  --color-mara-good-deep: var(--color-teal-text);
+  --color-mara-bad: var(--color-red);
+  --color-mara-bad-deep: var(--color-red);
+  --color-mara-warn: var(--color-amber);
+  --color-mara-warn-deep: var(--color-amber-text);
+  --color-mara-amber-bg: var(--color-amber-bg);
+  --color-mara-amber-edge: var(--color-amber-edge);
+  --color-mara-amber-ink: var(--color-amber-text);
 }
 
 /* The grain is gone, PLS-101.
@@ -328,6 +332,40 @@ body {
      Contract rule 8 PERMITS uppercase on the display face; it does not
      require it. Sentence case here, same face, same weight, tighter tracking
      because large display type needs it. */
+  /* PLS-178. A raised surface: elevation plus the inset top highlight.
+     
+     The highlight has to be in the same box-shadow declaration as the drop
+     shadow, so it cannot be a Tailwind utility stacked on shadow-elev-2. It
+     is what actually reads as lit from above, and leaving it out is why most
+     "elevated" cards look like they have a grey smudge under them instead. */
+  .raised {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.9),
+      var(--shadow-elev-2);
+  }
+
+  /* Dark mode: a white inset on a warm black card reads as a scratch, so the
+     highlight is a much quieter warm one. */
+  html[data-theme="dark"] .raised {
+    box-shadow:
+      inset 0 1px 0 rgb(255 250 240 / 0.06),
+      var(--shadow-elev-2);
+  }
+
+  /* PLS-177b. The editorial page title, DESIGN.md 4z.
+     
+     Newsreader at ~25px with a 120% line height, and nothing else uses it.
+     This is the "warm editorial" half of the direction: the palette does the
+     rest, but a serif title is what makes a data product read as considered
+     rather than generated. */
+  .page-title {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 25px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
   .display-lg {
     font-family: var(--font-display);
     font-weight: 400;

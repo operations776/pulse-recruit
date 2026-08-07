@@ -64,7 +64,7 @@ export default function SettingsClient({ data }: { data: SettingsData }) {
                     aria-current={active ? "page" : undefined}
                     className={`w-full rounded-control px-3 py-2 text-left text-[12px] transition-colors duration-150 ${
                       active
-                        ? "bg-well font-semibold text-violet-hover"
+                        ? "bg-well font-medium text-violet-hover"
                         : "text-ink-2 hover:bg-paper hover:text-ink"
                     }`}
                   >
@@ -101,7 +101,7 @@ function GeneralPanel({ data }: { data: SettingsData }) {
   return (
     <div className="flex flex-col gap-4">
       <section className={CARD}>
-        <h2 className="text-[18px] font-semibold leading-[22px]">Workspace</h2>
+        <h2 className="text-[18px] font-medium leading-[22px]">Workspace</h2>
         <p className="mt-1 text-[12px] text-ink-2">
           The name your team sees in the top bar, and the address candidates and
           clients land on.
@@ -144,7 +144,7 @@ function GeneralPanel({ data }: { data: SettingsData }) {
       </section>
 
       <section className={CARD}>
-        <h2 className="text-[18px] font-semibold leading-[22px]">Danger zone</h2>
+        <h2 className="text-[18px] font-medium leading-[22px]">Danger zone</h2>
         <p className="mt-1 text-[12px] text-ink-2">
           Deleting the workspace removes every job, candidate, note and file for
           the whole team. There is no undo and no export afterwards.
@@ -379,12 +379,12 @@ function BillingPanel() {
   return (
     <section className={CARD}>
       <p className="legend text-ink-3">Current plan</p>
-      <h2 className="mt-1.5 text-[18px] font-semibold leading-[22px]">
+      <h2 className="mt-1.5 text-[18px] font-medium leading-[22px]">
         Founding agency
       </h2>
 
       <p className="mt-2 flex items-baseline gap-1.5">
-        <span className="font-mono text-[21px] font-semibold leading-[30px] tabular-nums">
+        <span className="font-mono text-[21px] font-medium leading-[30px] tabular-nums">
           $50
         </span>
         <span className="text-[12px] text-ink-3">/month</span>

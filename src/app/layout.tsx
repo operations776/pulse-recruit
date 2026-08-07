@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo, IBM_Plex_Mono, Inter } from "next/font/google";
+import { Archivo, IBM_Plex_Mono, Inter, Newsreader } from "next/font/google";
 import { ThemeScript } from "@/components/shell/theme-script";
 import { brand } from "@/config/brand";
 import "./globals.css";
@@ -17,11 +17,28 @@ const archivo = Archivo({
   display: "swap",
 });
 
+// PLS-177b. The serif, and the single change Daniyal will feel first.
+//
+// Scope is deliberately narrow, per DESIGN.md 4z: page titles and coach prose
+// only. A serif on a data label makes a table unreadable, which is exactly how
+// an editorial face gets blamed for a legibility problem it did not cause.
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "swap",
+});
+
 // Inter replaces IBM Plex Sans as the reading face, per the rebrand.
+//
+// 400 and 500 ONLY, per DESIGN.md 4z. Dropping 600 and 700 is a real change:
+// the shipped build reaches for semibold whenever something needs emphasis,
+// and emphasis now comes from size, colour and space. Loading them would let
+// them creep back one component at a time.
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -49,7 +66,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${archivo.variable} ${inter.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${inter.variable} ${plexMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <head>
         {/* Before the first paint, always. An effect would run after the

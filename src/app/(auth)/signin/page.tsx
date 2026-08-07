@@ -87,10 +87,10 @@ function SignInCard() {
         >
           <span className="size-2 rounded-full bg-teal" />
         </span>
-        <span className="display text-[13px] font-bold">{brand.name}</span>
+        <span className="display text-[13px] font-medium">{brand.name}</span>
       </span>
 
-      <h1 className="mt-6 display text-[18px] font-semibold leading-7 tracking-[-0.01em]">
+      <h1 className="mt-6 display text-[18px] font-medium leading-7 tracking-[-0.01em]">
         Welcome back
       </h1>
       <p className="mt-1.5 text-[12px] text-ink-2">
@@ -165,7 +165,7 @@ function SignInCard() {
       <p className="mt-5 text-center text-[12px] text-ink-2">
         <Link
           href="/signup"
-          className="font-semibold text-violet-hover hover:underline"
+          className="font-medium text-violet-hover hover:underline"
         >
           New here? Create an account
         </Link>

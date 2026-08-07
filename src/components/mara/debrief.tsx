@@ -68,12 +68,7 @@ export function DebriefCard({
   };
 
   return (
-    <section className="mara-in relative flex w-full flex-col gap-2.5 overflow-hidden rounded-shell border border-mara-violet-edge bg-mara-violet-soft px-4 py-3.5">
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-[3px] bg-mara-violet"
-      />
-
+    <section className="mara-in raised flex w-full flex-col gap-2.5 rounded-card border border-mara-violet-edge bg-mara-violet-soft px-4 py-3.5">
       <p className="meta text-mara-violet-deep">BEFORE YOU GO</p>
       {/* "This morning" was a guess. A promise made at 2pm is not a morning
           promise, and a card that gets the day wrong is a card you stop

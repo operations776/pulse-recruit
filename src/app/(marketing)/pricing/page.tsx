@@ -81,7 +81,7 @@ export default function PricingPage() {
               key={item.title}
               className="settle lift rounded-card border border-rule bg-sheet p-5 hover:border-violet"
             >
-              <p className="text-[15px] font-semibold">{item.title}</p>
+              <p className="text-[15px] font-medium">{item.title}</p>
               <p className="mt-2 text-[13px] leading-[1.6] text-ink-2">
                 {item.body}
               </p>

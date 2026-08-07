@@ -176,6 +176,14 @@ export default async function BDStrategistPage({
       domains={domains}
       firstName={firstName}
       serverHour={serverHour}
+      // Formatted here, not in the client: a date rendered from the browser
+      // clock can disagree with the greeting beside it across midnight.
+      todayLabel={new Intl.DateTimeFormat("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        timeZone: "Europe/London",
+      }).format(renderedAt)}
       // From 17:00 London, and only for a promise made before today's
       // afternoon: asking at 5pm about something committed at 4:55pm is not a
       // debrief, it is nagging. Commitments come oldest first, so [0] is the

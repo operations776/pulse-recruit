@@ -94,7 +94,7 @@ function Section({
   return (
     <section className="flex flex-col gap-3">
       <div>
-        <h2 className="display text-[13px] font-bold text-ink">{title}</h2>
+        <h2 className="display text-[13px] font-medium text-ink">{title}</h2>
         <p className="mt-1 text-[12px] leading-[1.5] text-ink-2">{note}</p>
       </div>
       {/* One shell per section, per DESIGN.md section 7: the sample sits inside

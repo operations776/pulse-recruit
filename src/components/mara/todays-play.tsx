@@ -31,7 +31,7 @@ export function TodaysPlay({ signal }: { signal: PlaySignal | null }) {
 
   if (!signal) {
     return (
-      <section className="flex w-full flex-col gap-1.5 rounded-shell border border-mara-rule bg-mara-sheet px-4 py-3.5">
+      <section className="raised flex w-full flex-col gap-1.5 rounded-card border border-mara-rule bg-mara-sheet px-4 py-3.5">
         <p className="meta text-mara-ink-3">TODAY&rsquo;S PLAY</p>
         <p className="text-[13px] leading-[1.5] text-mara-ink-2">
           Nothing has moved on your patch yet. Add companies to your Dream 100
@@ -70,15 +70,8 @@ export function TodaysPlay({ signal }: { signal: PlaySignal | null }) {
   };
 
   return (
-    <section className="relative flex w-full flex-col gap-2 overflow-hidden rounded-shell border border-mara-violet-edge bg-mara-violet-soft px-4 py-3.5">
-      {/* The violet left rule from the Figma. Decorative, the label carries
-          the meaning. */}
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-[3px] bg-mara-violet"
-      />
-
-      <div className="flex items-center justify-between">
+    <section className="raised flex w-full flex-col gap-2 rounded-card border border-mara-violet-edge bg-mara-violet-soft px-4 py-3.5">
+            <div className="flex items-center justify-between">
         <p className="meta text-mara-violet-deep">TODAY&rsquo;S PLAY</p>
         <p className="meta text-mara-ink-3">{sourceLabel}</p>
       </div>

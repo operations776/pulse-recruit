@@ -137,7 +137,7 @@ export function Dialog({
       >
         <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-5">
           <div className="min-w-0">
-            <h2 className="display text-[18px] font-semibold leading-6">
+            <h2 className="display text-[18px] font-medium leading-6">
               {title}
             </h2>
             {description ? (
