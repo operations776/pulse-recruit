@@ -54,6 +54,7 @@ export function MemoryDialog({
   editing,
   canManageAgency,
   onSaved,
+  defaultScope,
 }: {
   open: boolean;
   onClose: () => void;
@@ -61,11 +62,22 @@ export function MemoryDialog({
   editing: BDAgentMemoryRow | null;
   canManageAgency: boolean;
   onSaved: () => void;
+  /**
+   * Which layer the add button was pressed from, so opening this from the
+   * Pillars panel starts on agency strategy and from Context starts on
+   * personal coaching. Ignored when editing: a record cannot change layers.
+   */
+  defaultScope?: BDMemoryScope;
 }) {
   const { notify } = useToast();
-  const [scope, setScope] = useState<BDMemoryScope>(
-    editing?.scope ?? (canManageAgency ? "agency" : "personal"),
-  );
+  const [scope, setScope] = useState<BDMemoryScope>(() => {
+    if (editing) return editing.scope;
+    // A member without organisation rights cannot file agency strategy, so the
+    // panel they opened this from does not get to preselect it for them and
+    // hand them a form that cannot save.
+    if (defaultScope === "agency" && !canManageAgency) return "personal";
+    return defaultScope ?? (canManageAgency ? "agency" : "personal");
+  });
   const [kind, setKind] = useState<BDMemoryKind>(
     (editing?.kind as BDMemoryKind) ?? "positioning",
   );

@@ -1,10 +1,13 @@
 "use client";
 
-import { Clock, Compass, Target } from "lucide-react";
+import { Clock, Target } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import type { AgentState } from "@/components/ai/agent-status";
 import { Briefing, parseBriefing } from "@/components/ai/briefing";
 import { ChatPanel } from "@/components/ai/chat-panel";
+import { phaseWord } from "@/components/ai/run-log";
+import type { RunPhase } from "@/lib/ai-events";
 import type {
   BDAgentMemoryRow,
   ChatConversationRow,
@@ -74,6 +77,22 @@ export function StrategistWorkspace({
 }) {
   const router = useRouter();
 
+  // Lifted out of ChatPanel so the rail can say whether the strategist is
+  // working. The panel owns the run; this is a read of it, not a second copy.
+  const [running, setRunning] = useState<{
+    busy: boolean;
+    phase: RunPhase | null;
+  }>({ busy: false, phase: null });
+
+  // A missing platform key is a deployment fact the recruiter cannot fix, and
+  // the composer already says so. The indicator agrees with it rather than
+  // reporting Ready on a surface that cannot answer.
+  const agentState: AgentState = !configured
+    ? "unavailable"
+    : running.busy
+      ? "thinking"
+      : "ready";
+
   const answers = useMemo(
     () => messages.filter((m) => m.role === "assistant" && m.status === "complete"),
     [messages],
@@ -103,11 +122,6 @@ export function StrategistWorkspace({
     // agency's recent research rather than a call made just now.
     return "Recent research";
   }, [latest]);
-
-  const coaching = useMemo(
-    () => memories.filter((memory) => memory.source === "feedback").slice(0, 3),
-    [memories],
-  );
 
   const meter = (
     <div>
@@ -162,21 +176,10 @@ export function StrategistWorkspace({
         ) : null}
       </section>
 
-      {coaching.length > 0 ? (
-        <section className="border-t border-rule px-4 py-3">
-          <p className="legend flex items-center gap-1.5 text-ink-3">
-            <Compass size={16} strokeWidth={1.5} className="size-3.5" aria-hidden />
-            Coaching it has taken
-          </p>
-          <ul className="mt-1.5 flex flex-col gap-2">
-            {coaching.map((memory) => (
-              <li key={memory.id} className="text-[12px] leading-[1.5] text-ink-2">
-                <span className="line-clamp-3">{memory.body}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      {/* "Coaching it has taken" used to close this panel, showing the three
+          most recent feedback records. The Context panel now holds all of
+          them, with edit and delete on each, so repeating a truncated copy
+          here would be the same fact stated twice in one column. */}
     </>
   );
 
@@ -187,6 +190,10 @@ export function StrategistWorkspace({
         canManageAgency={canManageAgency}
         meId={meId}
         meter={meter}
+        agentState={agentState}
+        agentDetail={
+          running.phase ? phaseWord(running.phase, "market") : null
+        }
         currentRead={currentRead}
         history={
           <ConversationList
@@ -217,6 +224,7 @@ export function StrategistWorkspace({
           emptyBody="Ask about hiring, funding, or leadership moves at the companies you want to win. Every answer names the opportunity, why it matters to you, and the one move worth making, with the sources it was built from."
           suggestions={SUGGESTIONS}
           conversationId={activeConversationId}
+          onRunStateChange={setRunning}
           // A first question creates its thread server-side, so the client
           // only learns the id when the run opens. Switching to it means a
           // reload lands on the conversation just started.

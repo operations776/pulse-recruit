@@ -312,6 +312,10 @@ folder is a complete product with surfaces we did not have.
 
 | ID | Ticket | Status |
 | --- | --- | --- |
+| PLS-100 | Private repo goes public with real CI (typecheck, lint, production build, a migration warning), and DEPLOY.md documents the path. PR #1 | done |
+| PLS-101 | The token layer ported: re-pointing `globals.css` reskinned 73 components without editing one of them. PR #2 | done |
+| PLS-102 | The rename to Pulse Recruit, a one-file change through `src/config/brand.ts`. PR #2 | done |
+| PLS-103 | DESIGN.md becomes Rev C: what the rebrand changed, and the structural rules it did not. PR #3 | done |
 | PLS-104 | The shell: settings popover, working dark mode, workspace menu. Dark mode is persisted, unlike the rebrand's in-memory toggle, and applied by an inline script before paint rather than in an effect, which is a white flash on every navigation | done |
 | PLS-105 | `chat_conversations`, so a chat surface has threads. `begin_ask` resolves the thread inside the function to keep the claim atomic. All 14 existing messages adopted into 3 threads titled from their own first questions | done |
 | PLS-106 | The BD history panel: threads grouped Today / Yesterday / date, New conversation, author-only delete. The transcript is scoped to the open thread, and so is the history the model receives | done |
@@ -352,20 +356,247 @@ token-addressed page that is meant to work without a session.
 Still open, and Daniyal's call because it is an Auth setting rather than
 schema: leaked password protection is disabled on the Supabase project.
 
-## Mara, the BD strategist redesign (Figma JNQb065A0l98R0chZVy0B6)
+## The gate, and the rest of the BD Strategist
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-109 | The `design-review` skill was judging Rev C screens against Rev A. It asked for `forest-900` chrome, `emerald-600` actions, Bricolage headings, JetBrains data literals, 11px micro labels, hue-tinted initials and `hueByIndex`: seven rules, zero occurrences of any of them in `src/`. It sent every route through `shot.mjs`, which cannot get past the session gate, and never opened dark mode at all. Rewritten to reference DESIGN.md section 11 rather than restate it, which is how it went stale in the first place | done |
+| PLS-110 | BD Strategist: the Ready/Thinking run-state indicator and the rail panel toggles | review: typecheck, lint and production build are green, and the mechanical checks are clean. The screenshot pass has not run, see below |
+
+**The gate was the thing checking everything else.** It named a "Review
+checklist section" of DESIGN.md that does not exist, said "all ten checklist
+items" over a list of eleven, and its mechanical grep flagged `text-[1[0-9]px]`,
+which matches `text-[12px]` and `text-[13px]`, the correct Rev C type scale.
+`strategy-rail.tsx` alone would have returned a dozen false findings, which is
+how a reviewer learns to skim the list.
+
+**PLS-110 has not had its screenshot pass.** `/market` is behind the session
+gate, so photographing it needs a sign-in against the shared Supabase project,
+and this session has the publishable pair only as a build-gate placeholder.
+Judging the change from the diff is the one thing the skill exists to forbid,
+so it stays at `review` rather than being called done. The commands are in the
+skill; running them needs `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+
+Two DESIGN.md corrections are owed and are Daniyal's call, because it is the
+binding spec rather than a helper file. The skill documents both as carve-outs
+so nobody files a finding against them meanwhile:
+
+1. **Section 6d and contract rule 4 still describe the grain.** PLS-101 removed
+   it, `globals.css` says so, and the Rev C table at the top of the same file
+   says so. Rule 4 now governs something that does not exist.
+2. **Section 9's toggle group still specifies a teal active cap.** PLS-108
+   overruled that when it found every segmented control painting its selected
+   cap teal: teal means on or running, and a selected tab is not a running
+   thing. The anatomy and the lesson disagree in one document.
+
+## Rev D: the BD Strategist redesign
+
+Source: Figma file `JNQb065A0l98R0chZVy0B6`, "Pulse Recruit, BD Strategist
+redesign", four frames. Daniyal's call on 2026-08-07 was to adopt it in full
+rather than cherry-pick the parts that fit.
+
+**This is not a reskin, and it should not be planned like one.** Rev C was a
+colour and type change that landed by re-pointing tokens, without editing 73
+component files. This changes what the product is. Five things in the file
+contradict specs that are binding today, so each one changes the spec first,
+in the commit before the code, per the PLS-103 lesson: a stale spec means the
+next screen gets measured with the wrong ruler.
+
+**It also supersedes most of PLS-110, which shipped hours earlier.** The
+Ready/Thinking indicator becomes the two-state ancestor of Mara's five-state
+avatar, and the Pillars/Context/Read rail toggles have no equivalent at all:
+the redesign puts advisory domains and context in a persona panel with no
+switching. PLS-110 is still at `review` and never had its screenshot pass. It
+now likely never will, because the screen it changed is being replaced.
+
+### The five decisions this adopts
+
+1. **Mara.** The agent gets a name, a face, five states (idle, listening,
+   thinking, speaking, stumped), a 4s breathe loop and an in-character error
+   voice. The BD Strategist spec currently says the rail "makes the agent feel
+   present without inventing a human persona". That line is reversed.
+2. **Sessions replace credits.** The top bar reads "23 sessions left". AI.md
+   section 2 says "1 credit = 1 US cent of provider spend. That is the whole
+   definition, and it is what makes the meter honest." A session needs a
+   definition that exact before a screen prints one.
+3. **A five-room rail** (Coach, Patch, Accounts, Signals, Notes) replaces the
+   one-module-per-pillar wayfinding in DESIGN.md section 8. That section calls
+   four products behind one nav "the hardest problem in this product", so this
+   reaches all five modules, not just `/market`.
+4. **A new motion envelope.** Easing moves from `cubic-bezier(0.16, 1, 0.3, 1)`
+   to `cubic-bezier(0.2, 0, 0, 1)`, and the avatar breathe is a second ambient
+   animation where section 10 allows exactly one, the pulse dot. The rest
+   agrees with what we have: 160 to 220ms, translateY 8px plus opacity,
+   reduced motion collapsing to opacity only.
+5. **Four surfaces that do not exist yet:** the commitments ledger, the 5pm
+   evening debrief, the disagreement treatment, and the context gap list.
+6. **Three colour roles move.** The palette is unchanged, Rev C violet
+   throughout, so nothing is re-pointed in `globals.css`. What changes is what
+   the colours are allowed to mean, and each of these breaks a rule that holds
+   today:
+   - The **Act now** severity dot is violet, and it is not clickable. Rule 5
+     says violet is a verb.
+   - The **Watch** dot is teal, which currently means on, running, engaged. A
+     signal being watched is not a running thing.
+   - **Your offer** carries a red dot for "no price anchor". Section 3 says red
+     is destructive and error only, never a general warning colour.
+
+   Adopting these means section 3 gains a fourth category, a severity ramp,
+   alongside the content skill accents. The constraint that stopped those
+   accents eroding the roles applies here too: they carry a category and each
+   state still needs its icon and word.
+
+### Tickets
+
+| ID | Ticket | Depends on | Status |
+| --- | --- | --- | --- |
+| PLS-111 | DESIGN.md becomes Rev D. Section 8 rewritten for the five-room rail, section 10 takes the new easing and widens the ambient exception to the avatar, and section 3 gains the severity and domain hues as a named role set. The palette itself does not change | | todo |
+| PLS-112 | AI.md section 2: the billing unit becomes a session, defined as exactly as a credit is today. Nothing prints a session count until this lands | | todo |
+| PLS-113 | The BD Strategist spec gains Mara: the five states, the error voice, and the concede-on-second-push rule. The no-persona line is reversed on the record rather than quietly deleted | | todo |
+| PLS-114 | Migration: the sessions ledger. `begin_ask` reserves and `finish_ask` settles in sessions, and the meter stays exact across the change | PLS-112 | todo |
+| PLS-115 | Migration: `commitments`. A promise, when it was made, and whether it closed | | todo |
+| PLS-116 | Migration: `context_gaps`, the questions Mara knows she cannot answer yet | | todo |
+| PLS-117 | The five-room rail replaces the pillar rail, across all five modules | PLS-111 | todo |
+| PLS-118 | `MetricCard` and the metrics strip. Nodes `4:2`, `4:3`, `4:8`, `4:13`, `4:18` | PLS-111 | done: composed on the `/design` component sheet and APPROVED at 1440 light, 1440 dark and 900 |
+| PLS-119 | `SignalRow` and the signals feed. Nodes `4:23`, `4:27`, `4:33`, `4:39` | PLS-111 | done: APPROVED on `/design`. The name collision with the Postgres row type stands, they are in different modules and nothing imports both, so a file needing both must alias one |
+| PLS-120 | `AdvisoryDomain`. Nodes `4:51`, `4:53`, `4:58`, `4:63`, `4:68`, `4:73` | PLS-111 | done: APPROVED on `/design`. The design's per-domain hue became a `status` prop, because those colours are readings that change with the data rather than domain identities |
+| PLS-121 | `PersonaPanel` and the avatar states. Node `1:7`, states from spec frame `2:44` | PLS-113, PLS-120 | todo |
+| PLS-122 | The commitments ledger. Node `9:2` | PLS-115 | todo |
+| PLS-123 | Tell Mara something: the drawer and the gap list. Nodes `5:8`, `5:19` to `5:40` | PLS-116 | todo |
+| PLS-124 | The evening debrief, 5pm local, only on days with an open commitment | PLS-122 | blocked: needs a scheduler, and pg_cron is still deliberately unscheduled per PLS-88 |
+| PLS-125 | The disagreement treatment, amber rule on the left, one objection and not a debate. Node `10:23` | PLS-113 | todo |
+
+### Blocked on the Figma read budget
+
+The account is on a Starter plan with a View seat, which is **six MCP read
+calls per month**, not per day, shared across everyone using it. One
+`get_metadata` call bought the full node tree, every ID, name, size and string,
+which is what the table above is built from. The next call was refused.
+
+A PNG export then covered most of the gap. The palette reads as Rev C violet
+throughout, so no token work is needed and the components can be built against
+the 58 in `globals.css` today.
+
+**What is still missing is exact values and assets.** Hex codes, type sizes,
+radii and the exported icon set cannot be read off a screenshot to the
+precision this system needs, and DESIGN.md rule 1 forbids off-scale values.
+The working assumption is that every value maps to an existing token, and the
+first design review will catch where it does not. The five rail icons render as
+plain circles in the export, so those are unidentified and will come from
+Lucide until somebody says otherwise.
+
+### The palette does not change, and here is the proof
+
+Read off the real nodes with a Full seat, not eyedropped from the export. Every
+Figma value is a near-miss of a token we already ship, all within a few
+percent, which is what a designer working from a screenshot produces rather
+than what a new ramp looks like. So nothing is re-pointed in `globals.css` and
+`src/components/bd/tone.ts` maps to tokens instead:
+
+| Role | Figma | Our token | Value |
+| --- | --- | --- | --- |
+| Body text | `#17151f` | `--color-ink` | `#1b1526` |
+| Secondary | `#9a96a8` | `--color-ink-3` | `#8b84a0` |
+| Meta, severity word | `#6b6779` | `--color-ink-2` | `#585272` |
+| Hairline | `#e5e3ec` | `--color-rule` | `#e7e1f4` |
+| Positive delta | `#10916b` | `--color-teal` | `#0f7a5f` |
+| Attention delta | `#da961b` | `--color-amber` | `#b8860b` |
+| Negative delta | `#cd4b4a` | `--color-red` | `#b02a37` |
+| Card fill | `#ffffff` | `--color-sheet` | `#ffffff` |
+
+The deciding argument is not fidelity, it is dark mode. A raw hex cannot flip,
+so pasting these would leave the BD screen in permanent light mode while every
+other screen follows the theme. That is the same class of bug as the top bar
+in PLS-104, which is the one a screenshot caught and three automated gates did
+not.
+
+### Six numeric deltas, snapped rather than adopted
+
+The components ship on the existing scale, and each of these is where the
+design and the scale disagree. None is a guess: the design value is on the
+left. PLS-111 decides whether DESIGN.md widens to meet any of them.
+
+| Where | Figma | Shipped | Why |
+| --- | --- | --- | --- |
+| Metric card radius | 12px | `--r-shell` 10px | Rule 1, the scale has no 12 |
+| Metric strip gap | 10px | 12px | 4px scale has no 10 |
+| Metric value size | 19px mono | 19px mono | Kept, but section 4 says metric numbers are Archivo 21px/700 |
+| Signal row padding | 9px | 12px | 4px scale has no 9 |
+| Domain row padding | 11px | 12px | 4px scale has no 11 |
+| Legend tracking | 0.04em | 0.12em | `.legend` is the shipped mono treatment |
+
+Secondary text is 11px throughout the design where section 4's table says
+12px. 11px is shipped, because section 2 sets the floor at 11px and the design
+is consistent about it, but it is a table change PLS-111 should record.
+
+### The export and the live file disagree
+
+The PNG and the `get_metadata` read, taken minutes apart, do not describe the
+same screen. Neither is obviously stale, so this needs settling before
+PLS-118 and PLS-122 are built:
+
+| | PNG export | Live file |
+| --- | --- | --- |
+| Commitments ledger | absent | present, node `9:2`, between the subtitle and Today's play |
+| Signal rows | four, ending in a grey **Note** | three, ending at WATCH |
+
+The four-severity version resolves the earlier question in favour of the
+original brief: `act | recover | watch | note` is right, and `note` is grey
+rather than a state colour. That is the version PLS-119 builds.
+
+### The component sheet exists now
+
+`/design` was referenced by the design-review skill and recorded as shipped in
+PLS-4, and did not exist. It does now, holding the Rev D components with the
+Figma file's own sample copy.
+
+It sits outside the `(app)` group on purpose: a route added inside it with no
+entry in `modules.ts` falls through `moduleForPath` to TALENT, which is the
+defect the `SETTINGS_MODULE` comment records. And it is public on purpose,
+because it holds no tenant data and being reachable without a session is the
+only reason the gate could photograph it at all. It carries `noindex`.
+
+That unblocked the first real screenshot pass of the session, which found two
+defects the mechanical checks passed clean:
+
+1. The advisory shell stretched to the page while its content was 320px, so
+   most of a panel sat empty. The width belonged on the shell, not inside it.
+2. The first advisory row drew a rule the design does not have. Figma `4:53`
+   carries no top border and `4:58` onward do.
+
+Both fixed and re-reviewed. APPROVED at 1440 light, 1440 dark, and 900.
+
+### Open questions
+
+- Which of the two versions above is current. If the ledger was cut, PLS-115
+  and PLS-122 come off the list entirely.
+- The gap list says one row is "Synced from RecruiterFlow". That integration is
+  not in the ARCHITECTURE.md provider table and has never been connected.
+- "Nothing charged against your sessions" appears in the error copy, which
+  confirms sessions as the unit but not what one is. PLS-112 still needs the
+  definition before anything prints a count.
+
+## Rev D delivered: Mara is the live BD screen
 
 Built from the Figma alone, on Daniyal's instruction to ignore DESIGN.md for
 this screen and follow the file. The redesign turns pillar 1 from a research
 chat into a coach: the screen opens with what you promised, not with metrics.
 
+This is the implementation of the Rev D plan above, built in a parallel session
+and renumbered onto the block that plan reserved. The two do not collide in
+code: `src/components/bd/` is the reviewed primitive set, reachable only from
+`/design`, and `src/components/mara/` is what `/market` actually renders. The
+open question above, whether the ledger survived the cut, is answered here: it
+did, and it is the first thing on the screen.
+
 | ID | Ticket | Status |
 | --- | --- | --- |
-| PLS-109 | `bd_commitments` and `bd_debriefs`, RLS from birth, `settle_commitment` RPC writing both tables. `asked_on` is a stored column because `created_at::date` cannot be indexed | done |
-| PLS-110 | Mara tokens and motion keyframes, avatar with five states from the extracted geometry | done |
-| PLS-111 | Persona panel: identity, advisory domains, context chips | done |
-| PLS-112 | The stage: greeting, ledger, today's play, metrics, signals feed, conversation | done |
-| PLS-113 | "Tell Mara something" drawer, gap list driven by which memory kinds are missing | done |
-| PLS-114 | "I'd push back" briefing section and the evening debrief card | done |
+| PLS-126 | `bd_commitments` and `bd_debriefs`, RLS from birth, `settle_commitment` RPC writing both tables. `asked_on` is a stored column because `created_at::date` cannot be indexed | done |
+| PLS-127 | Mara tokens and motion keyframes, avatar with five states from the extracted geometry | done |
+| PLS-128 | Persona panel: identity, advisory domains, context chips | done |
+| PLS-129 | The stage: greeting, ledger, today's play, metrics, signals feed, conversation | done |
+| PLS-130 | "Tell Mara something" drawer, gap list driven by which memory kinds are missing | done |
+| PLS-131 | "I'd push back" briefing section and the evening debrief card | done |
 
 Three metrics come from rows that already exist. **BD time has no source
 anywhere in Pulse**, so its tile shows `--` behind a "soon" badge. It stays
