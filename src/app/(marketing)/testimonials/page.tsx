@@ -36,14 +36,12 @@ export default function TestimonialsPage() {
   return (
     <>
       <Hero
-        eyebrow="Testimonials"
         title="Recruiters who stopped losing candidates to silence"
         sub="The founding pilots are running now. Their words go here, once they have said them."
       />
 
       <Band>
         <SectionHead
-          tag="Coming from the pilot"
           title="Real quotes, once there are real quotes"
           sub="This page is built and waiting. Nothing is published here until a founding agency has actually said it and agreed to be named."
         />

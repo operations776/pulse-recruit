@@ -20,7 +20,6 @@ export default function FaqPage() {
   return (
     <>
       <Hero
-        eyebrow="Help centre"
         title="Frequently asked questions"
         sub="Everything about running your desk on Pulse Recruit: data, the AI pillars, pilots, and security. Cannot find it? Email us and a human replies."
       />

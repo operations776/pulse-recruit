@@ -10,29 +10,30 @@ export function Wrap({ children }: { children: ReactNode }) {
 }
 
 /** The page hero: eyebrow, headline, one paragraph. */
+// PLS-172. The eyebrow prop and the radial glow are both gone.
+//
+// The glow was `rgb(157 75 255)`, a hardcoded hex that is not a token, exists
+// nowhere else in the codebase, and does not follow the theme: on the dark
+// ground it was a violet haze over near-black. It is also the single most
+// recognisable tell of a generated interface, and it was copied into two files
+// so it fired on all five pages.
+//
+// The eyebrow is a kicker, banned outright by DESIGN.md 10b. It was also a
+// rule 5 violation on every page: violet text on something you cannot click.
 export function Hero({
-  eyebrow,
   title,
   sub,
   children,
 }: {
-  eyebrow: string;
   title: ReactNode;
   sub?: string;
   children?: ReactNode;
 }) {
   return (
-    // The violet glow behind the headline is the rebrand's signature. It is a
-    // radial gradient rather than an image, so it costs nothing and scales.
-    <section className="relative overflow-hidden py-20 text-center">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-[-10%] h-[420px] bg-[radial-gradient(60%_60%_at_50%_0,rgb(157_75_255/0.18),transparent_70%)]"
-      />
+    <section className="py-20 text-center">
       <Wrap>
-        <div className="relative">
-          <p className="legend text-violet">{eyebrow}</p>
-          <h1 className="display mx-auto mt-4 max-w-[18ch] text-[clamp(2.2rem,5.4vw,3.6rem)] leading-[1.05]">
+        <div>
+          <h1 className="display mx-auto max-w-[18ch] text-[clamp(2.2rem,5.4vw,3.6rem)] leading-[1.05]">
             {title}
           </h1>
           {sub ? (
@@ -48,19 +49,18 @@ export function Hero({
 }
 
 /** A centred section heading, used between bands. */
+// The `tag` prop is gone, not defaulted, so a kicker cannot come back by
+// passing one. DESIGN.md 10b.
 export function SectionHead({
-  tag,
   title,
   sub,
 }: {
-  tag: string;
   title: string;
   sub?: string;
 }) {
   return (
     <div className="mx-auto mb-11 max-w-[60ch] text-center">
-      <p className="legend text-violet">{tag}</p>
-      <h2 className="display mt-4 text-[clamp(1.8rem,4vw,2.5rem)] leading-[1.15]">
+      <h2 className="display text-[clamp(1.8rem,4vw,2.5rem)] leading-[1.15]">
         {title}
       </h2>
       {sub ? (
@@ -97,7 +97,11 @@ export function PrimaryLink({
   return (
     <Link
       href={href}
-      className="settle lift inline-flex items-center justify-center gap-2 rounded-control bg-violet px-6 py-3 text-[15px] font-medium text-on-violet shadow-[0_8px_20px_rgb(124_58_237/0.22)] hover:bg-violet-hover"
+      // `.cap`, not a violet halo. A zero-offset coloured glow is decoration
+      // and is not one of the three depth treatments DESIGN.md 6 permits; the
+      // keycap edge IS the system's way of saying "this is a thing you press",
+      // and it presses into its own edge on click.
+      className="cap settle inline-flex items-center justify-center gap-2 rounded-control bg-violet px-6 py-3 text-[15px] font-medium text-on-violet hover:bg-violet-hover"
     >
       {children}
     </Link>

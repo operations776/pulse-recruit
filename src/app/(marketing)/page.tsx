@@ -20,15 +20,9 @@ import { HeroWord } from "./hero-word";
 export default function MarketingPage() {
   return (
     <>
-      {/* Hero. The violet glow is a radial gradient rather than an image, so
-          it costs nothing and scales to any width. */}
-      <section className="relative overflow-hidden py-24 text-center">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-[-10%] h-[460px] bg-[radial-gradient(60%_60%_at_50%_0,rgb(157_75_255/0.18),transparent_70%)]"
-        />
+      <section className="py-24 text-center">
         <Wrap>
-          <div className="relative">
+          <div>
             <h1 className="display mx-auto max-w-[20ch] text-[clamp(2.3rem,5.6vw,3.8rem)] leading-[1.05]">
               {HERO.headline} <HeroWord words={[...HERO.cycle]} />
             </h1>
@@ -46,18 +40,27 @@ export default function MarketingPage() {
 
       <Band alt id="how-it-works">
         <SectionHead
-          tag="How it works"
           title="From cold spreadsheet to a living pipeline"
           sub="No migration project. Import what you have and Pulse starts surfacing what needs attention."
         />
-        <div className="grid gap-4 md:grid-cols-3">
-          {HOW_IT_WORKS.map((step) => (
+        {/* One shell, three panels meeting on a 1px rule with no gap. That is
+            DESIGN.md section 1's structural rule, and it is what the app
+            already looks like: the marketing site had been using a grid of
+            floating cards, which is the shape every SaaS page ships.
+
+            The "Step 01/02/03" labels are gone. They were kickers, and the
+            order is already carried by reading left to right. */}
+        <div className="overflow-hidden rounded-shell border border-rule bg-sheet md:grid md:grid-cols-3">
+          {HOW_IT_WORKS.map((step, index) => (
             <div
               key={step.step}
-              className="settle lift rounded-card border border-rule bg-sheet p-6 hover:border-violet"
+              className={`p-6 ${
+                index > 0
+                  ? "border-t border-rule md:border-l md:border-t-0"
+                  : ""
+              }`}
             >
-              <p className="legend text-violet">{step.step}</p>
-              <p className="mt-3 text-[16px] font-semibold">{step.title}</p>
+              <p className="text-[16px] font-semibold">{step.title}</p>
               <p className="mt-2.5 text-[13px] leading-[1.65] text-ink-2">
                 {step.body}
               </p>
@@ -68,7 +71,6 @@ export default function MarketingPage() {
 
       <Band id="features">
         <SectionHead
-          tag="Everything in one place"
           title="All the tools. Zero bloat."
           sub="Built for the way a small agency actually runs a week, not for a procurement checklist."
         />
@@ -98,7 +100,6 @@ export default function MarketingPage() {
 
       <Band alt id="team">
         <SectionHead
-          tag="Meet the team"
           title={`The people behind ${brand.name}`}
           sub="A small team that runs recruiting operations on Pulse every day, and builds it."
         />
@@ -118,7 +119,7 @@ export default function MarketingPage() {
                   .join("")}
               </span>
               <p className="mt-4 text-[16px] font-semibold">{person.name}</p>
-              <p className="legend mt-1 text-violet">{person.role}</p>
+              <p className="meta mt-1 text-ink-3">{person.role}</p>
               <p className="mt-3 text-[13px] leading-[1.65] text-ink-2">
                 {person.body}
               </p>

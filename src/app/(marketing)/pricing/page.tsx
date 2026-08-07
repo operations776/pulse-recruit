@@ -26,7 +26,6 @@ export default function PricingPage() {
   return (
     <>
       <Hero
-        eyebrow="Pricing"
         title="One plan. Founding-agency price."
         sub="We are onboarding a small group of founding agencies at a locked-in rate before general pricing starts. No tiers, no seat maths: the whole desk is included."
       />
@@ -74,7 +73,6 @@ export default function PricingPage() {
 
       <Band alt>
         <SectionHead
-          tag="Everything included"
           title="One price, the whole platform"
         />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

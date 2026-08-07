@@ -13,7 +13,6 @@ export const metadata: Metadata = {
 // the three things that back it, and a small mock of the actual screen.
 const ROWS = [
   {
-    kicker: "Pipeline",
     title: "A pipeline that stays warm",
     body: "Every candidate and search carries an activity signal, so the ones going quiet surface before they ghost rather than after.",
     points: [
@@ -28,7 +27,6 @@ const ROWS = [
     ],
   },
   {
-    kicker: "Records",
     title: "One record per person",
     body: "Candidate and client profiles with every touch on one timeline, attributed to the teammate who took it.",
     points: [
@@ -43,7 +41,6 @@ const ROWS = [
     ],
   },
   {
-    kicker: "Signals",
     title: "Signals that start conversations",
     body: "Funding, hiring and leadership moves on the companies you are chasing, with the evidence attached.",
     points: [
@@ -58,7 +55,6 @@ const ROWS = [
     ],
   },
   {
-    kicker: "Metrics",
     title: "Numbers that mean something",
     body: "The three numbers that actually predict a placement, rather than a dashboard nobody opens twice.",
     points: [
@@ -78,7 +74,6 @@ export default function FeaturesPage() {
   return (
     <>
       <Hero
-        eyebrow="Features"
         title="Everything your desk runs on, in one live system"
         sub={`${brand.name} is built around how a boutique agency actually works: placements, candidates, clients, and the signals that keep every search moving.`}
       />
@@ -94,8 +89,7 @@ export default function FeaturesPage() {
               }`}
             >
               <div>
-                <p className="legend text-violet">{row.kicker}</p>
-                <h2 className="display mt-3 text-[clamp(1.5rem,3vw,2rem)]">
+                                <h2 className="display mt-3 text-[clamp(1.5rem,3vw,2rem)]">
                   {row.title}
                 </h2>
                 <p className="mt-3.5 text-[15px] leading-[1.65] text-ink-2">
@@ -140,7 +134,7 @@ export default function FeaturesPage() {
                       }`}
                     >
                       <span className="font-medium">{label}</span>
-                      <span className="legend text-violet">{value}</span>
+                      <span className="meta text-ink-2">{value}</span>
                     </li>
                   ))}
                 </ul>
@@ -152,7 +146,6 @@ export default function FeaturesPage() {
 
       <Band alt>
         <SectionHead
-          tag="And everything else"
           title="All the tools. Zero bloat."
           sub="The rest of what your agency runs on, without the parts you would never open."
         />

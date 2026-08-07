@@ -59,7 +59,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             </Link>
             <Link
               href="/signup"
-              className="settle lift rounded-control bg-violet px-5 py-2 text-[14px] font-medium text-on-violet shadow-[0_8px_20px_rgb(124_58_237/0.22)] hover:bg-violet-hover"
+              className="cap settle rounded-control bg-violet px-5 py-2 text-[14px] font-medium text-on-violet hover:bg-violet-hover"
             >
               Start your pilot
             </Link>
