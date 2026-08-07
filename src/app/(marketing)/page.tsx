@@ -12,6 +12,7 @@ import {
 } from "./sections";
 import { HeroWord } from "./hero-word";
 
+import { ProductShot } from "@/components/marketing/product-shot";
 // PLS-107. The landing page, rebuilt on the rebrand's structure.
 //
 // Every control navigates. The UI-first build left these as handler-less
@@ -36,6 +37,21 @@ export default function MarketingPage() {
               <PrimaryLink href="/signup">Start your pilot</PrimaryLink>
               <GhostLink href="#how-it-works">See how it works</GhostLink>
               <GhostLink href="/pricing">Pricing</GhostLink>
+            </div>
+
+            {/* PLS-174. The product, immediately, rather than three more
+                paragraphs about it. This is the first thing on the site that
+                is evidence rather than a claim, and it is a real screen from
+                a real workspace: nobody has to take our word for the density.
+
+                `priority` because it is above the fold on most screens and
+                the whole point is that it arrives with the headline. */}
+            <div className="mount mount-3 mt-14">
+              <ProductShot
+                name="tasks"
+                alt="The Pulse task list: four open tasks grouped by date, three of them overdue, each showing who owns it and which client it belongs to."
+                priority
+              />
             </div>
           </div>
         </Wrap>

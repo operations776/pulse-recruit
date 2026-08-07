@@ -456,6 +456,15 @@ body {
   40% { opacity: 1; }
 }
 
+/* PLS-174. Theme-swapped imagery, in CSS so it is right on the first frame.
+   
+   The pre-paint script sets data-theme in the head before anything renders, so
+   the correct screenshot is the one that was always visible: no flash, no
+   layout shift, and no JavaScript deciding which picture a page shows. */
+.light-hide { display: none; }
+html[data-theme="dark"] .light-hide { display: block; }
+html[data-theme="dark"] .dark-hide { display: none; }
+
 /* PLS-173. The landing page's one authored entrance.
    
    DESIGN.md 10a permits exactly one of these per marketing page, up to 800ms,

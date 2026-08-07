@@ -3,6 +3,7 @@ import { brand } from "@/config/brand";
 import { FEATURES } from "@/config/marketing";
 import { Band, ClosingCta, Hero, SectionHead } from "../sections";
 
+import { ProductShot } from "@/components/marketing/product-shot";
 export const metadata: Metadata = {
   title: `Features — ${brand.name}`,
   description:
@@ -11,9 +12,25 @@ export const metadata: Metadata = {
 
 // The four detail rows from the rebrand's features page. Each is a claim plus
 // the three things that back it, and a small mock of the actual screen.
-const ROWS = [
+// `shot` is optional on purpose: a row whose screen has not been photographed
+// keeps its list rather than borrowing a picture of something else. An explicit
+// type, because `as const` on a mixed array infers the property onto only the
+// members that carry it.
+type FeatureRow = {
+  title: string;
+  body: string;
+  points: readonly string[];
+  mock: readonly (readonly [string, string])[];
+  shot?: "tasks" | "content";
+  shotAlt?: string;
+};
+
+const ROWS: readonly FeatureRow[] = [
   {
     title: "A pipeline that stays warm",
+    shot: "tasks" as const,
+    shotAlt:
+      "The task list grouped by date, with three overdue items showing who owns each one.",
     body: "Every candidate and search carries an activity signal, so the ones going quiet surface before they ghost rather than after.",
     points: [
       "Placement stages from sourcing to placed",
@@ -111,34 +128,35 @@ export default function FeaturesPage() {
                 </ul>
               </div>
 
-              {/* A window frame rather than a screenshot: a real screenshot
-                  would need updating every time the product moves, and would
-                  be stale within a week. */}
-              <div className="overflow-hidden rounded-shell border border-rule bg-sheet shadow-[0_18px_44px_rgb(27_21_38/0.10)]">
-                <div className="flex items-center gap-1.5 border-b border-rule px-4 py-3">
-                  {["#e7e1f4", "#e7e1f4", "#e7e1f4"].map((c, i) => (
-                    <span
-                      key={i}
-                      aria-hidden
-                      className="size-2.5 rounded-full"
-                      style={{ background: c }}
-                    />
-                  ))}
+              {/* PLS-174. The real screen, where one exists.
+
+                  This used to be a drawn browser frame with three grey dots
+                  and invented label/value rows. The comment defending it said
+                  a screenshot "would be stale within a week", which was true
+                  and is now handled: scripts/shot-marketing.mjs regenerates
+                  them, so freshness is a command rather than a liability.
+
+                  A row whose screen is not photographed keeps its list. A
+                  picture of an unrelated screen is worse than no picture. */}
+              {row.shot ? (
+                <ProductShot name={row.shot} alt={row.shotAlt ?? row.title} />
+              ) : (
+                <div className="overflow-hidden rounded-shell border border-rule bg-sheet">
+                  <ul>
+                    {row.mock.map(([label, value], i) => (
+                      <li
+                        key={label}
+                        className={`flex items-center justify-between gap-4 px-4 py-3.5 text-[13px] ${
+                          i > 0 ? "border-t border-rule" : ""
+                        }`}
+                      >
+                        <span className="font-medium">{label}</span>
+                        <span className="meta text-ink-2">{value}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul>
-                  {row.mock.map(([label, value], i) => (
-                    <li
-                      key={label}
-                      className={`flex items-center justify-between gap-4 px-4 py-3.5 text-[13px] ${
-                        i > 0 ? "border-t border-rule" : ""
-                      }`}
-                    >
-                      <span className="font-medium">{label}</span>
-                      <span className="meta text-ink-2">{value}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              )}
             </div>
           ))}
         </div>
