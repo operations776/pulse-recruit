@@ -368,6 +368,88 @@ export function TaskWorkspace({
     (t) => !doneOf(t) && bucketOf(t) === "overdue",
   ).length;
 
+  /**
+   * PLS-175. What is slipping, and where the load sits.
+   *
+   * Derived, not generated. Every input is already in memory on this page, so
+   * this costs nothing, appears instantly, and is structurally incapable of
+   * fabricating: there is no model here to invent a number. The model spend
+   * belongs on the content pillar, where the reasoning genuinely is not a
+   * formula.
+   *
+   * It says at most two things and often nothing. A strip that always speaks
+   * is one people stop reading, and a workspace that is genuinely fine should
+   * say so by being quiet.
+   */
+  const insights = useMemo(() => {
+    const open = openTasks.filter((t) => !doneOf(t));
+    const out: { key: string; text: string; tone: "warn" | "neutral" }[] = [];
+
+    // 1. What is slipping. The oldest overdue item, because "3 overdue" is a
+    //    number and "one of them since Sunday" is the thing that stings.
+    const overdue = open
+      .filter((t) => bucketOf(t) === "overdue" && t.due)
+      .sort((a, b) => (a.due ?? "").localeCompare(b.due ?? ""));
+    if (overdue.length > 0) {
+      const oldest = overdue[0];
+      // Against todayKey, which the server resolved inside the org's timezone,
+      // not the browser clock. Date.now() during render is impure and would
+      // also put a task in "overdue by 1 day" or "by 2" depending on which
+      // side of midnight the reader's machine sits.
+      const days = Math.round(
+        (Date.parse(`${todayKey}T00:00:00Z`) -
+          Date.parse(`${(oldest.due ?? "").slice(0, 10)}T00:00:00Z`)) /
+          86_400_000,
+      );
+      // Under a day late is not slipping, it is today.
+      if (days >= 1) {
+        out.push({
+          key: "slipping",
+          tone: "warn",
+          text:
+            overdue.length === 1
+              ? `"${oldest.title}" has been overdue ${days} ${days === 1 ? "day" : "days"}.`
+              : `${overdue.length} overdue, the oldest by ${days} ${days === 1 ? "day" : "days"}.`,
+        });
+      }
+    }
+
+    // 2. Where the load sits. Framed as capacity and unassigned work, never as
+    //    a league table: "Salar has 9, you have 2" is a fact that reads as an
+    //    accusation in a two-person agency. It says nothing when the split is
+    //    even, and nothing when there is barely any work to split.
+    const unassigned = open.filter((t) => ownersOf(t).length === 0).length;
+    if (unassigned > 0 && open.length >= 3) {
+      out.push({
+        key: "unowned",
+        tone: unassigned >= 3 ? "warn" : "neutral",
+        text: `${unassigned} of ${open.length} ${unassigned === 1 ? "task has" : "tasks have"} nobody on ${unassigned === 1 ? "it" : "them"}.`,
+      });
+    } else {
+      const counts = Object.values(personCounts);
+      if (counts.length > 1 && open.length >= 6) {
+        const most = Math.max(...counts);
+        const least = Math.min(...counts);
+        // Only when the imbalance is real: twice the load AND a gap worth
+        // acting on. Otherwise this is noise about normal variation.
+        if (most >= least * 2 && most - least >= 3) {
+          const heaviest = Object.entries(personCounts).find(
+            ([, n]) => n === most,
+          );
+          if (heaviest) {
+            out.push({
+              key: "load",
+              tone: "neutral",
+              text: `${nameOf(heaviest[0])} is carrying ${most} of the ${open.length} open.`,
+            });
+          }
+        }
+      }
+    }
+
+    return out.slice(0, 2);
+  }, [openTasks, doneOf, bucketOf, ownersOf, personCounts, nameOf, todayKey]);
+
   const selected = selectedId
     ? (tasks.find((t) => t.id === selectedId) ?? null)
     : null;
@@ -413,6 +495,29 @@ export function TaskWorkspace({
             <p className="meta mt-1.5 text-ink-2">
               {openCount} open{overdueCount > 0 ? `, ${overdueCount} of them overdue` : ""}
             </p>
+            {/* PLS-175. What is slipping and where the load sits, derived from
+                rows already on this page. Often absent, which is the point: a
+                strip that always speaks is one people stop reading. */}
+            {insights.length > 0 ? (
+              <p className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] leading-[1.45]">
+                {insights.map((insight, index) => (
+                  <span key={insight.key} className="flex items-center gap-2.5">
+                    {index > 0 ? (
+                      <span aria-hidden className="text-ink-3">
+                        &middot;
+                      </span>
+                    ) : null}
+                    <span
+                      className={
+                        insight.tone === "warn" ? "text-amber-text" : "text-ink-2"
+                      }
+                    >
+                      {insight.text}
+                    </span>
+                  </span>
+                ))}
+              </p>
+            ) : null}
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
