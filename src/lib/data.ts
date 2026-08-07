@@ -7,6 +7,7 @@ import { BD_FEEDBACK_TITLE } from "@/lib/supabase/types";
 import { dayKey } from "@/lib/time";
 import type {
   ActivityRow,
+  BDCommitmentRow,
   ChatConversationRow,
   BDFeedbackRating,
   AssetRow,
@@ -341,6 +342,101 @@ export async function getBDWorkspace(
     feedbackByAnswer,
     conversations,
     activeConversationId: active?.id ?? null,
+  };
+}
+
+/**
+ * Everything Mara's screen needs beyond the transcript (PLS-112).
+ *
+ * The metrics are computed from rows that already exist rather than stored:
+ * "accounts on patch" is the Dream 100, "roles live" is open jobs, "clients
+ * gone quiet" is companies with nothing on their timeline for 90 days. BD
+ * time has no source at all, so the caller marks that tile pending instead of
+ * inventing a number.
+ */
+export async function getMaraBoard() {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 86_400_000).toISOString();
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+
+  const [
+    commitments,
+    dream,
+    openJobs,
+    newDream,
+    signals,
+    quiet,
+  ] = await Promise.all([
+    supabase
+      .from("bd_commitments")
+      .select("*")
+      .eq("status", "open")
+      // Oldest first: the promise you have been avoiding longest is the one
+      // that needs saying out loud.
+      .order("said_at", { ascending: true })
+      .limit(8),
+    supabase
+      .from("dream_companies")
+      .select("id", { count: "exact", head: true }),
+    supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("state", "open"),
+    supabase
+      .from("dream_companies")
+      .select("id", { count: "exact", head: true })
+      .gte("added_at", weekAgo),
+    supabase
+      .from("signals")
+      .select("*")
+      .is("dismissed_at", null)
+      .gte("detected_at", sevenDaysAgo)
+      .order("detected_at", { ascending: false })
+      .limit(6),
+    // Clients with nothing recent on them. `last_signal_at` is the only
+    // activity stamp the Dream 100 carries, so quiet means never seen or not
+    // seen in ninety days.
+    supabase
+      .from("dream_companies")
+      .select("id", { count: "exact", head: true })
+      .or(`last_signal_at.is.null,last_signal_at.lt.${ninetyDaysAgo}`),
+  ]);
+
+  // Signals carry a dream_company_id, not a name, and the card and the play
+  // both need the name. One extra query keyed by the ids actually returned,
+  // rather than a join that would fetch the whole Dream 100 to label six rows.
+  const signalRows = (signals.data ?? []) as SignalRow[];
+  let namesById = new Map<string, string>();
+  if (signalRows.length > 0) {
+    const { data: companyRows } = await supabase
+      .from("dream_companies")
+      .select("id,name")
+      .in("id", [...new Set(signalRows.map((row) => row.dream_company_id))]);
+    namesById = new Map(
+      (companyRows ?? []).map((row) => [row.id as string, row.name as string]),
+    );
+  }
+
+  const withNames = signalRows.map((row) => ({
+    ...row,
+    // A signal whose company was deleted still describes something real, so it
+    // renders with an honest placeholder rather than being dropped.
+    companyName: namesById.get(row.dream_company_id) ?? "an account on your patch",
+  }));
+
+  return {
+    session,
+    commitments: (commitments.data ?? []) as BDCommitmentRow[],
+    signals: withNames,
+    counts: {
+      patch: dream.count ?? 0,
+      patchNew: newDream.count ?? 0,
+      rolesLive: openJobs.count ?? 0,
+      quiet: quiet.count ?? 0,
+    },
   };
 }
 

@@ -262,6 +262,46 @@ export type ChatConversationRow = {
   last_message_at: string;
 };
 
+/**
+ * A promise, and how it went (PLS-109).
+ *
+ * `said_at` is separate from `created_at` because Mara can log a commitment
+ * made earlier in a thread than the moment the row is written. The ledger
+ * ages against said_at, which is what the recruiter actually remembers.
+ */
+export type BDCommitmentStatus = "open" | "done" | "dropped";
+export type BDCommitmentSource = "said" | "play" | "manual";
+
+export type BDCommitmentRow = {
+  id: string;
+  org_id: string;
+  user_id: string;
+  body: string;
+  source: BDCommitmentSource;
+  message_id: string | null;
+  status: BDCommitmentStatus;
+  created_at: string;
+  said_at: string;
+  settled_at: string | null;
+};
+
+export type BDDebriefOutcome =
+  | "went_well"
+  | "still_chasing"
+  | "dead_end"
+  | "skipped";
+
+export type BDDebriefRow = {
+  id: string;
+  org_id: string;
+  user_id: string;
+  commitment_id: string;
+  outcome: BDDebriefOutcome;
+  note: string;
+  asked_on: string;
+  created_at: string;
+};
+
 export type CreditEventRow = {
   id: string;
   org_id: string;
