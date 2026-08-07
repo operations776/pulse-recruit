@@ -53,3 +53,8 @@ next-env.d.ts
 !.env.example
 
 .vercel
+
+# Claude Code per-machine settings. The impeccable hooks live here, and the
+# path is machine specific, so each person runs `npx impeccable install`
+# rather than inheriting somebody else's absolute paths.
+.claude/settings.local.json

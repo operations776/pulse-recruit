@@ -12,6 +12,15 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+
+    // Vendored agent tooling, installed by `npx impeccable install` and
+    // committed so the whole team gets the same skills. It is somebody else's
+    // source: linting it produced 302 warnings from files we do not maintain,
+    // which is exactly how a warning list stops being read.
+    ".claude/skills/impeccable/**",
+    ".github/skills/**",
+    ".github/agents/**",
+    ".github/hooks/**",
   ]),
 ]);
 

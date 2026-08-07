@@ -837,3 +837,29 @@ missed both because they are JSX text nodes, not string literals.
 **Voice is half built.** Speaking to it works. Having it speak back was scoped
 out for now: browser synthesis is free but sounds robotic, and an OpenAI voice
 needs a credit rule before anything bills for it.
+
+## PLS-137: impeccable, design anti-pattern detection
+
+`npx impeccable install`, Daniyal's call. Apache-2.0, published by Paul Bakaus,
+six dependencies, no network calls in the hook. 24 commands (`/critique`,
+`/polish`, `/audit`, `/harden`, `/typeset`, `/layout`) plus a `detect` CLI that
+scans for UI anti-patterns.
+
+Installed at **project scope**, into `.claude` and `.github`, and committed so
+the whole team gets the same skills rather than each machine having its own.
+`.claude/settings.local.json` is gitignored: it carries the hook wiring with
+machine-specific paths, so each person runs the installer once.
+
+**Verified it actually detects rather than trusting the README.** Against a
+deliberately bad fixture it found low contrast with the real ratio (1.2:1
+against a 4.5:1 requirement), cramped padding, and 9px functional text, each
+with the reasoning behind the rule. Against `src/components/mara/` it found
+nothing, which is the answer we wanted and now know is meaningful.
+
+**No collision with our own `design-review` skill.** That one is untouched and
+still the version from PR #7; impeccable lives beside it under
+`.claude/skills/impeccable/`.
+
+The 300 vendored files are excluded from eslint. Linting somebody else's
+source produced 302 warnings from files we do not maintain, which is precisely
+how a warning list stops being read. Zero came from our code.
