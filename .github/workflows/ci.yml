@@ -9,7 +9,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# The pre-merge gates from CLAUDE.md, run on every pull request and on main.
+# The gates from CLAUDE.md, run on main and on any pull request that still
+# opens.
+#
+# Work now lands by pushing straight to main, so main is where these matter:
+# there is no preview URL sitting between a commit and production. The gates
+# also run locally before every push, and CI is the backstop that catches what
+# a local run cannot, a dirty working tree or a machine-specific pass.
 #
 # Playwright is NOT run here, deliberately. Two reasons, in order:
 #
@@ -61,7 +67,6 @@ jobs:
   # rather than relying on somebody remembering at deploy time.
   migrations:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     timeout-minutes: 5
 
     steps:
@@ -69,13 +74,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      # This used to be `if: pull_request`, which meant it never ran on a push
+      # to main. Now that work lands by pushing, that was precisely the case it
+      # needed to cover: a migration reaching production with nobody told.
       - name: Flag new migrations
         run: |
-          BASE="origin/${{ github.base_ref }}"
-          NEW=$(git diff --name-only --diff-filter=A "$BASE"...HEAD -- supabase/migrations || true)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="origin/${{ github.base_ref }}...HEAD"
+          else
+            # On a push, compare against what main looked like before it.
+            RANGE="${{ github.event.before }}..HEAD"
+          fi
+          NEW=$(git diff --name-only --diff-filter=A $RANGE -- supabase/migrations || true)
           if [ -n "$NEW" ]; then
-            echo "::warning title=Migrations in this PR::Apply these to Supabase BEFORE merging (law 10)."
+            echo "::warning title=New migrations::Apply these to Supabase BEFORE the code that needs them (law 10)."
             echo "$NEW" | while read -r f; do echo "::warning file=$f::Apply this migration before the code that needs it."; done
           else
-            echo "No new migrations in this PR."
+            echo "No new migrations here."
           fi

@@ -6,11 +6,28 @@ Standalone ATS SaaS for recruitment agencies. Detail lives in `ARCHITECTURE.md` 
 
 ## Workflow
 
-1. Pick a ticket from `TICKETS.md`. One ticket, one branch, small commits.
+**Work lands by pushing to `main`.** No branch, no PR, no merge to click.
+Vercel deploys `main` to production, so a push is a deploy. Daniyal's call on
+2026-08-07: the PR round trip was costing more than it caught.
+
+1. Pick a ticket from `TICKETS.md`. Small commits, each one green on its own.
 2. Every commit message starts with the ticket ID: `PLS-12: add candidate drawer`.
-3. Before merge: `npm run build` must pass (production build, not dev), typecheck clean, Playwright green.
-4. Any ticket touching a screen goes through the `design-review` skill and needs an explicit APPROVED.
+3. **Run the gates before you push, not after.** `npm run typecheck`, `npm run
+   lint`, `npm run build`. There is no preview URL between the push and
+   production now, so a red gate that reaches `main` is a broken deploy.
+4. **Any change to a screen is screenshotted in both themes before the push**,
+   and the images are actually looked at. This is not ceremony: on 2026-08-07
+   four bugs shipped through typecheck, lint and build clean, and every one was
+   caught in an image. Include a short viewport (1440x820), not just 1440x1000,
+   since two of the four only appeared on a short window.
 5. Update `TICKETS.md` status in the same commit that finishes the ticket.
+
+Open a branch and a PR only when the change is genuinely risky and wants a
+preview URL first, or when Daniyal asks for one.
+
+**A migration still ships before the code that needs it** (law 10). That
+ordering is now entirely on the person pushing: nothing sits between the commit
+and production to catch it.
 
 ## Hard rules
 
