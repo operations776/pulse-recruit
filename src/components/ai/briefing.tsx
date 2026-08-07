@@ -1,6 +1,6 @@
 "use client";
 
-import { Compass, Quote, Target, TrendingUp } from "lucide-react";
+import { AlertTriangle, Compass, Quote, Target, TrendingUp } from "lucide-react";
 import type { ReactNode } from "react";
 
 // PLS-96. A BD answer, rendered as a briefing.
@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
 // showing a parse error instead of an answer never is.
 
 export type BriefingSection = {
-  key: "changed" | "matters" | "move" | "evidence";
+  key: "changed" | "matters" | "move" | "evidence" | "pushback";
   label: string;
   body: string;
 };
@@ -24,6 +24,10 @@ const LABELS: { key: BriefingSection["key"]; match: RegExp; label: string }[] = 
   { key: "matters", match: /^why it matters:?\s*$/i, label: "Why it matters" },
   { key: "move", match: /^best next move:?\s*$/i, label: "Best next move" },
   { key: "evidence", match: /^evidence:?\s*$/i, label: "Evidence" },
+  // PLS-114. The section Mara writes when she thinks the recruiter is wrong.
+  // An adviser who only ever agrees is not an adviser, so this is a first
+  // class part of the answer rather than a hedge buried in the prose.
+  { key: "pushback", match: /^i'?d push back:?\s*$/i, label: "I'd push back" },
 ];
 
 // Also accept the label and its content on one line, which models do often
@@ -112,6 +116,14 @@ const SECTION_STYLE: Record<
     edge: "border-l-ink-3",
     text: "text-ink-2",
   },
+  // Amber, and the only section that uses a status colour. Disagreement IS a
+  // status: it is Mara saying the plan on the table has a problem. The word
+  // "I'd push back" carries it too, so the colour is reinforcement.
+  pushback: {
+    icon: AlertTriangle,
+    edge: "border-l-amber",
+    text: "text-amber-text",
+  },
 };
 
 export function Briefing({
@@ -132,7 +144,9 @@ export function Briefing({
             key={section.key}
             className={`settle border-l-[3px] py-2.5 pl-3 ${style.edge} ${
               index > 0 ? "mt-2.5 border-t border-t-rule pt-3" : ""
-            } ${section.key === "move" ? "bg-move" : ""}`}
+            } ${section.key === "move" ? "bg-move" : ""} ${
+              section.key === "pushback" ? "bg-amber-bg" : ""
+            }`}
           >
             <p className={`legend flex items-center gap-1.5 ${style.text}`}>
               <Icon size={16} strokeWidth={1.75} className="size-3.5" aria-hidden />

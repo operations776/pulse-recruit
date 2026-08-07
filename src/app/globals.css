@@ -67,6 +67,41 @@
   --color-today: #fdf6ec;
   --color-move: #f9edf7;
 
+  /* PLS-110. Mara, the BD Strategist redesign.
+   *
+   * The Figma runs a slightly different palette from the rest of the product:
+   * a bluer violet (#6D3BF5 against our #7C3AED), a cooler ground, and a
+   * near-black bar. Daniyal asked for a one-to-one copy, so these are its
+   * exact values rather than an approximation onto the existing tokens.
+   *
+   * Scoped with a `mara-` prefix so they cannot leak into the other four
+   * pillars: this is one screen's palette, not a second design system.
+   */
+  --color-mara-violet: #6d3bf5;
+  --color-mara-violet-soft: #f4f1fe;
+  --color-mara-violet-edge: #cabffb;
+  --color-mara-violet-deep: #38217e;
+  --color-mara-ring: #ded7fe;
+
+  --color-mara-ground: #f7f6fa;
+  --color-mara-sheet: #ffffff;
+  --color-mara-rule: #e5e3ec;
+  --color-mara-bar: #12101c;
+
+  --color-mara-ink: #17151f;
+  --color-mara-ink-2: #6b6779;
+  --color-mara-ink-3: #9a96a8;
+  --color-mara-bubble: #f2f1f6;
+
+  /* Signal and metric tones, straight from the Figma. */
+  --color-mara-good: #10916b;
+  --color-mara-warn: #da961b;
+  --color-mara-warn-deep: #a4660e;
+  --color-mara-bad: #cd4b4a;
+  --color-mara-amber-bg: #fcf3e2;
+  --color-mara-amber-edge: #efcd8b;
+  --color-mara-amber-ink: #854f0b;
+
   /* Faces. Archivo for display and Inter for body, both from the rebrand.
      IBM Plex Mono stays as the legend face: the rebrand uses JetBrains Mono,
      but the two are metrically close at 10px caps and Plex is already
@@ -116,6 +151,34 @@ html[data-theme="dark"] {
   --color-rail: #100c20;
   --color-today: #241a10;
   --color-move: #2a1638;
+
+  /* Mara in dark. The Figma is light only, so these are derived rather than
+     copied: same hues, inverted lightness, contrast checked against the dark
+     ground. Without them the BD page would be the one screen that stays white
+     when the theme flips, which is worse than not having dark mode at all. */
+  --color-mara-violet: #8b5cf6;
+  --color-mara-violet-soft: #221a3d;
+  --color-mara-violet-edge: #3b2d6b;
+  --color-mara-violet-deep: #c9b8ff;
+  --color-mara-ring: #4c3a8a;
+
+  --color-mara-ground: #0d0918;
+  --color-mara-sheet: #141026;
+  --color-mara-rule: #2a2340;
+  --color-mara-bar: #0a0714;
+
+  --color-mara-ink: #f2effa;
+  --color-mara-ink-2: #bcb4d2;
+  --color-mara-ink-3: #8b83a2;
+  --color-mara-bubble: #241d3d;
+
+  --color-mara-good: #34d399;
+  --color-mara-warn: #e2c37a;
+  --color-mara-warn-deep: #e2c37a;
+  --color-mara-bad: #f4a3ac;
+  --color-mara-amber-bg: #2a2113;
+  --color-mara-amber-edge: #4a3a1a;
+  --color-mara-amber-ink: #e2c37a;
 }
 
 /* The grain is gone, PLS-101.
@@ -311,6 +374,53 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* PLS-110. Mara's motion, from the Figma spec board verbatim:
+   160 to 220ms for everything except the idle breathe, easing
+   cubic-bezier(0.2, 0, 0, 1) with no spring and no overshoot, entrance is
+   translateY 8px plus opacity and never scale or blur, 40ms stagger across
+   the first three cards. Reduced motion is handled by the global rule at the
+   bottom of this file, which collapses every duration. */
+
+/* Idle: 4s breathe, 1.0 to 1.015. Small enough to read as alive rather than
+   as an animation, which is the whole point of it. */
+.mara-breathe {
+  animation: mara-breathe 4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes mara-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+
+/* Thinking: a 1.2s dot loop. The three dots share one keyframe and are
+   offset, so they read as a wave rather than a blink. */
+.mara-dot {
+  animation: mara-dot 1.2s ease-in-out infinite;
+}
+.mara-dot-2 { animation-delay: 0.15s; }
+.mara-dot-3 { animation-delay: 0.3s; }
+
+@keyframes mara-dot {
+  0%, 100% { opacity: 0.25; }
+  40% { opacity: 1; }
+}
+
+/* The entrance every Mara card uses. translateY and opacity only. */
+.mara-in {
+  animation: mara-in 200ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* 40ms between the first three, then the rest together, per the spec. */
+.mara-in-1 { animation-delay: 0ms; }
+.mara-in-2 { animation-delay: 40ms; }
+.mara-in-3 { animation-delay: 80ms; }
+
+@keyframes mara-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes drawer-in {

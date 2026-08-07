@@ -7,6 +7,7 @@ import { BD_FEEDBACK_TITLE } from "@/lib/supabase/types";
 import { dayKey } from "@/lib/time";
 import type {
   ActivityRow,
+  BDCommitmentRow,
   ChatConversationRow,
   BDFeedbackRating,
   AssetRow,
@@ -273,11 +274,14 @@ export async function getBDWorkspace(
     .limit(40);
 
   const conversations = (threadRows ?? []) as ChatConversationRow[];
+  // Only an explicitly requested thread opens. This used to fall back to the
+  // most recent one, which meant /market re-opened last week's transcript and
+  // the briefing pushed Mara's whole stage, the greeting, the play, the
+  // metrics and the signals, off the top of the screen. Landing on the module
+  // is landing on the stage; a conversation is something you choose to open.
   const active = startFresh
     ? null
-    : (conversations.find((c) => c.id === conversationId) ??
-      conversations[0] ??
-      null);
+    : (conversations.find((c) => c.id === conversationId) ?? null);
 
   const [messages, credits, memories] = await Promise.all([
     // Scoped to the open thread. This is what the 60-row cap was standing in
@@ -341,6 +345,120 @@ export async function getBDWorkspace(
     feedbackByAnswer,
     conversations,
     activeConversationId: active?.id ?? null,
+  };
+}
+
+/**
+ * Everything Mara's screen needs beyond the transcript (PLS-112).
+ *
+ * The metrics are computed from rows that already exist rather than stored:
+ * "accounts on patch" is the Dream 100, "roles live" is open jobs, "clients
+ * gone quiet" is companies with nothing on their timeline for 90 days. BD
+ * time has no source at all, so the caller marks that tile pending instead of
+ * inventing a number.
+ */
+export async function getMaraBoard() {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 86_400_000).toISOString();
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+
+  // Already answered today. "Still chasing" leaves the commitment open on
+  // purpose, so it stays in the ledger, but re-asking about it the same
+  // evening is the product not listening. The unique index makes the write
+  // idempotent; this makes the question stop.
+  const askedToday = new Date().toISOString().slice(0, 10);
+
+  const [
+    commitments,
+    dream,
+    openJobs,
+    newDream,
+    signals,
+    quiet,
+    debriefedToday,
+  ] = await Promise.all([
+    supabase
+      .from("bd_commitments")
+      .select("*")
+      .eq("status", "open")
+      // Oldest first: the promise you have been avoiding longest is the one
+      // that needs saying out loud.
+      .order("said_at", { ascending: true })
+      .limit(8),
+    supabase
+      .from("dream_companies")
+      .select("id", { count: "exact", head: true }),
+    supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("state", "open"),
+    supabase
+      .from("dream_companies")
+      .select("id", { count: "exact", head: true })
+      .gte("added_at", weekAgo),
+    supabase
+      .from("signals")
+      .select("*")
+      .is("dismissed_at", null)
+      .gte("detected_at", sevenDaysAgo)
+      .order("detected_at", { ascending: false })
+      .limit(6),
+    // Clients with nothing recent on them. `last_signal_at` is the only
+    // activity stamp the Dream 100 carries, so quiet means never seen or not
+    // seen in ninety days.
+    supabase
+      .from("dream_companies")
+      .select("id", { count: "exact", head: true })
+      .or(`last_signal_at.is.null,last_signal_at.lt.${ninetyDaysAgo}`),
+    supabase
+      .from("bd_debriefs")
+      .select("commitment_id")
+      .eq("asked_on", askedToday),
+  ]);
+
+  // Signals carry a dream_company_id, not a name, and the card and the play
+  // both need the name. One extra query keyed by the ids actually returned,
+  // rather than a join that would fetch the whole Dream 100 to label six rows.
+  const signalRows = (signals.data ?? []) as SignalRow[];
+  let namesById = new Map<string, string>();
+  if (signalRows.length > 0) {
+    const { data: companyRows } = await supabase
+      .from("dream_companies")
+      .select("id,name")
+      .in("id", [...new Set(signalRows.map((row) => row.dream_company_id))]);
+    namesById = new Map(
+      (companyRows ?? []).map((row) => [row.id as string, row.name as string]),
+    );
+  }
+
+  const withNames = signalRows.map((row) => ({
+    ...row,
+    // A signal whose company was deleted still describes something real, so it
+    // renders with an honest placeholder rather than being dropped.
+    companyName: namesById.get(row.dream_company_id) ?? "an account on your patch",
+  }));
+
+  const answeredIds = new Set(
+    (debriefedToday.data ?? []).map((row) => row.commitment_id as string),
+  );
+
+  return {
+    session,
+    commitments: (commitments.data ?? []) as BDCommitmentRow[],
+    /** Open, and not already answered this evening. */
+    debriefCandidates: ((commitments.data ?? []) as BDCommitmentRow[]).filter(
+      (row) => !answeredIds.has(row.id),
+    ),
+    signals: withNames,
+    counts: {
+      patch: dream.count ?? 0,
+      patchNew: newDream.count ?? 0,
+      rolesLive: openJobs.count ?? 0,
+      quiet: quiet.count ?? 0,
+    },
   };
 }
 

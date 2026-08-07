@@ -62,66 +62,89 @@ export function ModuleRail({ aside }: { aside?: ReactNode }) {
         </Link>
       </nav>
 
-      <nav
-        aria-label={`${active.wordmark} sections`}
-        className="flex w-52 shrink-0 flex-col border-r border-rule bg-sheet"
-      >
-        {/* Masthead: the wayfinding that colour cannot do here. */}
-        <div className="border-b border-rule px-3 py-3">
-          <p className="legend text-ink-3">
-            {active.pillar === null ? "Workspace" : `Pillar ${active.pillar}`}
-          </p>
-          <p className="display mt-1 text-[15px] leading-none">
-            {active.wordmark}
-          </p>
-          <p className="mt-1.5 text-[12px] leading-[1.4] text-ink-2">
-            {active.pillarName}
-          </p>
-        </div>
+      {/*
+        A module with one destination has no sections to navigate between, so
+        the rail would be 208px of chrome whose only link points at the page
+        already open. MARKET is the one such module today, and its screen owns
+        its own identity, so the rail steps aside rather than repeating it. A
+        module that grows a second section gets its rail back automatically.
 
-        <ul className="flex flex-col gap-0.5 p-2">
-          {active.nav.map((item) => {
-            // /settings is a prefix of every other settings route, so a plain
-            // startsWith would light Workspace up while you are on Channels or
-            // API keys. Anything that is a parent of its siblings matches
-            // exactly or not at all.
-            const isParentOfSiblings = active.nav.some(
-              (other) =>
-                other.href !== item.href && other.href.startsWith(`${item.href}/`),
-            );
-            const isActive = isParentOfSiblings
-              ? pathname === item.href
-              : pathname === item.href || pathname.startsWith(`${item.href}/`);
-            const Icon = item.icon;
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  prefetch
-                  aria-current={isActive ? "page" : undefined}
-                  className={`flex h-8 items-center gap-2.5 rounded-control px-2.5 text-[13px] ${
-                    isActive
-                      ? "bg-well font-medium text-ink"
-                      : "text-ink-2 hover:bg-well hover:text-ink"
-                  }`}
-                >
-                  <Icon size={15} strokeWidth={1.75} />
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        The aside is live data, not navigation, so it still renders: only the
+        masthead and the section list are what a single destination makes
+        redundant.
+      */}
+      {active.nav.length <= 1 ? null : (
+        <nav
+          aria-label={`${active.wordmark} sections`}
+          className="flex w-52 shrink-0 flex-col border-r border-rule bg-sheet"
+        >
+          {/* Masthead: the wayfinding that colour cannot do here. */}
+          {active.nav.length > 1 ? (
+            <div className="border-b border-rule px-3 py-3">
+              <p className="legend text-ink-3">
+                {active.pillar === null
+                  ? "Workspace"
+                  : `Pillar ${active.pillar}`}
+              </p>
+              <p className="display mt-1 text-[15px] leading-none">
+                {active.wordmark}
+              </p>
+              <p className="mt-1.5 text-[12px] leading-[1.4] text-ink-2">
+                {active.pillarName}
+              </p>
+            </div>
+          ) : null}
 
-        {/*
+          {active.nav.length > 1 ? (
+            <ul className="flex flex-col gap-0.5 p-2">
+              {active.nav.map((item) => {
+                // /settings is a prefix of every other settings route, so a plain
+                // startsWith would light Workspace up while you are on Channels or
+                // API keys. Anything that is a parent of its siblings matches
+                // exactly or not at all.
+                const isParentOfSiblings = active.nav.some(
+                  (other) =>
+                    other.href !== item.href &&
+                    other.href.startsWith(`${item.href}/`),
+                );
+                const isActive = isParentOfSiblings
+                  ? pathname === item.href
+                  : pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
+                const Icon = item.icon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      prefetch
+                      aria-current={isActive ? "page" : undefined}
+                      className={`flex h-8 items-center gap-2.5 rounded-control px-2.5 text-[13px] ${
+                        isActive
+                          ? "bg-well font-medium text-ink"
+                          : "text-ink-2 hover:bg-well hover:text-ink"
+                      }`}
+                    >
+                      <Icon size={15} strokeWidth={1.75} />
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+
+          {/*
           What used to live here was `active.blurb`, a static marketing
           sentence pinned to the floor with mt-auto. It never changed, it was
           read once, and the mt-auto was what actively manufactured ~700px of
           void between the nav and it. The rail now carries whatever the
           active module has that is live, and nothing when it has nothing.
         */}
-        {aside ? <div className="min-h-0 flex-1 overflow-y-auto">{aside}</div> : null}
-      </nav>
+          {aside ? (
+            <div className="min-h-0 flex-1 overflow-y-auto">{aside}</div>
+          ) : null}
+        </nav>
+      )}
     </>
   );
 }

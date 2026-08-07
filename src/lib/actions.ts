@@ -25,6 +25,7 @@ import { createClient } from "@/lib/supabase/server";
 import { BD_FEEDBACK_TITLE, MANUAL_STATUSES } from "@/lib/supabase/types";
 import type {
   BDAgentMemoryRow,
+  BDDebriefOutcome,
   BDMemoryKind,
   BDMemoryScope,
   ContentSkill,
@@ -233,6 +234,71 @@ export async function deleteConversation(id: string): Promise<Result> {
 
   revalidatePath("/market");
   return { ok: true, data: undefined };
+}
+
+/* ---------------------------------------------------------------------------
+ * Mara's commitments (PLS-109)
+ * ------------------------------------------------------------------------- */
+
+/** Log something you said you would do. */
+export async function addCommitment(
+  body: string,
+  source: "said" | "play" | "manual" = "manual",
+  messageId?: string,
+): Promise<Result<string>> {
+  const text = body.trim();
+  if (!text) return fail("Say what you are going to do.");
+  if (text.length > 400) return fail("Keep a commitment under 400 characters.");
+
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("bd_commitments")
+    .insert({
+      org_id: session.org.id,
+      user_id: session.userId,
+      body: text,
+      source,
+      message_id: messageId ?? null,
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (error) return fail(readable(error.message));
+  if (!data) return fail("That commitment was not saved.");
+
+  revalidatePath("/market");
+  return { ok: true, data: data.id as string };
+}
+
+/**
+ * Settle a commitment with how it went.
+ *
+ * One RPC because it writes two tables. Note that `still_chasing` leaves the
+ * commitment open by design: answering the question is not doing the thing.
+ */
+export async function settleCommitment(
+  id: string,
+  outcome: BDDebriefOutcome,
+  note = "",
+): Promise<Result<string>> {
+  await requireSession();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("settle_commitment", {
+    target_commitment: id,
+    debrief_outcome: outcome,
+    debrief_note: note,
+  });
+
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/market");
+  return {
+    ok: true,
+    data: ((data as { status?: string })?.status ?? "open") as string,
+  };
 }
 
 /* ---------------------------------------------------------------------------

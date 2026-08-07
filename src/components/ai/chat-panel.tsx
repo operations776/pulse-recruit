@@ -271,11 +271,22 @@ export function ChatPanel({
         </div>
       ) : null}
 
+      {/*
+        An empty transcript still claimed flex-1, so a screen with nothing to
+        show reserved a blank region the size of the conversation. Where the
+        caller supplies no empty-state copy there is genuinely nothing to
+        render, so the region collapses and whatever sits above the panel keeps
+        the space.
+      */}
       <div
         ref={transcriptRef}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
+        className={
+          messages.length === 0 && !busy && !failure && !emptyTitle
+            ? "flex flex-col"
+            : "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
+        }
       >
-        {messages.length === 0 && !busy && !failure ? (
+        {messages.length === 0 && !busy && !failure && emptyTitle ? (
           <EmptyState title={emptyTitle} body={emptyBody} />
         ) : null}
 
