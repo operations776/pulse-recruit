@@ -1171,6 +1171,71 @@ export async function createShape(input: {
   return { ok: true, data: undefined };
 }
 
+/**
+ * Edit an org-defined shape in place. Built-ins have no row and are config,
+ * so only a custom shape reaches here. The key never changes (createShape's
+ * rule), which is what keeps existing posts pointed at the right shape.
+ */
+export async function updateShape(
+  shapeId: string,
+  input: { name: string; blurb: string; prompt: string },
+): Promise<Result> {
+  const name = input.name.trim();
+  const prompt = input.prompt.trim();
+  if (!name) return fail("Give the shape a name.");
+  if (!prompt) return fail("Describe what this shape asks for.");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("content_shapes")
+    .update({ name, blurb: input.blurb.trim(), prompt })
+    .eq("id", shapeId)
+    .select("id");
+  if (error) return fail(readable(error.message));
+  if (!data || data.length === 0) return fail("That shape no longer exists.");
+
+  revalidatePath("/content", "layout");
+  return { ok: true, data: undefined };
+}
+
+/**
+ * PLS-188. Pause or resume a skill for the whole workspace.
+ *
+ * A paused skill keeps its history and stays on the Skills screen; it is
+ * only removed from the pick lists for NEW posts. Insert with conflict
+ * handling, per the race-guard law: two people pausing at once both land.
+ */
+export async function setSkillPaused(
+  skillKey: string,
+  paused: boolean,
+): Promise<Result> {
+  const key = skillKey.trim();
+  if (!key) return fail("That skill has no key.");
+
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  if (paused) {
+    const { error } = await supabase
+      .from("content_skill_pauses")
+      .upsert(
+        { org_id: session.org.id, skill_key: key, paused_by: session.userId },
+        { onConflict: "org_id,skill_key" },
+      );
+    if (error) return fail(readable(error.message));
+  } else {
+    const { error } = await supabase
+      .from("content_skill_pauses")
+      .delete()
+      .eq("org_id", session.org.id)
+      .eq("skill_key", key);
+    if (error) return fail(readable(error.message));
+  }
+
+  revalidatePath("/content", "layout");
+  return { ok: true, data: undefined };
+}
+
 export async function deleteShape(shapeId: string): Promise<Result> {
   const supabase = await createClient();
   const { data, error } = await supabase

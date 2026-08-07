@@ -39,7 +39,6 @@ export function ContentRail({
   skillCount,
   hasPersona,
   pendingLessons,
-  onOpenSkills,
 }: {
   filter: ContentFilter;
   posts: PostRow[];
@@ -47,7 +46,6 @@ export function ContentRail({
   hasPersona: boolean;
   /** Edits the voice has not learned from yet. Real work, so it is counted. */
   pendingLessons: number;
-  onOpenSkills: () => void;
 }) {
   const counts: Record<ContentFilter, number> = {
     all: 0,
@@ -143,13 +141,10 @@ export function ContentRail({
           </Link>
         </li>
         <li>
-          {/* Still a dialog rather than a route. The Figma gives Skills a full
-              screen and that is its own ticket; opening the existing popup
-              from here keeps the rail honest about where the entry goes
-              instead of linking at a route that does not exist yet. */}
-          <button
-            type="button"
-            onClick={onOpenSkills}
+          {/* PLS-188: the full screen the frame gives Skills. */}
+          <Link
+            href="/content/skills"
+            prefetch
             className="flex h-8 w-full items-center gap-2.5 rounded-control px-2.5 text-left text-[13px] text-ink-2 hover:bg-well hover:text-ink"
           >
             <Sparkles size={15} strokeWidth={1.75} />
@@ -157,7 +152,7 @@ export function ContentRail({
             {skillCount > 0 ? (
               <span className="meta text-ink-3">{skillCount}</span>
             ) : null}
-          </button>
+          </Link>
         </li>
       </ul>
 

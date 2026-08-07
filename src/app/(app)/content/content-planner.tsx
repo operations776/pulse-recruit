@@ -35,6 +35,8 @@ import {
   shiftMonth,
   timeOfDay,
 } from "@/lib/time";
+import { rankSlots } from "@/lib/slots";
+import { shapeForPost } from "@/lib/shapes";
 import { Backlog } from "./backlog";
 import { CalendarGrid } from "./calendar-grid";
 import { ContentRail, needsYou, type ContentFilter } from "./content-rail";
@@ -44,7 +46,6 @@ import { WaitingOnYou, waitingRows } from "./waiting-on-you";
 import { GenerateDialog } from "./generate-dialog";
 import { PerformanceStrip } from "./performance-strip";
 import { PostDialog } from "./post-dialog";
-import { SkillsDialog } from "./skills-dialog";
 import { StatusBoard } from "./content-board";
 
 
@@ -75,6 +76,7 @@ export function ContentPlanner({
   canPublish,
   metricsByPost,
   orgName,
+  pausedKeys,
 }: {
   filter: ContentFilter;
   posts: PostRow[];
@@ -97,6 +99,8 @@ export function ContentPlanner({
   metricsByPost: Record<string, PostMetricsRow>;
   /** For the editor's LinkedIn preview byline. */
   orgName: string;
+  /** Skills paused for this workspace, PLS-188. Not offered for new posts. */
+  pausedKeys: string[];
 }) {
   const router = useRouter();
   const { notify } = useToast();
@@ -106,7 +110,6 @@ export function ContentPlanner({
   // The day a per-cell "+" was clicked on, so the composer opens dated.
   const [seedDay, setSeedDay] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [skillsOpen, setSkillsOpen] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropDay, setDropDay] = useState<string | null>(null);
 
@@ -159,6 +162,16 @@ export function ContentPlanner({
     () => visible.filter((p) => !p.scheduled_for),
     [visible],
   );
+
+  // A paused skill keeps its posts and its history; it is only withheld from
+  // the composer, so nothing NEW gets written through it.
+  const activeShapes = useMemo(() => {
+    const pausedSet = new Set(pausedKeys);
+    const filtered = shapes.filter((s) => !pausedSet.has(s.id ?? s.key));
+    // Everything paused would leave the composer with nothing to write
+    // through, which is a broken dialog, not a preference.
+    return filtered.length > 0 ? filtered : shapes;
+  }, [shapes, pausedKeys]);
 
   // Newest live first, for the performance strip.
   const published = useMemo(
@@ -412,7 +425,6 @@ export function ContentPlanner({
         skillCount={shapes.length}
         hasPersona={hasPersona}
         pendingLessons={pendingLessons}
-        onOpenSkills={() => setSkillsOpen(true)}
       />
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -682,19 +694,11 @@ export function ContentPlanner({
           setSeedDay("");
         }}
         seedDay={seedDay}
-        shapes={shapes}
+        shapes={activeShapes}
         hasPersona={hasPersona}
         configured={generationConfigured}
         onAdd={addWritten}
         adding={pending}
-      />
-
-      <SkillsDialog
-        open={skillsOpen}
-        onClose={() => setSkillsOpen(false)}
-        posts={posts}
-        shapes={shapes}
-        configured={generationConfigured}
       />
 
       {open ? (
@@ -708,6 +712,14 @@ export function ContentPlanner({
               ?.display_name ?? "You"
           }
           orgName={orgName}
+          slotSuggestions={rankSlots({
+            posts,
+            metricsByPost,
+            skillKey: open.skill,
+            skillName: shapeForPost(open, shapes).name,
+            todayKey: today,
+            tz: timezone,
+          })}
           onClose={() => {
             setOpenId(null);
             // Media uploads deliberately skip revalidation while the layer is

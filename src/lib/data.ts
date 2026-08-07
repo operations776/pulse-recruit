@@ -811,6 +811,7 @@ export async function getPlanner(month: string) {
     lessonsResult,
     channelResult,
     metricsResult,
+    pausesResult,
   ] = await Promise.all([
       supabase
         .from("content_posts")
@@ -847,6 +848,8 @@ export async function getPlanner(month: string) {
         .select("*")
         .order("fetched_at", { ascending: false })
         .limit(200),
+      // PLS-188: skills paused for this workspace.
+      supabase.from("content_skill_pauses").select("skill_key"),
     ]);
 
   const posts = (postsResult.data ?? []) as PostRow[];
@@ -904,6 +907,9 @@ export async function getPlanner(month: string) {
     pendingLessons: lessonsResult.count ?? 0,
     canPublish: (channelResult.count ?? 0) > 0,
     orgName: session.org.name,
+    pausedKeys: ((pausesResult.data ?? []) as { skill_key: string }[]).map(
+      (row) => row.skill_key,
+    ),
     // Freshest reading per post. Older rows are history the strip does not
     // print.
     metricsByPost: (() => {

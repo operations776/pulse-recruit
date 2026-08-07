@@ -44,6 +44,7 @@ export default async function ContentPlannerPage({
       canPublish={planner.canPublish}
       metricsByPost={planner.metricsByPost}
       orgName={planner.orgName}
+      pausedKeys={planner.pausedKeys}
       month={month}
       // Week is the default, per the Figma. It answers what is going out this
       // week, which is the question the planner gets opened for; the month grid

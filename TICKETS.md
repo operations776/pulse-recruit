@@ -1403,3 +1403,33 @@ which nothing does yet. Logged rather than faked.
 | Piece | State |
 | --- | --- |
 | PLS-187 | Editor: preview strip, metered rewrite toolbar, correction capture | done |
+
+## PLS-188 and PLS-189: skills screen and the schedule popover
+
+**PLS-188.** Skills is a screen at /content/skills, per its frame: each
+skill with its tinted tile, what it is for, posts written through it and
+average reported views (dash over nothing, teal from 5k), and a pause
+toggle backed by the new content_skill_pauses table (migration
+20260808110000). A paused skill keeps its posts and stays on the screen; it
+is only withheld from the composer, and if everything is paused the
+composer keeps the full list rather than breaking. Org-defined shapes edit
+in place through the new updateShape action; the five built-ins read with
+the reason stated, because their definition ships with the product and a
+Save button that cannot save is worse than the truth. "Its best posts"
+lists the skill's top real performers. The rail links to the screen and the
+skills dialog is gone from the planner.
+
+**PLS-189.** "When should this go out?" offers three ranked slots computed
+in src/lib/slots.ts from the workspace's own publish history: this skill's
+slots first, the whole account as fallback, averages cited in the reason
+("Your role posts average 5.9k views in this slot"), BEST on the top slot
+only when it is backed by data, and defaults that say "No posting history
+in this slot yet" when there is none. Picking one schedules it; "Or pick
+another time" keeps the manual fields. A scheduled post shows the green
+strip: Scheduled for X, "Posts to LinkedIn automatically" (only when a
+profile is connected AND auto_publish is on), with Undo in the row.
+
+| Piece | State |
+| --- | --- |
+| PLS-188 | Skills screen: list, stats, pause, edit-in-place, best posts | done |
+| PLS-189 | Ranked schedule slots from real history + green confirmation with Undo | done |

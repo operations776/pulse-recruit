@@ -27,6 +27,7 @@ import {
 } from "@/lib/actions";
 import { Avatar } from "@/components/ui/avatar";
 import { decodeEvents } from "@/lib/ai-events";
+import type { SlotSuggestion } from "@/lib/slots";
 import { createClient } from "@/lib/supabase/client";
 import type { PostAsset, PostRow } from "@/lib/supabase/types";
 import { dayKey, formatDate, timeOfDay } from "@/lib/time";
@@ -133,6 +134,7 @@ export function PostDialog({
   timezone,
   authorName,
   orgName,
+  slotSuggestions,
   onClose,
   onSchedule,
   onTogglePublished,
@@ -147,6 +149,8 @@ export function PostDialog({
   /** The byline on the LinkedIn preview strip. */
   authorName: string;
   orgName: string;
+  /** Three ranked slots from real publish history, PLS-189. */
+  slotSuggestions: SlotSuggestion[];
   onClose: () => void;
   onSchedule: (postId: string, day: string, time: string) => void;
   onTogglePublished: (post: PostRow) => void;
@@ -594,6 +598,70 @@ export function PostDialog({
 
           <section>
             <h3 className="legend mb-2.5 text-ink-2">Goes out</h3>
+
+            {/* PLS-189. The scheduled confirmation, per the frame: what will
+                happen, in green, with Undo in the row. */}
+            {post.scheduled_for && post.status === "scheduled" && !dateChanged ? (
+              <div className="mb-2.5 flex items-center gap-2.5 rounded-control border border-teal-bg bg-teal-bg px-3 py-2">
+                <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-teal" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12px] font-medium leading-[1.4] text-teal-text">
+                    Scheduled for {formatDate(post.scheduled_for)},{" "}
+                    {timeOfDay(post.scheduled_for, timezone)}
+                  </span>
+                  <span className="meta block text-teal-text">
+                    {canPublish && post.auto_publish
+                      ? "Posts to LinkedIn automatically"
+                      : "Recorded on the plan"}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  disabled={locked}
+                  onClick={() => onSchedule(post.id, "", "")}
+                  className="settle shrink-0 rounded-control border border-rule bg-sheet px-2.5 py-1 text-[11px] leading-[1.45] text-ink-2 hover:border-violet hover:text-violet disabled:opacity-50"
+                >
+                  Undo
+                </button>
+              </div>
+            ) : null}
+
+            {/* Three ranked slots, best first, each citing its evidence or
+                admitting it is a default. Picking one schedules it. */}
+            {!post.scheduled_for && post.status !== "published" ? (
+              <div className="mb-2.5 flex flex-col gap-1.5">
+                <p className="text-[12px] leading-[1.45] text-ink">
+                  When should this go out?
+                </p>
+                {slotSuggestions.map((slot) => (
+                  <button
+                    key={`${slot.day}-${slot.time}`}
+                    type="button"
+                    disabled={locked}
+                    onClick={() => onSchedule(post.id, slot.day, slot.time)}
+                    className={`settle flex items-center justify-between gap-2 rounded-control border px-3 py-2 text-left disabled:opacity-50 ${
+                      slot.best
+                        ? "border-violet-100 bg-violet-wash hover:border-violet"
+                        : "border-rule bg-sheet hover:border-violet"
+                    }`}
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-[12px] font-medium leading-[1.4] text-ink">
+                        {slot.label}
+                      </span>
+                      <span className="block text-[11px] leading-[1.4] text-ink-3">
+                        {slot.reason}
+                      </span>
+                    </span>
+                    {slot.best ? (
+                      <span className="meta shrink-0 text-violet-deep">Best</span>
+                    ) : null}
+                  </button>
+                ))}
+                <p className="meta text-ink-3">Or pick another time</p>
+              </div>
+            ) : null}
+
             <div className="flex flex-wrap items-center gap-2">
               <Input
                 type="date"
@@ -618,7 +686,9 @@ export function PostDialog({
               unscheduling would throw away the date just typed.
             */}
             <div className="mt-2 flex flex-wrap gap-2">
-              {post.scheduled_for && !dateChanged ? (
+              {/* A scheduled post's Undo lives in the green strip above, so
+                  this button only serves dated posts in other states. */}
+              {post.scheduled_for && !dateChanged && post.status !== "scheduled" ? (
                 <Button
                   disabled={locked}
                   onClick={() => onSchedule(post.id, "", "")}
@@ -646,13 +716,13 @@ export function PostDialog({
             {/* What actually happens at that time. A scheduled post with
                 auto_publish off is the grandfathered case: it would sit there
                 looking scheduled and never go out, so it says so. */}
-            {post.status === "scheduled" ? (
+            {/* The happy path is the green strip above; these are the two
+                cases where a date does not mean what it looks like. */}
+            {post.status === "scheduled" && (!canPublish || !post.auto_publish) ? (
               <p className="mt-2 text-[12px] text-ink-2">
                 {!canPublish
                   ? "No LinkedIn profile is connected, so this will not go out on its own. Connect one in Settings, Channels."
-                  : post.auto_publish
-                    ? "This publishes to LinkedIn on its own at that time."
-                    : "This one was scheduled before automatic publishing was switched on, so it stays put. Move it to a new time to send it."}
+                  : "This one was scheduled before automatic publishing was switched on, so it stays put. Move it to a new time to send it."}
               </p>
             ) : null}
 
