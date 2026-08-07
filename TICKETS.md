@@ -1202,3 +1202,70 @@ both double and three tasks.
   3's "there is no variant of it".
 - `overused-font` (Inter) is the one real finding left on the landing page. A
   display face is a brand decision, not a defect.
+
+## PLS-176 to PLS-182: Rev E, the warm rebuild
+
+Daniyal: *"a complete redesign of each page with more depth because I do like
+depth and warm... it has no depth, no animation, no flow, no background"*, then
+the full design-system handoff for `JNQb065A0l98R0chZVy0B6`.
+
+**The direction is one sentence: "depth is a token layer, not a per-screen
+decision."** That is also the diagnosis. The product read flat not because a
+screen was wrong but because every card decided its own elevation, which in
+practice meant none of them did.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-176 | DESIGN.md becomes Rev E: warm palette, 4-level elevation, 12/8/6/20 radius, pills, circles, three-font scope. AI.md 2a defines a session | done |
+| PLS-177 | The warm token layer, contrast computed for every pair | done |
+| PLS-178 | `Surface`, `Chip`, `MonoLabel`, `StatDot`, `MetricTile`; `Avatar` and `Button` extended in place | done |
+| PLS-179 | Sessions on the top bar, and the behavioural-rules audit | done |
+| PLS-180 | BD screen: serif greeting with its dateline, elevated cards, no left rules | done |
+| PLS-182 | The suggestions engine finally has a reader | done |
+
+### Four values diverge from the Figma, deliberately
+
+Contrast computed against the 4.5:1 floor rather than eyeballed. Each is the
+same hue darkened until it passes on all four surfaces, with the Figma value
+recorded inline:
+
+| Token | Figma | Measured | Shipped |
+| --- | --- | --- | --- |
+| `text-muted` | `#96897B` | 2.85:1 | `#72685E` |
+| Good text | `#0F7A57` | 4.45:1 | `#0F7956` |
+| Attention text | `#A8690F` | 3.74:1 | `#965D0D` |
+| Violet, dark mode | `#8558EC` | 4.46:1 | `#8457EB` |
+
+### Three DESIGN.md rules reversed, on Daniyal's call
+
+20px pill chips and circular avatars, against Rev C's *"pills and fully-rounded
+shapes do not exist in this system"* and *"never circles"*. A four-level
+elevation ramp, against *"exactly three depth treatments exist, anything else is
+a bug"*. The superseded reasoning is recorded rather than deleted: those rules
+existed to stop a flat violet product looking generic, and the warm palette plus
+the elevation ramp carry that job now.
+
+### The mara-* fork is gone
+
+It became an alias layer. PLS-110 forked it because the Figma ran different
+values; Rev E adopted those values product-wide, so the fork was pure
+duplication. It had already cost us once: PLS-138 fixed a contrast bug on
+`--color-violet` and left `--color-mara-violet` holding the failing value 22
+lines below its own warning comment.
+
+### Sessions, without weakening the meter
+
+AI.md 2a: a session is one question you ask, floored, derived at render time,
+never stored. `AVERAGE_ASK_CREDITS` is 12 rather than the 25-credit MARKET
+ceiling, because a ceiling-based number understates what is left by half. On
+screen the bar reads 10 sessions while the composer reads 131 of 250 credits,
+and 131/12 is 10.
+
+### Still open
+
+- The three Tasks spec sheets (completion states, completed list, comments).
+- Content's post editor, board, month and skills screens.
+- All four Talent screens. The client-export privacy defaults need the
+  shortlist builder's toggles, which `ShortlistRow` has no columns for.
+- The landing page's warm depth and background.
+- `recordLesson` still calls `distilLesson` outside the reservation lifecycle.
