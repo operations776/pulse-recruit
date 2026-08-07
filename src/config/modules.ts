@@ -14,7 +14,6 @@ import {
   Share2,
   SlidersHorizontal,
   Sparkles,
-  UserRound,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -111,14 +110,17 @@ export const MODULES: ModuleDef[] = [
     icon: PenLine,
     blurb:
       "The content engine. Describe an idea, get it written in your own voice, and plan the week rather than starting from zero every Monday.",
-    // Skills is deliberately absent: it was a second route holding reference
-    // cards, which split one job across two rooms, and it is a popup on the
-    // planner now. Your voice earns a route because it is a place you go and
-    // do something, not a card you read.
-    nav: [
-      { href: "/content", label: "Planner", icon: CalendarDays },
-      { href: "/content/persona", label: "Your voice", icon: UserRound },
-    ],
+    // One destination, so the module rail's section column does not render for
+    // CONTENT at all. Same rule as OPS in PLS-133: a module with one place to
+    // go has no sections to navigate between.
+    //
+    // The Figma gives CONTENT its own rail carrying Planner, Needs you, Ideas
+    // and Published with live counts, then Your voice and Skills under a "how
+    // it writes" heading. Counts cannot live in this file, so that rail is
+    // owned by the page. Leaving both would put a section column and a view
+    // column side by side, which is the four-column defect PLS-99 was filed
+    // for. "Your voice" keeps its route and moves into the page rail.
+    nav: [{ href: "/content", label: "Planner", icon: CalendarDays }],
   },
 ];
 

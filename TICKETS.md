@@ -800,7 +800,9 @@ it. That is what makes PLS-154 and PLS-155 buildable at all.
 | PLS-153 | A disconnected LinkedIn becomes Needs attention, never Failed. `finish_publish` learns a failure kind, and `flag_unpublishable_posts` surfaces due posts the claim query structurally cannot see | done |
 | PLS-154 | `post_metrics`, every counter nullable | done |
 | PLS-155 | Unipile `getPostStats` and the six-hourly refresher at `/api/cron/post-metrics` | done |
-| PLS-157 to PLS-162 | Provenance, the metered rewrite bar, skills as rules, suggestions and their two RPCs, the suggestion engine, best-slot advice | todo |
+| PLS-157 | The pricing page was promising a founding rate for life. Corrected to three months, and the founding margin recorded in AI.md | done |
+| PLS-158 | The planner shell from the Figma: content rail, week strip, "This week" header | done |
+| PLS-159 to PLS-162 | Provenance, the metered rewrite bar, skills as rules, suggestions and their two RPCs, the suggestion engine, best-slot advice | todo |
 | PLS-163 | DESIGN.md amended for the two Figma conflicts, plus the shared primitives onto `/design` | todo |
 | PLS-164 to PLS-170 | The six screens, then retire the dialogs | todo |
 

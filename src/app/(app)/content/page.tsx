@@ -8,7 +8,7 @@ import { ContentPlanner } from "./content-planner";
 export default async function ContentPlannerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; view?: string }>;
+  searchParams: Promise<{ month?: string; view?: string; filter?: string }>;
 }) {
   const params = await searchParams;
 
@@ -41,12 +41,27 @@ export default async function ContentPlannerPage({
       pendingLessons={planner.pendingLessons}
       canPublish={planner.canPublish}
       month={month}
-      view={params.view === "board" ? "board" : "calendar"}
+      // Week is the default, per the Figma. It answers what is going out this
+      // week, which is the question the planner gets opened for; the month grid
+      // answers a different and rarer one.
+      view={
+        params.view === "board"
+          ? "board"
+          : params.view === "calendar"
+            ? "calendar"
+            : "week"
+      }
+      filter={
+        params.filter === "needs-you" ||
+        params.filter === "ideas" ||
+        params.filter === "published"
+          ? params.filter
+          : "all"
+      }
       // Today is read on the server inside the org zone and handed down. A
       // client-side clock read would disagree with the server render and move
       // the highlight after hydration.
       today={dayKey(new Date(), planner.timezone)}
-      todayInstant={new Date().toISOString()}
     />
   );
 }
