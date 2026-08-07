@@ -136,8 +136,9 @@ export function TellMaraDrawer({
             Tell {agent.name} something
           </p>
           <p className="text-[12px] leading-[1.5] text-mara-ink-2">
-            He uses this on every answer. The more she knows about your
-            business, the less generic his advice is.
+            {agent.name} uses this on every answer. The more {agent.pronoun}{" "}
+            knows about your business, the less generic {agent.possessive}{" "}
+            advice is.
           </p>
         </div>
 

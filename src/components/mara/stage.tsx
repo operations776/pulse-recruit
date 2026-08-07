@@ -71,6 +71,8 @@ export function MaraStage({
   resetsAt,
   configured,
   unconfiguredReason,
+  pendingQuestion,
+  openMemory,
   conversations,
   activeConversationId,
   todayKey,
@@ -97,6 +99,10 @@ export function MaraStage({
   resetsAt: string | null;
   configured: boolean;
   unconfiguredReason: string;
+  /** A question passed in the URL by "Ask Reyhan how", fired once on arrival. */
+  pendingQuestion: string | null;
+  /** True when "Manage" sent the user here to see what the agent knows. */
+  openMemory: boolean;
   conversations: ChatConversationRow[];
   activeConversationId: string | null;
   /** Fixed on the server so Today/Yesterday cannot disagree after hydration. */
@@ -104,16 +110,28 @@ export function MaraStage({
   yesterdayKey: string;
 }) {
   const router = useRouter();
-  const [tellOpen, setTellOpen] = useState(false);
+  const [tellOpen, setTellOpen] = useState(openMemory);
   const [historyOpen, setHistoryOpen] = useState(false);
 
   // ChatPanel owns the run lifecycle, so it hands `ask` back here and the
   // suggestion chips live in the scroll region above rather than in the pinned
   // composer block. Held in a ref: calling it must not re-render the stage.
   const askRef = useRef<((text: string) => void) | null>(null);
-  const onReady = useCallback((ask: (text: string) => void) => {
-    askRef.current = ask;
-  }, []);
+  // Guards the one-shot: a refresh must not re-ask a question that is already
+  // in the transcript, and re-running an Exa research call costs real credits.
+  const askedRef = useRef(false);
+  const onReady = useCallback(
+    (ask: (text: string) => void) => {
+      askRef.current = ask;
+      if (pendingQuestion && !askedRef.current && configured) {
+        askedRef.current = true;
+        // Drop the param first, so a reload is not a second paid run.
+        router.replace("/market");
+        ask(pendingQuestion);
+      }
+    },
+    [pendingQuestion, configured, router],
+  );
 
   // A run in flight is the only thing that should animate the avatar. Anything
   // else would be a mood with no cause behind it.

@@ -304,7 +304,12 @@ export type BDDebriefOutcome =
   | "went_well"
   | "still_chasing"
   | "dead_end"
-  | "skipped";
+  | "skipped"
+  // PLS-140. What the ledger's Done button writes. It closes the commitment
+  // without claiming it went well, which is an outcome the user never gave:
+  // they said "take this off my list". Analytics must exclude it when reading
+  // how things actually went.
+  | "closed_by_user";
 
 export type BDDebriefRow = {
   id: string;

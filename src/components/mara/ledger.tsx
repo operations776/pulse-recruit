@@ -45,16 +45,36 @@ export function CommitmentsLedger({
   const [pending, startTransition] = useTransition();
   const [settling, setSettling] = useState<string | null>(null);
 
+  // PLS-139. The row leaves on the click, not on the server's answer.
+  //
+  // Crossing a promise off is the one emotional peak this product has, and it
+  // used to be a router.refresh(): the row vanished after a round trip with no
+  // acknowledgement, which is the same nothing a failed request gives you.
+  //
+  // The animation runs first and the write happens underneath it. If the write
+  // fails the row springs back and the toast says why, so nothing is claimed
+  // that did not happen.
   const markDone = (row: BDCommitmentRow) => {
     setSettling(row.id);
     startTransition(async () => {
-      const result = await settleCommitment(row.id, "went_well");
-      setSettling(null);
+      // NOT "went_well". Clicking Done means "take this off my list"; it does
+      // not say the outreach landed. Writing went_well here put words in the
+      // recruiter's mouth and contaminated the one column the debrief exists
+      // to fill honestly.
+      const result = await settleCommitment(row.id, "closed_by_user");
       if (!result.ok) {
+        // Put it back. The promise is still open, and a row that left the
+        // screen while still being owed is the product lying about the one
+        // thing it exists to track.
+        setSettling(null);
         notify(result.error, "danger");
         return;
       }
       notify(`Done. ${agent.name} has it off your list.`);
+      // The refresh replaces this list with one that no longer holds the row,
+      // so `settling` is deliberately NOT cleared on success: clearing it
+      // would flash the full row back for one frame before the new data
+      // arrives.
       router.refresh();
     });
   };
@@ -65,8 +85,11 @@ export function CommitmentsLedger({
         <p className="text-[13px] font-medium leading-[1.45] text-mara-ink">
           You said you&rsquo;d
         </p>
+        {/* Drops with the row. A count still reading "1 OPEN" while the row
+            it counts is visibly being crossed off is the header contradicting
+            the list. */}
         <p className="meta text-mara-ink-3">
-          {commitments.length} OPEN
+          {commitments.length - (settling ? 1 : 0)} OPEN
         </p>
       </div>
 
@@ -81,13 +104,25 @@ export function CommitmentsLedger({
         commitments.map((row) => (
           <div
             key={row.id}
-            className="flex items-center gap-[11px] border-t border-mara-rule py-2.5"
+            className={`flex items-center gap-[11px] border-t border-mara-rule py-2.5 ${
+              settling === row.id ? "commitment-settled" : ""
+            }`}
           >
             <span
               aria-hidden
-              className="size-[15px] shrink-0 rounded-full border-[1.5px] border-mara-violet-edge"
+              className={`settle size-[15px] shrink-0 rounded-full border-[1.5px] ${
+                settling === row.id
+                  ? "border-mara-violet bg-mara-violet"
+                  : "border-mara-violet-edge"
+              }`}
             />
-            <p className="min-w-0 flex-1 text-[13px] leading-[1.45] text-mara-ink">
+            <p
+              className={`min-w-0 flex-1 text-[13px] leading-[1.45] transition-colors duration-200 ${
+                settling === row.id
+                  ? "text-mara-ink-3 line-through"
+                  : "text-mara-ink"
+              }`}
+            >
               {row.body}
             </p>
             <p className="meta shrink-0 text-mara-warn-deep">

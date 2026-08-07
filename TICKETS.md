@@ -1055,3 +1055,78 @@ at genuine per-component sizes rather than one shared class, 13 contrast, plus
 `overused-font` (Inter) and two `flat-type-hierarchy`. The marketing site has
 its own 111, including `ai-color-palette` and `radial-spotlight-glow` on the
 landing hero, which are judgement calls about the rebrand rather than defects.
+
+## PLS-139 to PLS-141: the critique, and the motion it earned
+
+`/critique` run properly: two isolated sub-agents, design judgement and
+detector evidence, neither seeing the other until synthesis. Both found things
+the other could not have.
+
+### What the design review caught
+
+| | |
+| --- | --- |
+| **Pronouns broken in shipped copy** | "Stays open. **She** will ask again" sat next to "Dropped, and **he** stops suggesting it" in the same four-button group. `tell-mara.tsx` said "**He** uses this on every answer. The more **she** knows" in one sentence. The agent is named after a real, identifiable man, so this reads as a female AI find-and-replaced badly, which is exactly what happened. Fixed by routing every pronoun through `agent.pronoun`, so one cannot be hand-written wrong again. |
+| **Two CTAs navigated nowhere** | "Ask Reyhan how" pushed `?q=` and "Manage" pushed `?memory=1`. The page typed its searchParams as `{ c?: string }` and read neither. The secondary verb on the primary card did nothing at all. |
+| **`Done` recorded an outcome nobody gave** | See PLS-140 below. |
+
+### PLS-140: the ledger was lying to the coaching data
+
+`Done` called `settleCommitment(row.id, "went_well")`. Clicking Done means
+"take this off my list"; it does not say the outreach landed. That value went
+into the same column the debrief card fills, so every coaching signal derived
+from `bd_debriefs.outcome` was contaminated by clicks that meant something
+else. The debrief exists *because* a binary done/not-done makes people lie, and
+the ledger shipped exactly that binary, mislabelled.
+
+A fifth outcome, `closed_by_user`, with the check constraint and
+`settle_commitment` updated in one migration. It closes the commitment like
+`went_well` does but claims nothing about how it went, and analytics can
+exclude it. Verified in the database: the new row records `closed_by_user` with
+status `done`.
+
+### PLS-141: the same violet, missed twice
+
+The detector found white-on-violet at 4.23:1 in dark mode, on "I'll do this".
+PLS-138 had already fixed that exact value on `--color-violet` and left
+`--color-mara-violet` holding it, 22 lines below a comment warning about it.
+Fixing one violet and leaving its twin is what a duplicated palette costs.
+Also raised the "soon" chip from 9px and the metric delta from 10px.
+
+Dark mode went 20 findings to 17.
+
+### PLS-139: motion, and only where it means something
+
+Thesis written before the code, in `src/components/mara/MOTION.md`. Operate
+mode: nothing animates because an area was static.
+
+**The focal moment is a promise being crossed off**, which was a
+`router.refresh()`: the row vanished after a round trip with no
+acknowledgement, the same nothing a failed request gives you. The single
+emotional peak in the product read as a page reload, while the most decorated
+object on screen was the card that *adds* work.
+
+The row now strikes through, desaturates and collapses its own height over
+260ms, on the click rather than the server's answer. Collapsing rather than
+fading moves the rows below up, so the list visibly shortens: a fade leaves a
+hole where the payoff should be. If the write fails the row springs back and
+says why, so the optimism is never a lie. The header count drops with it.
+
+**The metric strip deliberately does not animate.** Numbers counting up delay
+the one thing a tile exists to say, and four counting at once is worse.
+
+Verified with `scripts/verify-settle.mjs`, which drives a real click: the class
+lands on the click, the row genuinely collapses, and the promise is still
+settled after a reload. A class-name assertion alone would pass on an animation
+that moves nothing.
+
+### Not done, and deliberately
+
+The review raised the persona risk hardest: there is **no disclosure anywhere
+that Reyhan is an AI**, while the name, role and breathing face all point the
+other way. It also flagged that the model will render "I'd push back" over a
+real CEO's name, on advice no human reviewed. Both are Daniyal's calls, not
+mine, and are raised rather than silently resolved.
+
+Also open: no undo on any write, the duplicated `--color-mara-*` palette, and
+what the ledger does at 22 open promises.

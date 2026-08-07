@@ -33,7 +33,9 @@ function humanise(iso: string | null, nowMs: number): string {
 export default async function BDStrategistPage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string }>;
+  // q and memory are pushed by buttons on this very screen. They were not
+  // read, so "Ask Reyhan how" and "Manage" changed the URL and did nothing.
+  searchParams: Promise<{ c?: string; q?: string; memory?: string }>;
 }) {
   const params = await searchParams;
   // `c=new` is how the New conversation button says "do not open anything":
@@ -94,7 +96,8 @@ export default async function BDStrategistPage({
   ];
 
   // Each domain says what the strategist can actually see. "Unknown" is a real state and
-  // reads as one: she has not been told, so she does not pretend to a view.
+  // reads as one: the strategist has not been told, so it does not pretend
+  // to a view.
   const has = (kind: string) => memories.some((memory) => memory.kind === kind);
   const domains: Domain[] = [
     {
@@ -103,7 +106,7 @@ export default async function BDStrategistPage({
       read:
         counts.patch > 0
           ? `${counts.patch} accounts, ${counts.quiet} gone quiet`
-          : "No Dream 100 yet. Add accounts and she starts watching.",
+          : `No Dream 100 yet. Add accounts and ${agent.pronoun} starts watching.`,
       tone: counts.patch === 0 ? "unknown" : counts.quiet > 0 ? "watch" : "good",
     },
     {
@@ -199,6 +202,9 @@ export default async function BDStrategistPage({
           ? `Pulse has no research provider configured yet, so ${agent.name} cannot check anything. This is a Pulse setup step, not something you need to do.`
           : `Pulse has no model configured yet, so ${agent.name} cannot answer. This is a Pulse setup step, not something you need to do.`
       }
+      // A question handed over in the URL, asked once on arrival.
+      pendingQuestion={params.q ?? null}
+      openMemory={params.memory === "1"}
       conversations={conversations}
       activeConversationId={activeConversationId}
       todayKey={renderedAt.toISOString().slice(0, 10)}

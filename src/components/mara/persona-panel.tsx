@@ -120,7 +120,7 @@ export function PersonaPanel({
           ))}
 
           {/* The amber chip in the Figma is a GAP, not a fact: "Add your fee
-              model" is something she is missing. It only shows when the gap is
+              model" is a GAP, not a fact. It only shows when the gap is
               real, so it disappears once the fee model is answered. */}
           {!memories.some((m) => m.kind === "offer") ? (
             <button

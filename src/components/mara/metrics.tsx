@@ -40,7 +40,7 @@ export function MetricsStrip({ metrics }: { metrics: Metric[] }) {
               // is the kind of thing that ends up in a pitch deck.
               <span
                 title="No data source for this yet"
-                className="rounded-chip border border-mara-rule px-1 text-[9px] uppercase tracking-wide"
+                className="rounded-chip border border-mara-rule px-1 text-[11px] uppercase tracking-wide"
               >
                 soon
               </span>
@@ -56,7 +56,7 @@ export function MetricsStrip({ metrics }: { metrics: Metric[] }) {
             </p>
             {metric.delta ? (
               <p
-                className={`font-mono text-[10px] tracking-[-0.1px] ${
+                className={`font-mono text-[11px] tracking-[-0.1px] ${
                   metric.tone ? TONE[metric.tone] : "text-mara-ink-3"
                 }`}
               >

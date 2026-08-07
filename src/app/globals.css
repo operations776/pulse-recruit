@@ -171,7 +171,12 @@ html[data-theme="dark"] {
      copied: same hues, inverted lightness, contrast checked against the dark
      ground. Without them the BD page would be the one screen that stays white
      when the theme flips, which is worse than not having dark mode at all. */
-  --color-mara-violet: #8b5cf6;
+  /* PLS-141. The same #8b5cf6 that PLS-138 fixed on --color-violet, missed
+     here: white text on it measures 4.23:1 against a 4.5:1 requirement, and
+     this token paints "I'll do this", the one filled button on the screen.
+     Fixing one violet and leaving its twin is how a duplicated palette costs
+     you. 4.56 now. */
+  --color-mara-violet: #8558ec;
   --color-mara-violet-soft: #221a3d;
   --color-mara-violet-edge: #3b2d6b;
   --color-mara-violet-deep: #c9b8ff;
@@ -430,6 +435,44 @@ body {
 @keyframes mara-dot {
   0%, 100% { opacity: 0.25; }
   40% { opacity: 1; }
+}
+
+/* PLS-139. A promise being crossed off: the focal moment of this screen, see
+   src/components/mara/MOTION.md.
+
+   Three properties carrying one idea: the line is struck through, it stops
+   being live, and it leaves. Height collapses rather than the row fading in
+   place, so the rows below move up and the list visibly shortens. A fade
+   leaves a hole where the payoff should be.
+
+   `forwards` holds the collapsed state, so there is no flash of the full row
+   between the animation finishing and the server refresh landing. */
+.commitment-settled {
+  animation: commitment-settled 260ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  overflow: hidden;
+}
+
+/* max-height, not height: a commitment can wrap to two lines and the row has
+   no fixed height. 96px clears both cases. */
+@keyframes commitment-settled {
+  0% {
+    opacity: 1;
+    max-height: 96px;
+    transform: translateX(0);
+  }
+  45% {
+    opacity: 0.55;
+    max-height: 96px;
+    transform: translateX(4px);
+  }
+  100% {
+    opacity: 0;
+    max-height: 0;
+    transform: translateX(4px);
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top-width: 0;
+  }
 }
 
 /* The entrance every Mara card uses. translateY and opacity only. */

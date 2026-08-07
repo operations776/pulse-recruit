@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/toast";
 import { settleCommitment } from "@/lib/actions";
 import type { BDCommitmentRow, BDDebriefOutcome } from "@/lib/supabase/types";
 
+import { agent } from "@/config/brand";
 // PLS-114. The evening debrief.
 //
 // From 17:00 London, Mara asks about the oldest open promise. This is the
@@ -24,7 +25,7 @@ const OPTIONS: { outcome: BDDebriefOutcome; label: string; hint: string }[] = [
   {
     outcome: "still_chasing",
     label: "Still chasing",
-    hint: "Stays open. She will ask again.",
+    hint: `Stays open. ${agent.pronoun} will ask again.`,
   },
   {
     outcome: "dead_end",
@@ -59,8 +60,8 @@ export function DebriefCard({
         outcome === "went_well"
           ? "Good. Off your list."
           : outcome === "dead_end"
-            ? "Dropped. She will stop bringing it up."
-            : "Noted. She will ask again tomorrow.",
+            ? `Dropped. ${agent.pronoun} will stop bringing it up.`
+            : `Noted. ${agent.pronoun} will ask again tomorrow.`,
       );
       router.refresh();
     });
