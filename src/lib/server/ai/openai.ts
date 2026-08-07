@@ -97,7 +97,7 @@ function readableFailure(status: number, body: string): ProviderError {
   }
   // A 404 here is almost always the model name, not the endpoint: an account
   // without access to the configured model gets one. PLS-94 moved the default
-  // to gpt-5, so name the variable and the fix rather than leaving somebody to
+  // to gpt-4.1, so name the variable and the fix rather than leaving somebody to
   // read a raw provider string.
   if (status === 404) {
     return new ProviderError(
