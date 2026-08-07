@@ -312,6 +312,10 @@ folder is a complete product with surfaces we did not have.
 
 | ID | Ticket | Status |
 | --- | --- | --- |
+| PLS-100 | Private repo goes public with real CI (typecheck, lint, production build, a migration warning), and DEPLOY.md documents the path. PR #1 | done |
+| PLS-101 | The token layer ported: re-pointing `globals.css` reskinned 73 components without editing one of them. PR #2 | done |
+| PLS-102 | The rename to Pulse Recruit, a one-file change through `src/config/brand.ts`. PR #2 | done |
+| PLS-103 | DESIGN.md becomes Rev C: what the rebrand changed, and the structural rules it did not. PR #3 | done |
 | PLS-104 | The shell: settings popover, working dark mode, workspace menu. Dark mode is persisted, unlike the rebrand's in-memory toggle, and applied by an inline script before paint rather than in an effect, which is a white flash on every navigation | done |
 | PLS-105 | `chat_conversations`, so a chat surface has threads. `begin_ask` resolves the thread inside the function to keep the claim atomic. All 14 existing messages adopted into 3 threads titled from their own first questions | done |
 | PLS-106 | The BD history panel: threads grouped Today / Yesterday / date, New conversation, author-only delete. The transcript is scoped to the open thread, and so is the history the model receives | done |
@@ -351,6 +355,32 @@ token-addressed page that is meant to work without a session.
 
 Still open, and Daniyal's call because it is an Auth setting rather than
 schema: leaked password protection is disabled on the Supabase project.
+
+## The gate, and the rest of the BD Strategist
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-109 | The `design-review` skill was judging Rev C screens against Rev A. It asked for `forest-900` chrome, `emerald-600` actions, Bricolage headings, JetBrains data literals, 11px micro labels, hue-tinted initials and `hueByIndex`: seven rules, zero occurrences of any of them in `src/`. It sent every route through `shot.mjs`, which cannot get past the session gate, and never opened dark mode at all. Rewritten to reference DESIGN.md section 11 rather than restate it, which is how it went stale in the first place | done |
+| PLS-110 | BD Strategist: the Ready/Thinking run-state indicator and the rail panel toggles | todo |
+
+**The gate was the thing checking everything else.** It named a "Review
+checklist section" of DESIGN.md that does not exist, said "all ten checklist
+items" over a list of eleven, and its mechanical grep flagged `text-[1[0-9]px]`,
+which matches `text-[12px]` and `text-[13px]`, the correct Rev C type scale.
+`strategy-rail.tsx` alone would have returned a dozen false findings, which is
+how a reviewer learns to skim the list.
+
+Two DESIGN.md corrections are owed and are Daniyal's call, because it is the
+binding spec rather than a helper file. The skill documents both as carve-outs
+so nobody files a finding against them meanwhile:
+
+1. **Section 6d and contract rule 4 still describe the grain.** PLS-101 removed
+   it, `globals.css` says so, and the Rev C table at the top of the same file
+   says so. Rule 4 now governs something that does not exist.
+2. **Section 9's toggle group still specifies a teal active cap.** PLS-108
+   overruled that when it found every segmented control painting its selected
+   cap teal: teal means on or running, and a selected tab is not a running
+   thing. The anatomy and the lesson disagree in one document.
 
 ## Later weeks (placeholders, not yet specced)
 
