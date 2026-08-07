@@ -43,6 +43,7 @@ import type {
   PersonRow,
   ShortlistRow,
   StageEventRow,
+  SuggestionRow,
   TaskRow,
 } from "@/lib/supabase/types";
 
@@ -489,6 +490,36 @@ export async function getAvailableCredits(): Promise<number> {
       (data.used_this_week ?? 0) -
       (data.reserved_this_week ?? 0),
   );
+}
+
+/**
+ * Open suggestions for this recruiter, freshest first.
+ *
+ * PLS-182. The engine, its schema and its route shipped without a single
+ * reader: `content_suggestions` had no consumer anywhere in src/. This is it.
+ *
+ * Scoped to the author, not the org. A suggestion is grounded in the
+ * recruiter's own pipeline and written in their voice, so showing one person's
+ * to another is both wrong and confusing. RLS would allow the read; the
+ * product should not.
+ *
+ * Snoozed rows come back once their time is up, which is what makes snooze
+ * different from dismiss.
+ */
+export async function getSuggestions(): Promise<SuggestionRow[]> {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("content_suggestions")
+    .select("*")
+    .eq("user_id", session.userId)
+    .in("status", ["open", "snoozed"])
+    .or(`snoozed_until.is.null,snoozed_until.lte.${new Date().toISOString()}`)
+    .order("created_at", { ascending: false })
+    .limit(8);
+
+  return (data ?? []) as SuggestionRow[];
 }
 
 export async function getTasks() {

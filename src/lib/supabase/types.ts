@@ -644,6 +644,51 @@ export type PostAsset = AssetRow & { url: string | null };
  * come back dependably; impressions come from LinkedIn's own analytics, which a
  * personal profile may not expose. Nothing may substitute one for the other.
  */
+/**
+ * PLS-182. A thing worth posting about, grounded in a row this workspace holds.
+ *
+ * `source_kind` and `source_id` are the grounding: the engine drops any
+ * suggestion naming a ref that was not in its input, so every row here traces
+ * back to something real. `evidence` carries what the model was shown, and
+ * `run_id` points at the metered run that produced it, so a suggestion can be
+ * traced to what it cost.
+ */
+export type SuggestionSourceKind =
+  | "job"
+  | "candidacy"
+  | "placement"
+  | "company"
+  | "signal"
+  | "lesson";
+
+export type SuggestionStatus = "open" | "drafted" | "dismissed" | "snoozed";
+
+/** Why it was not for me. The engine reads these back as a learning signal. */
+export type SuggestionDismissReason =
+  | "not_my_patch"
+  | "too_salesy"
+  | "already_covered"
+  | "wrong_skill"
+  | "not_now";
+
+export type SuggestionRow = {
+  id: string;
+  org_id: string;
+  user_id: string;
+  source_kind: SuggestionSourceKind;
+  source_id: string | null;
+  title: string;
+  why: string;
+  shape_key: string;
+  evidence: Record<string, unknown>;
+  status: SuggestionStatus;
+  dismissed_reason: SuggestionDismissReason | null;
+  snoozed_until: string | null;
+  post_id: string | null;
+  run_id: string | null;
+  created_at: string;
+};
+
 export type PostMetricsRow = {
   id: string;
   org_id: string;

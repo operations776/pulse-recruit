@@ -25,6 +25,7 @@ import type {
   PostAsset,
   PostRow,
   Shape,
+  SuggestionRow,
 } from "@/lib/supabase/types";
 import {
   dayKey,
@@ -37,6 +38,7 @@ import { Backlog } from "./backlog";
 import { CalendarGrid } from "./calendar-grid";
 import { ContentRail, needsYou, type ContentFilter } from "./content-rail";
 import { WeekView } from "./week-view";
+import { SuggestionsRail } from "./suggestions-rail";
 import { WaitingOnYou, waitingRows } from "./waiting-on-you";
 import { GenerateDialog } from "./generate-dialog";
 import { PostDialog } from "./post-dialog";
@@ -67,6 +69,7 @@ export function ContentPlanner({
   hasPersona,
   generationConfigured,
   pendingLessons,
+  suggestions,
   canPublish,
 }: {
   filter: ContentFilter;
@@ -82,6 +85,8 @@ export function ContentPlanner({
   hasPersona: boolean;
   generationConfigured: boolean;
   pendingLessons: number;
+  /** Grounded ideas from the recruiter's own rows. PLS-182. */
+  suggestions: SuggestionRow[];
   /** A connected LinkedIn profile, so a scheduled post actually goes out. */
   canPublish: boolean;
 }) {
@@ -592,6 +597,11 @@ export function ContentPlanner({
             else setOpenId(post.id);
           }}
         />
+
+        {/* PLS-182. The engine shipped in PLS-162 with nothing reading it.
+            Below the queue rather than above: what is already waiting on you
+            outranks a new idea, the same argument the BD ledger makes. */}
+        <SuggestionsRail suggestions={suggestions} />
       </div>
 
       <GenerateDialog

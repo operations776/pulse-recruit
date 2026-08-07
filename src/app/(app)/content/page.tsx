@@ -1,4 +1,4 @@
-import { getPlanner } from "@/lib/data";
+import { getPlanner, getSuggestions } from "@/lib/data";
 import { hasModelKey } from "@/lib/server/ai/openai";
 import { dayKey, isMonth } from "@/lib/time";
 import { ContentPlanner } from "./content-planner";
@@ -16,9 +16,10 @@ export default async function ContentPlannerPage({
   // media to sign by it. An unparseable value falls back to the current month
   // rather than rendering an empty grid for the year 0.
   const fallback = dayKey(new Date(), "UTC").slice(0, 7);
-  const planner = await getPlanner(
-    isMonth(params.month) ? params.month : fallback,
-  );
+  const [planner, suggestions] = await Promise.all([
+    getPlanner(isMonth(params.month) ? params.month : fallback),
+    getSuggestions(),
+  ]);
 
   const month = isMonth(params.month)
     ? params.month
@@ -39,6 +40,7 @@ export default async function ContentPlannerPage({
       )}
       generationConfigured={hasModelKey()}
       pendingLessons={planner.pendingLessons}
+      suggestions={suggestions}
       canPublish={planner.canPublish}
       month={month}
       // Week is the default, per the Figma. It answers what is going out this

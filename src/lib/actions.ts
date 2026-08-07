@@ -38,6 +38,7 @@ import type {
   TaskPriority,
   TaskStatus,
   VoiceProfile,
+  SuggestionDismissReason,
 } from "@/lib/supabase/types";
 
 // Every write lives here. Anything touching two or more tables calls an RPC;
@@ -243,6 +244,61 @@ export async function deleteConversation(id: string): Promise<Result> {
  * ------------------------------------------------------------------------- */
 
 /** Log something you said you would do. */
+/**
+ * PLS-182. "Not for me", with a reason.
+ *
+ * The reason is the point. `dismiss_suggestion` reads it back as a learning
+ * signal with different strengths: "not my patch" suppresses that source hard,
+ * "not now" only snoozes for a fortnight and suppresses nothing. A dismissal
+ * with no reason teaches the engine nothing and it will file the same
+ * suggestion again next week.
+ */
+export async function dismissSuggestion(
+  id: string,
+  reason: SuggestionDismissReason,
+): Promise<Result<null>> {
+  await requireSession();
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("dismiss_suggestion", {
+    target: id,
+    reason,
+  });
+  if (error) return fail(readable(error.message));
+
+  revalidatePath("/content");
+  return { ok: true, data: null };
+}
+
+/**
+ * Turn a suggestion into a draft post.
+ *
+ * An RPC because it writes both tables: the post is created and the suggestion
+ * is marked drafted and pointed at it. Two client-side writes could create the
+ * post and then fail to mark the suggestion, so the same idea would be offered
+ * again with a draft already sitting in the planner.
+ */
+export async function draftFromSuggestion(
+  id: string,
+  hook: string,
+): Promise<Result<string>> {
+  const text = hook.trim();
+  if (!text) return fail("A post needs a hook to start from.");
+
+  await requireSession();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("draft_from_suggestion", {
+    target: id,
+    post_hook: text,
+  });
+  if (error) return fail(readable(error.message));
+  if (!data) return fail("That suggestion is no longer available.");
+
+  revalidatePath("/content");
+  return { ok: true, data: data as string };
+}
+
 export async function addCommitment(
   body: string,
   source: "said" | "play" | "manual" = "manual",
