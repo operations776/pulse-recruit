@@ -903,6 +903,7 @@ export async function getPlanner(month: string) {
     persona: (personaResult.data ?? null) as PersonaRow | null,
     pendingLessons: lessonsResult.count ?? 0,
     canPublish: (channelResult.count ?? 0) > 0,
+    orgName: session.org.name,
     // Freshest reading per post. Older rows are history the strip does not
     // print.
     metricsByPost: (() => {

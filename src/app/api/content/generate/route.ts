@@ -45,9 +45,13 @@ export async function POST(request: Request) {
     );
   }
 
-  let payload: { idea?: unknown; shape?: unknown };
+  let payload: { idea?: unknown; shape?: unknown; rewrite?: unknown };
   try {
-    payload = (await request.json()) as { idea?: unknown; shape?: unknown };
+    payload = (await request.json()) as {
+      idea?: unknown;
+      shape?: unknown;
+      rewrite?: unknown;
+    };
   } catch {
     return NextResponse.json({ error: "Body was not json." }, { status: 400 });
   }
@@ -55,7 +59,24 @@ export async function POST(request: Request) {
   const idea = typeof payload.idea === "string" ? payload.idea.trim() : "";
   const shapeValue = typeof payload.shape === "string" ? payload.shape : "";
 
-  if (!idea) {
+  // PLS-187, the editor's rewrite toolbar: revise an existing body under one
+  // instruction instead of drafting from an idea. Same claim, same metering.
+  const rewriteRaw = payload.rewrite as
+    | { body?: unknown; instruction?: unknown }
+    | undefined;
+  const rewrite =
+    rewriteRaw &&
+    typeof rewriteRaw.body === "string" &&
+    typeof rewriteRaw.instruction === "string" &&
+    rewriteRaw.body.trim() &&
+    rewriteRaw.instruction.trim()
+      ? {
+          body: rewriteRaw.body.trim(),
+          instruction: rewriteRaw.instruction.trim(),
+        }
+      : null;
+
+  if (!idea && !rewrite) {
     return NextResponse.json(
       { error: "Describe the post you want first." },
       { status: 400 },
@@ -64,6 +85,12 @@ export async function POST(request: Request) {
   if (idea.length > 2000) {
     return NextResponse.json(
       { error: "That description is too long. Trim it to the essentials." },
+      { status: 400 },
+    );
+  }
+  if (rewrite && rewrite.body.length > 4000) {
+    return NextResponse.json(
+      { error: "That post is too long to rewrite in one pass." },
       { status: 400 },
     );
   }
@@ -114,7 +141,7 @@ export async function POST(request: Request) {
   const { data: claim, error: claimError } = await supabase.rpc("begin_ask", {
     target_org: session.org.id,
     target_surface: "content",
-    question: idea,
+    question: rewrite ? `Rewrite: ${rewrite.instruction}` : idea,
     reserve: limits.reserveCredits,
   });
   if (claimError) {
@@ -152,6 +179,7 @@ export async function POST(request: Request) {
           idea,
           shape,
           profile,
+          rewrite: rewrite ?? undefined,
           signal: abort.signal,
           onDelta: (text) => send({ type: "delta", text }),
         });

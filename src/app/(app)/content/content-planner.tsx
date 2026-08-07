@@ -74,6 +74,7 @@ export function ContentPlanner({
   suggestions,
   canPublish,
   metricsByPost,
+  orgName,
 }: {
   filter: ContentFilter;
   posts: PostRow[];
@@ -94,6 +95,8 @@ export function ContentPlanner({
   canPublish: boolean;
   /** Freshest Unipile reading per post, for the performance strip. */
   metricsByPost: Record<string, PostMetricsRow>;
+  /** For the editor's LinkedIn preview byline. */
+  orgName: string;
 }) {
   const router = useRouter();
   const { notify } = useToast();
@@ -700,6 +703,11 @@ export function ContentPlanner({
           post={open}
           assets={assets[open.id] ?? []}
           timezone={timezone}
+          authorName={
+            members.find((m) => m.user_id === (open.author_id ?? meId))
+              ?.display_name ?? "You"
+          }
+          orgName={orgName}
           onClose={() => {
             setOpenId(null);
             // Media uploads deliberately skip revalidation while the layer is

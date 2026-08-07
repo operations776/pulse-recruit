@@ -25,9 +25,66 @@ import {
   removeAsset,
   updatePost,
 } from "@/lib/actions";
+import { Avatar } from "@/components/ui/avatar";
+import { decodeEvents } from "@/lib/ai-events";
 import { createClient } from "@/lib/supabase/client";
 import type { PostAsset, PostRow } from "@/lib/supabase/types";
 import { dayKey, formatDate, timeOfDay } from "@/lib/time";
+
+/** LinkedIn's hard cap on a post body. The counter reads against it. */
+const LINKEDIN_MAX = 3000;
+
+/**
+ * The rewrite toolbar, per the editor frame. Each button is one instruction
+ * to the same metered generation call: a revision of THIS text, never a new
+ * draft from nowhere.
+ */
+const REWRITES: { key: string; label: string; instruction: string }[] = [
+  {
+    key: "shorter",
+    label: "Shorter",
+    instruction:
+      "Make it shorter. Cut roughly a third without losing any concrete detail.",
+  },
+  {
+    key: "warmer",
+    label: "Warmer",
+    instruction: "Make it warmer and more human. No added fluff, no emoji.",
+  },
+  {
+    key: "hook",
+    label: "Sharper hook",
+    instruction:
+      "Rewrite only the first line so it stops the scroll. Keep everything after it as it is.",
+  },
+  {
+    key: "question",
+    label: "Cut the question",
+    instruction:
+      "Remove any closing question and end on the thought instead.",
+  },
+  {
+    key: "regenerate",
+    label: "Regenerate",
+    instruction:
+      "Rewrite the whole post fresh in the same voice and shape, keeping exactly the same facts.",
+  },
+];
+
+/** First paragraph pair where the edited body diverges from the generated one. */
+function firstChange(
+  generated: string,
+  body: string,
+): { wrote: string; yours: string } | null {
+  const a = generated.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+  const b = body.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if ((a[i] ?? "") !== (b[i] ?? "")) {
+      return { wrote: a[i] ?? "", yours: b[i] ?? "" };
+    }
+  }
+  return null;
+}
 
 // The bucket refuses anything larger, so say it here rather than letting a
 // 400MB upload run for two minutes and then fail.
@@ -74,6 +131,8 @@ export function PostDialog({
   post,
   assets,
   timezone,
+  authorName,
+  orgName,
   onClose,
   onSchedule,
   onTogglePublished,
@@ -85,6 +144,9 @@ export function PostDialog({
   post: PostRow;
   assets: PostAsset[];
   timezone: string;
+  /** The byline on the LinkedIn preview strip. */
+  authorName: string;
+  orgName: string;
   onClose: () => void;
   onSchedule: (postId: string, day: string, time: string) => void;
   onTogglePublished: (post: PostRow) => void;
@@ -100,6 +162,11 @@ export function PostDialog({
   const [hook, setHook] = useState(post.hook);
   const [body, setBody] = useState(post.body);
   const [saved, setSaved] = useState(false);
+  const [rewriting, setRewriting] = useState<string | null>(null);
+  // The frame's Learn from this / One off pair. Learning is the default;
+  // "One off" says this edit is circumstance, not correction, and the close
+  // then skips the lesson call.
+  const [learnOnClose, setLearnOnClose] = useState(true);
   const [copied, setCopied] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -158,10 +225,77 @@ export function PostDialog({
    * to spend the call.
    */
   const closeAndLearn = () => {
-    if (!locked && post.generated_body) {
+    if (!locked && post.generated_body && learnOnClose) {
       void updatePost(post.id, { hook, body }, true);
     }
     onClose();
+  };
+
+  /**
+   * One rewrite instruction against the metered generation call. The revised
+   * text streams straight into the editor, replacing the body live, and the
+   * result is saved the way any edit is. A failure keeps the original words.
+   */
+  const runRewrite = async (key: string, instruction: string) => {
+    if (rewriting || locked || !body.trim()) return;
+    setRewriting(key);
+    const original = body;
+
+    try {
+      const response = await fetch("/api/content/generate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          shape: post.shape_id ?? post.skill,
+          rewrite: { body: original, instruction },
+        }),
+      });
+
+      if (!response.ok || !response.body) {
+        const data = await response.json().catch(() => ({ error: "" }));
+        onError(data.error || "The rewrite could not run. Nothing changed.");
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let draft = "";
+      let failed = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const { events, rest } = decodeEvents(buffer);
+        buffer = rest;
+        for (const event of events) {
+          if (event.type === "delta") {
+            draft += event.text;
+            setBody(draft);
+          } else if (event.type === "reset") {
+            draft = "";
+            setBody(original);
+          } else if (event.type === "error") {
+            failed = true;
+            onError(event.message);
+          }
+        }
+      }
+
+      if (failed || !draft.trim()) {
+        setBody(original);
+        return;
+      }
+
+      const saved = await updatePost(post.id, { hook, body: draft.trim() });
+      if (!saved.ok) onError(saved.error);
+    } catch {
+      setBody(original);
+      onError("The rewrite was interrupted. Your words are unchanged.");
+    } finally {
+      setRewriting(null);
+    }
   };
 
   const copy = async () => {
@@ -324,6 +458,24 @@ export function PostDialog({
           rail, so writing and dating are visible at the same time. */}
       <div className="flex flex-col gap-5 lg:flex-row">
         <div className="flex min-w-0 flex-1 flex-col gap-3">
+          {/* The frame's LinkedIn preview strip: who this goes out as and
+              when, exactly as the feed will show it. */}
+          <div className="raised flex items-center gap-2.5 rounded-card border border-rule bg-sheet px-3.5 py-2.5">
+            <Avatar name={authorName} size="sm" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-medium leading-[1.4] text-ink">
+                {authorName}
+              </p>
+              <p className="truncate text-[11px] leading-[1.4] text-ink-3">
+                Recruitment at {orgName}
+                {post.scheduled_for
+                  ? ` · ${formatDate(post.scheduled_for)}, ${timeOfDay(post.scheduled_for, timezone)}`
+                  : ""}
+              </p>
+            </div>
+            <span className="meta shrink-0 text-ink-3">Preview</span>
+          </div>
+
           <label className="flex flex-col gap-2">
             <span className="legend text-ink-2">Hook</span>
             <Input
@@ -340,22 +492,105 @@ export function PostDialog({
             <Textarea
               value={body}
               rows={18}
-              readOnly={locked}
+              readOnly={locked || rewriting !== null}
               placeholder="Write it here. It saves when you click away."
               onChange={(event) => setBody(event.target.value)}
               onBlur={save}
               className="min-h-[22rem] w-full leading-[1.6]"
             />
           </label>
+
+          {/* The rewrite toolbar from the frame. Each is one metered
+              revision of the words above, streamed back in place. */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="meta mr-1 text-ink-3">Rewrite</span>
+            {REWRITES.map((r) => (
+              <button
+                key={r.key}
+                type="button"
+                disabled={rewriting !== null || locked || !body.trim()}
+                onClick={() => void runRewrite(r.key, r.instruction)}
+                className="settle rounded-chip border border-rule bg-sheet px-2.5 py-1 text-[11px] leading-[1.45] text-ink-2 hover:border-violet hover:text-violet disabled:opacity-40"
+              >
+                {rewriting === r.key ? "Writing..." : r.label}
+              </button>
+            ))}
+            <span
+              className={`meta ml-auto ${
+                body.length > LINKEDIN_MAX ? "text-red" : "text-ink-3"
+              }`}
+            >
+              {body.length.toLocaleString("en-GB")} /{" "}
+              {LINKEDIN_MAX.toLocaleString("en-GB")}
+            </span>
+          </div>
         </div>
 
         <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[300px]">
           <section>
-            <h3 className="legend mb-2.5 text-ink-2">The frame</h3>
+            <h3 className="legend mb-2.5 text-ink-2">How it writes this</h3>
             <p className="well whitespace-pre-line rounded-control p-3 text-[12px] leading-[1.5] text-ink-2">
               {skill.prompt}
             </p>
           </section>
+
+          {/* The frame's correction capture. Only for a generated post that
+              has actually been edited: a hand-written post has nothing to
+              diff, and an unedited one has nothing to learn. */}
+          {post.generated_body && body.trim() !== post.generated_body.trim()
+            ? (() => {
+                const change = firstChange(post.generated_body, body);
+                if (!change) return null;
+                return (
+                  <section>
+                    <h3 className="legend mb-2.5 text-ink-2">
+                      What you changed
+                    </h3>
+                    <div className="well flex flex-col gap-2 rounded-control p-3 text-[12px] leading-[1.5]">
+                      {change.wrote ? (
+                        <p className="text-ink-3 line-through">
+                          It wrote: {change.wrote}
+                        </p>
+                      ) : null}
+                      {change.yours ? (
+                        <p className="text-ink">You wrote: {change.yours}</p>
+                      ) : null}
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setLearnOnClose(true)}
+                          aria-pressed={learnOnClose}
+                          className={`settle rounded-control border px-2.5 py-1 text-[11px] leading-[1.45] ${
+                            learnOnClose
+                              ? "border-violet bg-sheet font-medium text-violet"
+                              : "border-rule bg-sheet text-ink-2 hover:border-violet hover:text-violet"
+                          }`}
+                        >
+                          Learn from this
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLearnOnClose(false)}
+                          aria-pressed={!learnOnClose}
+                          className={`settle rounded-control border px-2.5 py-1 text-[11px] leading-[1.45] ${
+                            !learnOnClose
+                              ? "border-violet bg-sheet font-medium text-violet"
+                              : "border-rule bg-sheet text-ink-2 hover:border-violet hover:text-violet"
+                          }`}
+                        >
+                          One off
+                        </button>
+                      </div>
+                      <p className="text-[11px] leading-[1.45] text-ink-3">
+                        {learnOnClose
+                          ? "Kept as a correction when you close. Future drafts write it your way."
+                          : "Nothing is learned from this edit."}
+                      </p>
+                    </div>
+                  </section>
+                );
+              })()
+            : null}
 
           <section>
             <h3 className="legend mb-2.5 text-ink-2">Goes out</h3>

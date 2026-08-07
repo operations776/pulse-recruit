@@ -146,6 +146,13 @@ export async function generatePost(input: {
   shape: Shape;
   profile: VoiceProfile;
   lessons?: string[];
+  /**
+   * PLS-187, the editor's rewrite toolbar. When present the model revises
+   * this text under the instruction instead of drafting from an idea. Same
+   * voice, same shape, same metering; the one extra rule is that a revision
+   * may not introduce facts the original does not contain.
+   */
+  rewrite?: { body: string; instruction: string };
   signal?: AbortSignal;
   onDelta?: (text: string) => void;
 }): Promise<{ body: string } & ContentOutcome> {
@@ -192,9 +199,20 @@ export async function generatePost(input: {
           "- Specific beats clever. Use their real details from the idea; invent nothing.",
           "- If the idea is too thin to write honestly, say what is missing in one line instead of padding it out.",
           "- Under 200 words unless their own posts run longer.",
+          ...(input.rewrite
+            ? [
+                "",
+                "This is a REVISION. Apply the instruction to the post you are given, keep everything else, and never add a fact the original does not contain.",
+              ]
+            : []),
         ].join("\n"),
       },
-      { role: "user", content: input.idea.trim() },
+      {
+        role: "user",
+        content: input.rewrite
+          ? `REWRITE THIS POST\n${input.rewrite.body.trim()}\n\nINSTRUCTION\n${input.rewrite.instruction.trim()}`
+          : input.idea.trim(),
+      },
     ],
   });
 

@@ -1380,3 +1380,26 @@ Still open, specs captured from the frames:
 | Piece | State |
 | --- | --- |
 | PLS-186 | Planner: serif, right rail, voice card, performance strip, week thumbnails | done |
+
+## PLS-187: the post editor against its frame
+
+The rewrite toolbar is real and metered: Shorter, Warmer, Sharper hook, Cut
+the question and Regenerate each send ONE instruction to the generation
+call as a revision of the current body, streamed back into the editor live,
+with a system rule that a revision may never add a fact the original does
+not contain. Same begin_ask / finish_ask contract as every other paid call.
+The 3,000 counter reads against LinkedIn's cap and goes red past it.
+
+The LinkedIn preview strip shows who the post goes out as and when. WHAT
+YOU CHANGED appears only on a generated post that was actually edited,
+shows the first diverging paragraph as "It wrote / You wrote", and the
+frame's Learn from this / One off pair decides whether closing files the
+edit as a correction (learning stays the default).
+
+Not built, honestly: WHY IT WROTE IT THIS WAY with per-rule provenance
+needs the voice rules used to be recorded on the post at generation time,
+which nothing does yet. Logged rather than faked.
+
+| Piece | State |
+| --- | --- |
+| PLS-187 | Editor: preview strip, metered rewrite toolbar, correction capture | done |
