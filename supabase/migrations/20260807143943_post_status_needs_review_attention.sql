@@ -1,4 +1,4 @@
--- PLS-134. Two post states the content redesign needs, added alone.
+-- PLS-152. Two post states the content redesign needs, added alone.
 --
 -- This migration contains nothing else, and that is the whole point. Postgres
 -- will not let an enum value be added and then used in the same transaction, so
@@ -6,7 +6,7 @@
 -- mentioning it fails on apply. Precedent is
 -- 20260803140000_post_status_publishing_failed.sql, which added `publishing`
 -- and `failed` for exactly this reason and left the columns and RPCs to the
--- migration after it. PLS-135 is that migration here.
+-- migration after it. PLS-153 is that migration here.
 --
 -- What the two values mean, since the names are close:
 --

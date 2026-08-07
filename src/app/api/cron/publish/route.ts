@@ -23,7 +23,7 @@ export const maxDuration = 120;
 /**
  * Which failures are about the post, and which are about the account.
  *
- * PLS-135 split the two, because the spec frame is blunt about the cost of not
+ * PLS-153 split the two, because the spec frame is blunt about the cost of not
  * splitting them: "Failed tells the user nothing they can act on." A post
  * LinkedIn refused is `failed` and the words need changing. A post we could not
  * even attempt is `needs_attention`, the attempt goes back, and the fix is

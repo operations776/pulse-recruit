@@ -56,7 +56,7 @@ export type PostStatus =
 /**
  * What a human is allowed to choose. `setPostStatus` enforces it.
  *
- * `needs_review` joins the list in PLS-134: a person can send a draft back for
+ * `needs_review` joins the list in PLS-152: a person can send a draft back for
  * review, and the Figma board makes it a column you can drag into.
  *
  * `needs_attention` deliberately does NOT. Like `publishing` and `failed`, it
@@ -531,7 +531,7 @@ export type PostRow = {
   // "failed" tells a recruiter nothing they can act on.
   publish_error: string | null;
   publish_attempts: number;
-  // PLS-135. Why Pulse could not send this, when the problem is the account
+  // PLS-153. Why Pulse could not send this, when the problem is the account
   // rather than the post. Set alongside `needs_attention` and cleared by a
   // successful publish. Distinct from `publish_error`, which is LinkedIn
   // refusing the words: this one is actionable and that one needs a rewrite.
@@ -630,7 +630,7 @@ export type PostAsset = AssetRow & { url: string | null };
 /**
  * What a published post actually did, as LinkedIn reported it.
  *
- * PLS-136. Every counter is `number | null`, and null is not a nuisance to
+ * PLS-154. Every counter is `number | null`, and null is not a nuisance to
  * default away: it means LinkedIn did not report that figure. Zero means nobody
  * engaged. Rendering a null as 0 turns "we do not know" into a measurement,
  * which is the never-fabricate rule applied to arithmetic rather than prose.

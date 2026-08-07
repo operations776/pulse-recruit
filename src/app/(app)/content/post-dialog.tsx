@@ -36,7 +36,7 @@ const MAX_BYTES = 200 * 1024 * 1024;
 // DESIGN.md rule: status is colour AND icon AND word, never colour alone.
 // Exhaustive over PostStatus on purpose: the Record type is what makes adding
 // an enum value a compile error here rather than an `undefined` chip at
-// runtime. PLS-134 added the last two.
+// runtime. PLS-152 added the last two.
 //
 // `needs_attention` is `attention`, not `danger`. Red is destruction and error
 // (DESIGN.md section 3), and this state is neither: Pulse could not reach

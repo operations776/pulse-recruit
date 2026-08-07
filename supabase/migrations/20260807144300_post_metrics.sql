@@ -1,4 +1,4 @@
--- PLS-136. Somewhere honest to put real LinkedIn numbers.
+-- PLS-154. Somewhere honest to put real LinkedIn numbers.
 --
 -- The content redesign prints views, likes and replies on four of its six
 -- frames, and ranks posting slots by them. Nothing in Pulse has ever stored

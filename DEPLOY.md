@@ -90,7 +90,7 @@ Anything scheduled after it goes out at its time.
 
 ## Turning on the metrics refresher
 
-PLS-137. Separate from the publisher and far less urgent: this only reads. It
+PLS-155. Separate from the publisher and far less urgent: this only reads. It
 fetches engagement counters for posts Pulse published and writes `post_metrics`,
 which is what the planner's performance cards and the best-slot advice are built
 on. Until it runs, those surfaces correctly show nothing rather than a zero.
