@@ -238,12 +238,26 @@ export function TaskWorkspace({
     [links],
   );
 
+  /** For prose. "You" reads better than your own name in a sentence. */
   const nameOf = useCallback(
     (userId: string) =>
       userId === meId
         ? "You"
         : (members.find((m) => m.user_id === userId)?.display_name ?? "Teammate"),
     [members, meId],
+  );
+
+  /**
+   * For avatars, which take initials.
+   *
+   * nameOf was feeding both, so your own tile rendered a single "Y" from the
+   * word "You". An avatar is an identity, not a pronoun: it should say DA the
+   * way the design does, and the way every teammate's already did.
+   */
+  const tileNameOf = useCallback(
+    (userId: string) =>
+      members.find((m) => m.user_id === userId)?.display_name ?? "Teammate",
+    [members],
   );
 
   // Counts for the rail. Open work only, and computed off the same predicate
@@ -386,7 +400,14 @@ export function TaskWorkspace({
       />
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex items-center justify-between gap-4 border-b border-rule px-6 py-3">
+        {/* The rule spans the full width, the content inside it does not.
+            Capping the list without capping this left the title at one x and
+            the first row at another, which reads as two panels rather than one
+            screen. The band still crosses the whole main area, because a
+            divider that stops short of its own edges is a worse artefact than
+            the misalignment it was fixing. */}
+        <header className="border-b border-rule px-6 py-3">
+          <div className="mx-auto flex w-full max-w-[900px] items-center justify-between gap-4">
           <div className="min-w-0">
             <h1 className="display text-[18px] leading-none">{heading}</h1>
             <p className="meta mt-1.5 text-ink-2">
@@ -495,9 +516,18 @@ export function TaskWorkspace({
               {grouping === "date" ? "Group by date" : "Group by priority"}
             </button>
           </div>
+          </div>
         </header>
 
+        {/* The list is capped rather than fluid.
+            With a task open the panel takes 340px and the centre lands near the
+            Figma's 816px on its own. With nothing open there was nothing
+            holding it, so at 1440 the rows stretched past 1500px and a row's
+            record ID sat a screen away from its own title. A task list is read
+            by scanning one short column, and past roughly 900px that scan turns
+            into a horizontal saccade for every row. */}
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+          <div className="mx-auto w-full max-w-[900px]">
           <QuickAdd members={members} links={links} tz={tz} todayKey={todayKey} />
 
           <div className="mt-4 overflow-hidden rounded-shell border border-rule bg-sheet">
@@ -535,7 +565,7 @@ export function TaskWorkspace({
                         collapsing: collapsing.has(task.id),
                         error: rowError[task.id] || null,
                       }}
-                      ownerNames={ownersOf(task).map(nameOf)}
+                      ownerNames={ownersOf(task).map(tileNameOf)}
                       noteCount={noteCounts[task.id] ?? 0}
                       link={linkOf(task)}
                       selected={task.id === selectedId}
@@ -594,7 +624,7 @@ export function TaskWorkspace({
                             collapsing: false,
                             error: rowError[task.id] || null,
                           }}
-                          ownerNames={ownersOf(task).map(nameOf)}
+                          ownerNames={ownersOf(task).map(tileNameOf)}
                           noteCount={noteCounts[task.id] ?? 0}
                           link={linkOf(task)}
                           selected={task.id === selectedId}
@@ -631,6 +661,7 @@ export function TaskWorkspace({
           <p className="meta mt-3 text-ink-3">
             e completes the focused row. Cmd+Z undoes within four seconds.
           </p>
+          </div>
         </div>
       </main>
 
