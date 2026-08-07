@@ -9,6 +9,14 @@ import { expect, test, type Page } from "@playwright/test";
 // because it looks like coverage.
 const DEMO = { email: "daniyal@nortech.io", password: "pulse-demo-2026" };
 
+// PLS-110 renamed the rail's add control. It used to read "Context", which now
+// belongs to one of the three panel toggles, so /^context$/i would silently
+// start clicking the toggle and every dialog assertion under it would fail for
+// a reason that looks nothing like the cause. The button carries an aria-label
+// naming the layer it will file into, which depends on the open panel and on
+// whether this account may write agency strategy.
+const ADD_CONTEXT = /^add (agency strategy|your coaching)$/i;
+
 async function signIn(page: Page) {
   await page.goto("/signin");
   await page.getByLabel("Email").fill(DEMO.email);
@@ -58,7 +66,7 @@ test("a recruiter can add context and the strategist keeps it", async ({
   await signIn(page);
   await page.goto("/market");
 
-  await page.getByRole("button", { name: /^context$/i }).click();
+  await page.getByRole("button", { name: ADD_CONTEXT }).click();
   const dialog = page.getByRole("dialog", { name: /add context/i });
   await expect(dialog).toBeVisible();
 
@@ -83,7 +91,7 @@ test("agency strategy is closed to a member who cannot change org settings", asy
   await signIn(page);
   await page.goto("/market");
 
-  await page.getByRole("button", { name: /^context$/i }).click();
+  await page.getByRole("button", { name: ADD_CONTEXT }).click();
   const dialog = page.getByRole("dialog", { name: /add context/i });
   const agency = dialog.getByRole("option", { name: /the whole agency/i });
 
@@ -140,19 +148,114 @@ test("a briefing shows the four labelled sections", async ({ page }) => {
   await expect(brief).toBeVisible();
 });
 
-test("the evidence rail states how current the research is", async ({ page }) => {
+test("the Read panel states how current the research is", async ({ page }) => {
   await signIn(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/market");
 
-  const rail = page.getByText("Current read");
-  test.skip((await rail.count()) === 0, "evidence rail is hidden below xl");
+  // This test used to look for the text "Current read", which has never
+  // existed anywhere in src. It therefore skipped on every run while reading
+  // as coverage, which is the exact failure this file's header warns about.
+  // The evidence lives behind the Read toggle since PLS-110.
+  await page.getByRole("button", { name: /^read$/i }).click();
 
   // Never an unqualified claim that everything is current: a cache hit is
   // honest research but it is not a live look-up.
   await expect(
     page.getByText(/Live research|Recent research|Nothing researched yet/),
   ).toBeVisible();
+});
+
+test("the rail switches between the three panels", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/market");
+
+  const pillars = page.getByRole("button", { name: /^pillars$/i });
+  const context = page.getByRole("button", { name: /^context$/i });
+  const read = page.getByRole("button", { name: /^read$/i });
+
+  // Pillars opens by default, and exactly one panel is ever pressed.
+  await expect(pillars).toHaveAttribute("aria-pressed", "true");
+  await expect(context).toHaveAttribute("aria-pressed", "false");
+  await expect(read).toHaveAttribute("aria-pressed", "false");
+
+  await read.click();
+  await expect(read).toHaveAttribute("aria-pressed", "true");
+  await expect(pillars).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByText(/Best next move/i)).toBeVisible();
+
+  await context.click();
+  await expect(context).toHaveAttribute("aria-pressed", "true");
+  // Pillars content is switched away, not merely scrolled past.
+  await expect(page.getByText(/Best next move/i)).toBeHidden();
+});
+
+test("Pillars is the agency's strategy, never the five product pillars", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/market");
+
+  await page.getByRole("button", { name: /^pillars$/i }).click();
+
+  // The module rail 264px to the left already names the five pillars. A second
+  // column repeating them is the dead-column defect PLS-99 removed, so the
+  // panel holds agency strategy or an intake asking for some.
+  await expect(
+    page.getByText(/Agency strategy|Tell the strategist who you are|No agency strategy yet/),
+  ).toBeVisible();
+  await expect(page.getByText(/Multichannel outbound/i)).toHaveCount(0);
+});
+
+test("history stays reachable whichever panel is open", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/market");
+
+  // History is thread navigation rather than something the strategist knows,
+  // so it is not one of the three and does not switch away with them.
+  const newConversation = page.getByRole("button", { name: /new conversation/i });
+  await expect(newConversation).toBeVisible();
+
+  await page.getByRole("button", { name: /^read$/i }).click();
+  await expect(newConversation).toBeVisible();
+});
+
+test("the strategist reports Ready before a run and Thinking during one", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/market");
+
+  const composer = page.getByLabel(/your question/i);
+  test.skip(await composer.isDisabled(), "no provider key configured on this deploy");
+
+  // DESIGN.md rule 9: colour, icon and word. The word is the assertable part,
+  // and it must be present before anything is asked rather than appearing only
+  // once the surface is busy.
+  await expect(page.getByText(/^Ready$/)).toBeVisible();
+
+  await composer.fill("Which accounts in my patch raised funding this month?");
+  await page.getByRole("button", { name: /^ask$/i }).click();
+
+  await expect(page.getByText(/^Thinking$/)).toBeVisible();
+  // Teal is the running colour and it belongs to Thinking alone here.
+  await expect(page.getByText(/^Ready$/)).toHaveCount(0);
+});
+
+test("a surface with no provider key says so instead of reporting Ready", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/market");
+
+  const composer = page.getByLabel(/your question/i);
+  test.skip(!(await composer.isDisabled()), "this deploy has its provider keys");
+
+  // AI.md section 4: a missing key disables the composer and says so. The
+  // indicator has to agree with the banner rather than claiming the strategist
+  // is standing by on a surface that cannot answer.
+  await expect(page.getByText(/^Unavailable$/)).toBeVisible();
+  await expect(page.getByText(/^Ready$/)).toHaveCount(0);
 });
 
 test("reduced motion does not remove any content", async ({ browser }) => {
@@ -164,6 +267,9 @@ test("reduced motion does not remove any content", async ({ browser }) => {
   // Motion is decoration on top of a working page. With it off, the workspace
   // must still be complete rather than stuck mid-animation.
   await expect(page.getByText("BD Strategist").first()).toBeVisible();
-  await expect(page.getByRole("button", { name: /^context$/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: ADD_CONTEXT })).toBeVisible();
+  // The pulse on the Thinking dot is the one ambient animation in the product,
+  // and with motion off the status word must still be readable.
+  await expect(page.getByText(/^(Ready|Thinking|Unavailable)$/)).toBeVisible();
   await context.close();
 });
