@@ -79,16 +79,23 @@ export const TEAM = [
 ] as const;
 
 /**
- * Pricing. A commercial decision, ported exactly.
+ * Pricing. A commercial decision, and the one piece of copy on this site that
+ * is a promise rather than a description.
  *
- * The $50 founding rate matches what is already recorded in TICKETS.md, so
- * this is not placeholder copy from a design file.
+ * PLS-157 corrected it. The ported copy said the founding group "locks the
+ * founding rate for life" and "keeps its rate for as long as it stays
+ * subscribed". Daniyal confirmed the actual offer is $50 for the first three
+ * months and $299 after that, so the site was promising a permanent discount
+ * the business had not agreed to, to anyone who read the pricing page.
+ *
+ * That is worse than the invented testimonials PLS-107 pulled. A fabricated
+ * quote embarrasses us; a published price is what a customer will hold us to.
  */
 export const PRICING = {
   badge: "Founding pilot, 10 agencies",
   amount: "$50",
   period: "/month",
-  after: "then $299/month, lock the founding rate for life",
+  after: "for your first three months, then $299/month",
   includes: [
     "Unlimited candidates, clients and placements",
     "Live pipeline board with cold-spot signals",
@@ -191,7 +198,7 @@ export const FAQ: FaqGroup[] = [
       },
       {
         q: "How is Pulse priced?",
-        a: "One plan at a founding rate of $50 a month for the first ten agencies, then $299 a month. The founding group keeps its rate for as long as it stays subscribed.",
+        a: "One plan. The first ten agencies pay a founding rate of $50 a month for their first three months, then $299 a month. There is no separate charge for the AI: every plan includes a weekly allowance, and the meter shows exactly what each answer cost.",
       },
       {
         q: "Can I change plans later?",

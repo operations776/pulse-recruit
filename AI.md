@@ -34,6 +34,8 @@ Neither platform key is ever prefixed `NEXT_PUBLIC_`. Both are read only from `s
 
 **1 credit = 1 US cent of provider spend.** That is the whole definition, and it is what makes the meter honest: a recruiter spending 250 credits in a week has cost us about 2.50 USD against a 299 USD monthly price.
 
+**The founding rate changes that ratio and the allowance does not know it.** The first ten agencies pay 50 USD a month for three months. The default `weekly_allowance` is 250 credits and it is one default, not a per-plan cap, so a founding workspace using all of it costs about 10.83 USD a month against 50 rather than against 299: roughly 22 percent of its revenue instead of 3.6 percent. Bounded and deliberate at ten agencies for three months. If the founding rate is ever extended or widened, the answer is a per-plan allowance, not a lower price, because lowering the price without lowering the allowance moves the same cost onto a smaller number.
+
 Rates live in exactly one file, `src/lib/server/ai/pricing.ts`. They are configured defaults, not gospel: confirm them against the current OpenAI and Exa pricing pages before the pilot takes real money, and change them in that one file when the providers move.
 
 Cost is metered from what actually happened, never estimated after the fact:
