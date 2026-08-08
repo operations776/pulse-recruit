@@ -759,7 +759,20 @@ If the assistant is wanted back later, the cheaper move is a composer on the
 task list rather than restoring a second room: the tiles it carried were four
 counts, and the tasks header already answers the one that mattered.
 
-## Content rebuilt from Figma, page 02 (PLS-134 to PLS-151)
+## Content rebuilt from Figma, page 02 (PLS-152 onward)
+
+**Renumbered from 134 after the fact, and the first four were already in
+production when the collision was found.** This block was planned when 133 was
+the highest ID in the file. A parallel session landed PLS-134 to PLS-151 in the
+meantime, so the four tickets shipped here duplicated four that already existed:
+the gpt-4.1 model change, composer dictation, the Reyhan rename, and the
+Impeccable install. Their IDs stand, because theirs merged first and the whole
+workflow keys on these numbers; the migration files, code comments and DEPLOY.md
+were renumbered to 152 to 155 in the same pass as this line.
+
+The lesson is the one PLS-111 already taught and this session failed to apply
+twice: **re-read TICKETS.md immediately before claiming an ID, not at plan
+time.** A plan written an hour before it ships is a plan holding stale numbers.
 
 Figma page `32:2` holds six frames that replace the whole content module: a
 "This week" planner with two rails, a full-screen post editor, a five-column
@@ -779,17 +792,17 @@ it conflicts with DESIGN.md, amending the spec in the same commit.
 Verified during planning rather than assumed: Unipile's post endpoint really
 does return `reaction_counter`, `comment_counter`, `repost_counter` and
 `impressions_counter`, plus a fuller `analytics` object on accounts that have
-it. That is what makes PLS-136 and PLS-137 buildable at all.
+it. That is what makes PLS-154 and PLS-155 buildable at all.
 
 | ID | Ticket | Status |
 | --- | --- | --- |
-| PLS-134 | `post_status` gains `needs_review` and `needs_attention`, alone in its own migration | done |
-| PLS-135 | A disconnected LinkedIn becomes Needs attention, never Failed. `finish_publish` learns a failure kind, and `flag_unpublishable_posts` surfaces due posts the claim query structurally cannot see | done |
-| PLS-136 | `post_metrics`, every counter nullable | done |
-| PLS-137 | Unipile `getPostStats` and the six-hourly refresher at `/api/cron/post-metrics` | done |
-| PLS-138 to PLS-143 | Provenance, the metered rewrite bar, skills as rules, suggestions and their two RPCs, the suggestion engine, best-slot advice | todo |
-| PLS-144 | DESIGN.md amended for the two Figma conflicts, plus the shared primitives onto `/design` | todo |
-| PLS-145 to PLS-151 | The six screens, then retire the dialogs | todo |
+| PLS-152 | `post_status` gains `needs_review` and `needs_attention`, alone in its own migration | done |
+| PLS-153 | A disconnected LinkedIn becomes Needs attention, never Failed. `finish_publish` learns a failure kind, and `flag_unpublishable_posts` surfaces due posts the claim query structurally cannot see | done |
+| PLS-154 | `post_metrics`, every counter nullable | done |
+| PLS-155 | Unipile `getPostStats` and the six-hourly refresher at `/api/cron/post-metrics` | done |
+| PLS-156 to PLS-161 | Provenance, the metered rewrite bar, skills as rules, suggestions and their two RPCs, the suggestion engine, best-slot advice | todo |
+| PLS-162 | DESIGN.md amended for the two Figma conflicts, plus the shared primitives onto `/design` | todo |
+| PLS-163 to PLS-169 | The six screens, then retire the dialogs | todo |
 
 **Null is the load-bearing decision in this whole block.** Every counter in
 `post_metrics` is nullable, and a figure LinkedIn did not report is written as

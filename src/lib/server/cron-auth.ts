@@ -4,7 +4,7 @@ import { timingSafeEqual } from "node:crypto";
 /**
  * The shared secret every cron route checks.
  *
- * Lifted out of `/api/cron/publish` in PLS-137, when a second scheduled route
+ * Lifted out of `/api/cron/publish` in PLS-155, when a second scheduled route
  * needed the same check. Two copies of an auth comparison is how one of them
  * quietly stops matching the other: the publisher's version was already the
  * only thing standing between `CRON_SECRET` and a stranger claiming a batch of

@@ -3,7 +3,7 @@ import { cronAuthorised } from "@/lib/server/cron-auth";
 import { createAdminClient, hasAdminKey } from "@/lib/server/supabase-admin";
 import { getPostStats, hasUnipile, UnipileError } from "@/lib/server/unipile";
 
-// PLS-137. The metrics refresher.
+// PLS-155. The metrics refresher.
 //
 // The content redesign prints views, likes and replies, and ranks posting slots
 // by them. This is where those numbers come from, and it is the only writer of

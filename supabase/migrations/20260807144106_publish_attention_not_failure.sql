@@ -1,4 +1,4 @@
--- PLS-135. A disconnected LinkedIn is Needs attention, never Failed.
+-- PLS-153. A disconnected LinkedIn is Needs attention, never Failed.
 --
 -- The spec frame is blunt about why: "Failed tells the user nothing they can
 -- act on." Today every unhappy ending lands on `failed`, whether LinkedIn
