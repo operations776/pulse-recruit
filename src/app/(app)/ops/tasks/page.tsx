@@ -1,29 +1,53 @@
-import { getCandidates, getTaskBoard } from "@/lib/data";
-import { TaskList } from "./task-list";
+import { getTaskWorkspace } from "@/lib/data";
+import { isTaskView, type TaskViewKey } from "@/lib/tasks";
+import { dayKey } from "@/lib/time";
+import { TaskWorkspace } from "./task-workspace";
 
-// Pillar 2. The list the ops manager fills. A task it wrote carries the Claude
-// chip, so the recruiter always knows which lines are his own.
-export default async function TasksPage() {
-  const [board, { candidates }] = await Promise.all([
-    getTaskBoard(),
-    getCandidates(),
-  ]);
+/**
+ * Pillar 2. The tasks workspace.
+ *
+ * Three regions: the views on the left, the list in the middle, the open task
+ * on the right. Which view, which person and which task are all in the URL, so
+ * a view is linkable, the back button works, and the panel's activity stream is
+ * fetched by the server for exactly one task rather than for every row on
+ * screen.
+ */
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string; person?: string; task?: string }>;
+}) {
+  const params = await searchParams;
+  const view: TaskViewKey = isTaskView(params.view) ? params.view : "today";
+  const person = params.person ?? null;
+  const selectedId = params.task ?? null;
 
-  // A task carries a candidate id, not a name. Resolve it here so the row can
-  // stay a plain render with no second lookup.
-  const linkedNames: Record<string, string> = {};
-  for (const c of candidates) linkedNames[c.id] = c.name;
+  const workspace = await getTaskWorkspace(selectedId ?? undefined);
+
+  // Today is resolved once, on the server, inside the org's timezone. Every
+  // band on this screen is a day comparison, and a day only exists inside a
+  // zone: derive it from the machine clock and the server puts a task in Today
+  // while the browser puts it in Overdue for six hours out of twenty-four.
+  const todayKey = dayKey(new Date(), workspace.tz);
 
   return (
-    <TaskList
-      tasks={board.tasks}
-      assigneesByTask={board.assigneesByTask}
-      members={board.members}
-      meId={board.session.userId}
-      linkedNames={linkedNames}
-      // The clock is fixed on the server so the due-date colouring agrees
-      // between the server render and hydration.
-      now={new Date().toISOString()}
+    <TaskWorkspace
+      view={view}
+      person={person}
+      selectedId={selectedId}
+      tasks={workspace.tasks}
+      assigneesByTask={workspace.assigneesByTask}
+      watchersByTask={workspace.watchersByTask}
+      members={workspace.members}
+      meId={workspace.session.userId}
+      isAdmin={
+        workspace.session.role === "owner" || workspace.session.role === "admin"
+      }
+      noteCounts={workspace.noteCounts}
+      links={workspace.links}
+      activity={workspace.activity}
+      tz={workspace.tz}
+      todayKey={todayKey}
     />
   );
 }
