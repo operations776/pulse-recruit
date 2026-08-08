@@ -802,7 +802,9 @@ it. That is what makes PLS-154 and PLS-155 buildable at all.
 | PLS-155 | Unipile `getPostStats` and the six-hourly refresher at `/api/cron/post-metrics` | done |
 | PLS-157 | The pricing page was promising a founding rate for life. Corrected to three months, and the founding margin recorded in AI.md | done |
 | PLS-158 | The planner shell from the Figma: content rail, week strip, "This week" header | done |
-| PLS-159 to PLS-162 | Provenance, the metered rewrite bar, skills as rules, suggestions and their two RPCs, the suggestion engine, best-slot advice | todo |
+| PLS-159 | The board becomes the Figma pipeline: five columns, per-column add, and a card that still names its own status inside a grouped column | done |
+| PLS-160 | Waiting on you: what is blocked, why, and the one verb that clears it | done |
+| PLS-161 to PLS-170 | Suggestions schema and engine, the right rail, the post editor route, provenance, the rewrite bar, skills as rules, the skills screen, the action states | todo |
 | PLS-163 | DESIGN.md amended for the two Figma conflicts, plus the shared primitives onto `/design` | todo |
 | PLS-164 to PLS-170 | The six screens, then retire the dialogs | todo |
 

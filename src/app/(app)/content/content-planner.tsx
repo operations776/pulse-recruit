@@ -37,6 +37,7 @@ import { Backlog } from "./backlog";
 import { CalendarGrid } from "./calendar-grid";
 import { ContentRail, needsYou, type ContentFilter } from "./content-rail";
 import { WeekView } from "./week-view";
+import { WaitingOnYou, waitingRows } from "./waiting-on-you";
 import { GenerateDialog } from "./generate-dialog";
 import { PostDialog } from "./post-dialog";
 import { SkillsDialog } from "./skills-dialog";
@@ -167,6 +168,9 @@ export function ContentPlanner({
       (p) => p.status === "scheduled" || p.status === "publishing",
     ).length;
 
+    // The title names what is on screen. A filter wins over the view, because
+    // "Ideas" is a smaller and more surprising thing to be looking at than
+    // whichever layout is drawing it.
     const title =
       filter === "needs-you"
         ? "Needs you"
@@ -174,10 +178,30 @@ export function ContentPlanner({
           ? "Ideas"
           : filter === "published"
             ? "Published"
-            : "This week";
+            : view === "board"
+              ? "Pipeline"
+              : view === "calendar"
+                ? monthLabel(month)
+                : "This week";
 
     if (filter !== "all") {
       return { title, sub: `${visible.length} in this view` };
+    }
+
+    // The board and the month grid are not weeks, so the week's sentence would
+    // be answering a question neither of them asked. The board says how it
+    // works, because moving a post between columns is the one interaction on
+    // this screen that is not obvious from looking at it.
+    if (view === "board") {
+      return {
+        title,
+        sub: "Open a post to move it forward.",
+      };
+    }
+    if (view === "calendar") {
+      const dated = visible.filter((p) => p.scheduled_for).length;
+      const live = visible.filter((p) => p.status === "published").length;
+      return { title, sub: `${dated} scheduled. ${live} live.` };
     }
 
     // An empty week is a sentence, not a zero. "0 going out." reads as a
@@ -200,7 +224,14 @@ export function ContentPlanner({
     // as a continuation whether or not the first one is present.
     const sub = parts.join(". ");
     return { title, sub: `${sub.charAt(0).toUpperCase()}${sub.slice(1)}.` };
-  }, [visible, filter]);
+  }, [visible, filter, view, month]);
+
+  // What is blocked, computed once. The week strip says what is going out;
+  // this says what will not move until somebody touches it.
+  const waiting = useMemo(
+    () => waitingRows(visible, shapes, timezone),
+    [visible, shapes, timezone],
+  );
 
   const href = (next: { month?: string; view?: View }) =>
     `/content?month=${next.month ?? month}&view=${next.view ?? view}`;
@@ -538,9 +569,29 @@ export function ContentPlanner({
               posts={visible}
               timezone={timezone}
               onOpen={(post) => setOpenId(post.id)}
+              onAdd={() => {
+                setSeedDay("");
+                setAddOpen(true);
+              }}
             />
           )}
         </div>
+
+        {/* Its own shell, below the planner's. DESIGN.md section 7: gaps exist
+            between shells and never inside one, so this is a sibling rather
+            than a section nested in the calendar's sheet. */}
+        <WaitingOnYou
+          rows={waiting}
+          shapes={shapes}
+          onOpen={(post) => setOpenId(post.id)}
+          onAct={(post, kind) => {
+            // Retry is the one action that is a write from here. Review and
+            // Schedule both open the post, because both need a human to read
+            // the thing before committing it to a date.
+            if (kind === "retry") retry(post.id);
+            else setOpenId(post.id);
+          }}
+        />
       </div>
 
       <GenerateDialog
