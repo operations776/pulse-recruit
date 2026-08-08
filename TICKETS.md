@@ -805,7 +805,8 @@ it. That is what makes PLS-154 and PLS-155 buildable at all.
 | PLS-159 | The board becomes the Figma pipeline: five columns, per-column add, and a card that still names its own status inside a grouped column | done |
 | PLS-160 | Waiting on you: what is blocked, why, and the one verb that clears it | done |
 | PLS-161 | Suggestions schema. Every suggestion traces to a row in this workspace, and each dismissal reason writes the exact suppression the spec frame documents | done |
-| PLS-162 to PLS-170 | The suggestion engine, the right rail, the post editor route, provenance, the rewrite bar, skills as rules, the skills screen, the action states | todo |
+| PLS-162 | The suggestion engine and its metered route. Grounded at insert, not in the prompt, and `org_members` stops swallowing an empty directory | done |
+| PLS-163 to PLS-170 | The right rail, the post editor route, provenance, the rewrite bar, skills as rules, the skills screen, the action states | todo |
 | PLS-163 | DESIGN.md amended for the two Figma conflicts, plus the shared primitives onto `/design` | todo |
 | PLS-164 to PLS-170 | The six screens, then retire the dialogs | todo |
 

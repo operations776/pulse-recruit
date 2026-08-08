@@ -575,11 +575,59 @@ export async function getTaskWorkspace(selectedTaskId?: string) {
     tasks,
     assigneesByTask,
     watchersByTask,
-    members: (members.data ?? []) as OrgMember[],
+    members: directory(members.data, session),
     noteCounts,
     links,
     activity: (stream.data ?? []) as TaskCommentRow[],
   };
+}
+
+/**
+ * The team directory, with the caller guaranteed to be in it.
+ *
+ * `org_members` is `security definer` and gated on `is_org_member`, which reads
+ * `auth.uid()`. Measured against the live database: it returns the right rows
+ * on every call WITH a session and zero rows WITHOUT one. It is not flaky.
+ *
+ * The bug was here. Every caller wrote `members.data ?? []`, so a request that
+ * lost its session mid-render, or an RPC that errored, silently became "this
+ * workspace has no people in it". The tasks screen then drew an avatar reading
+ * "T" for Teammate and an empty By person rail, while the light-mode capture of
+ * the same route and the same data drew the real name. Two screenshots
+ * disagreeing is what surfaced it; nothing in the code said a word.
+ *
+ * That is the silent-partial-success class CLAUDE.md lists as a known bug not
+ * to reintroduce, and this was a live instance of it.
+ *
+ * `requireSession` has already resolved the caller by the time this runs, and a
+ * caller is always a member of their own org. So an empty directory is
+ * impossible in a healthy request, and the caller's own row is a fact we
+ * already hold rather than a fallback we invented. Reconstructing it keeps the
+ * assignee picker and every avatar working, and the console line is what says
+ * the read actually failed.
+ */
+function directory(
+  rows: unknown,
+  session: { userId: string; email: string; role: MembershipRow["role"] },
+): OrgMember[] {
+  const members = (rows ?? []) as OrgMember[];
+  if (members.length > 0) return members;
+
+  console.error(
+    "org_members returned no rows for a signed-in caller. The directory is " +
+      "being reconstructed from the session, so the assignee picker will show " +
+      "only the current user until the next successful read.",
+  );
+
+  return [
+    {
+      user_id: session.userId,
+      email: session.email,
+      // Same shape org_members derives when a user has no full_name set.
+      display_name: session.email.split("@")[0],
+      role: session.role,
+    },
+  ];
 }
 
 export type TaskLink = {
@@ -766,7 +814,7 @@ export async function getPlanner(month: string) {
     assets: Object.fromEntries(byPost) as Record<string, PostAsset[]>,
     timezone: tz,
     meId: session.userId,
-    members: (membersResult.data ?? []) as OrgMember[],
+    members: directory(membersResult.data, session),
     shapes: allShapes((shapesResult.data ?? []) as ContentShapeRow[]),
     persona: (personaResult.data ?? null) as PersonaRow | null,
     pendingLessons: lessonsResult.count ?? 0,

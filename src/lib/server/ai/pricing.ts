@@ -42,6 +42,14 @@ export const RESEARCH_RATES = {
 // What a surface may reserve before it runs, and the work ceiling that keeps a
 // run inside it. A run that hits a ceiling answers with what it has rather than
 // billing past the reservation (AI.md section 3).
+/**
+ * Reservation ceilings.
+ *
+ * These keys are reservation buckets, not `chat_surface` values. The enum is
+ * the ledger label, and `contentSuggest` reserves against `content` because
+ * that is what the credit_events row is filed under. Adding a bucket therefore
+ * needs no enum migration; adding a ledger label would.
+ */
 export const SURFACE_LIMITS = {
   market: {
     reserveCredits: 25,
@@ -69,6 +77,20 @@ export const SURFACE_LIMITS = {
     // output is priced at four times input, so a six credit ceiling would cut
     // drafts off mid sentence.
     reserveCredits: 10,
+    maxSearches: 0,
+    maxPageReads: 0,
+    maxSteps: 1,
+  },
+  contentSuggest: {
+    // One pass over a catalogue of the caller's own rows, returning at most
+    // five short suggestions. Larger input than a draft, because the whole
+    // workspace summary goes in; much smaller output, because each suggestion
+    // is a title and a sentence. Input is a quarter the price of output, so
+    // the two roughly cancel and this lands near a draft.
+    //
+    // It reserves against the `content` ledger surface. This key is a
+    // reservation bucket, not a chat_surface value.
+    reserveCredits: 12,
     maxSearches: 0,
     maxPageReads: 0,
     maxSteps: 1,
