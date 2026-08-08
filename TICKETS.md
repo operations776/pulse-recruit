@@ -800,9 +800,49 @@ it. That is what makes PLS-154 and PLS-155 buildable at all.
 | PLS-153 | A disconnected LinkedIn becomes Needs attention, never Failed. `finish_publish` learns a failure kind, and `flag_unpublishable_posts` surfaces due posts the claim query structurally cannot see | done |
 | PLS-154 | `post_metrics`, every counter nullable | done |
 | PLS-155 | Unipile `getPostStats` and the six-hourly refresher at `/api/cron/post-metrics` | done |
-| PLS-156 to PLS-161 | Provenance, the metered rewrite bar, skills as rules, suggestions and their two RPCs, the suggestion engine, best-slot advice | todo |
-| PLS-162 | DESIGN.md amended for the two Figma conflicts, plus the shared primitives onto `/design` | todo |
-| PLS-163 to PLS-169 | The six screens, then retire the dialogs | todo |
+| PLS-157 to PLS-162 | Provenance, the metered rewrite bar, skills as rules, suggestions and their two RPCs, the suggestion engine, best-slot advice | todo |
+| PLS-163 | DESIGN.md amended for the two Figma conflicts, plus the shared primitives onto `/design` | todo |
+| PLS-164 to PLS-170 | The six screens, then retire the dialogs | todo |
+
+## PLS-156: the first screenshot of the tasks workspace
+
+Node was installed on 2026-08-07, which finally made the gate runnable. The
+tasks workspace had shipped to production two hours earlier having never been
+photographed, and the first image found three things typecheck, lint and a
+production build had all passed over.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-156 | The tasks list is capped, the header aligns with it, and your own avatar stops saying "Y" | done |
+
+1. **The list stretched to 1550px.** With a task open the panel takes 340px and
+   the centre lands near the Figma's 816px on its own, so nothing had ever
+   pinned it. With nothing open, a row's record ID sat most of a screen away
+   from its own title. Capped at 900px: past that, scanning one short column
+   turns into a horizontal saccade on every row.
+2. **Your own avatar rendered "Y".** `nameOf` returns "You" for prose and was
+   feeding the avatar too, so `initials("You")` was a single letter. An avatar
+   is an identity, not a pronoun. `tileNameOf` never returns a pronoun.
+3. **Capping the list broke the header**, which is the loop working. The title
+   sat at one x and the first row at another, reading as two panels rather than
+   one screen. The rule still spans the full width; only its contents are
+   capped, because a divider stopping short of its own edges is a worse
+   artefact than the misalignment it fixes.
+
+**Open, found in the same pass, not fixed here.** In the dark-mode capture the
+By person rail is empty and the assignee avatar reads `T` for "Teammate", where
+the light capture of the same route and the same data reads `DA` and lists one
+person. `members` came back empty on that render, so `org_members` returns
+nothing intermittently. It is a data bug rather than a theming one and it wants
+its own ticket, because a directory that is sometimes empty also silently
+empties the assignee picker.
+
+**The dark-mode tool has the flaw PLS-109 documented in `shot.mjs`.**
+`shot-theme.mjs` does sign in, but three of eight runs in this session landed on
+`/signin` and photographed it anyway while reporting success, the same way
+`shot.mjs` used to. It looks like auth rate limiting under repeated sign-ins.
+The script should assert it is not on `/signin` before writing the file, exactly
+as `shot-app.mjs` already does.
 
 **Null is the load-bearing decision in this whole block.** Every counter in
 `post_metrics` is nullable, and a figure LinkedIn did not report is written as
