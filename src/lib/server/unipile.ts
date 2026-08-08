@@ -185,6 +185,65 @@ export async function publishPost(input: {
   };
 }
 
+/**
+ * What a published post actually did.
+ *
+ * Every field is `number | null`, and null is load-bearing. Null means LinkedIn
+ * did not report that figure, which is not the same as reporting zero. The
+ * caller writes null straight through to `post_metrics`, whose columns are
+ * nullable for this reason, and the UI prints "not reported" rather than a
+ * number it was never given. Substituting reactions for views, or defaulting a
+ * missing figure to 0, would turn "we do not know" into a measurement.
+ *
+ * Impressions are the field most likely to stay null. Unipile carries the
+ * reaction, comment and repost counters dependably; impressions come from
+ * LinkedIn's own analytics, which a personal profile may not expose at all.
+ *
+ * A read, and Unipile bills per connected account per month rather than per
+ * call, so there is nothing to reserve here. Law 3 is about irreversible
+ * effects and paid calls, and this is neither.
+ */
+export type PostStats = {
+  impressions: number | null;
+  likes: number | null;
+  comments: number | null;
+  reposts: number | null;
+};
+
+export async function getPostStats(input: {
+  accountId: string;
+  postId: string;
+}): Promise<PostStats> {
+  const result = await call<{
+    reaction_counter?: number;
+    comment_counter?: number;
+    repost_counter?: number;
+    impressions_counter?: number;
+    analytics?: { impressions?: number };
+  }>(
+    `/posts/${encodeURIComponent(input.postId)}?account_id=${encodeURIComponent(
+      input.accountId,
+    )}`,
+    { method: "GET" },
+  );
+
+  return {
+    // The richer analytics object wins where it exists, because it is
+    // LinkedIn's own figure. Both are absent on most personal profiles.
+    impressions: count(result.analytics?.impressions ?? result.impressions_counter),
+    likes: count(result.reaction_counter),
+    comments: count(result.comment_counter),
+    reposts: count(result.repost_counter),
+  };
+}
+
+/** A number we were actually given, or null. Never a default. */
+function count(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? Math.round(value)
+    : null;
+}
+
 /* ---------------------------------------------------------------------------
  * Connecting an account from inside Pulse
  *

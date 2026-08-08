@@ -1,5 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { cronAuthorised } from "@/lib/server/cron-auth";
 import { createAdminClient, hasAdminKey } from "@/lib/server/supabase-admin";
 import { hasUnipile, publishPost, UnipileError } from "@/lib/server/unipile";
 
@@ -20,24 +20,32 @@ export const runtime = "nodejs";
 // the ten minute sweep that rescues anything this limit kills.
 export const maxDuration = 120;
 
-/** Constant-time compare. A cron secret leaks through timing like any other. */
-function authorised(request: Request): boolean {
-  const expected = process.env.CRON_SECRET;
-  if (!expected) return false;
-
-  const given =
-    request.headers.get("x-cron-secret") ??
-    new URL(request.url).searchParams.get("token") ??
-    "";
-
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
+/**
+ * Which failures are about the post, and which are about the account.
+ *
+ * PLS-135 split the two, because the spec frame is blunt about the cost of not
+ * splitting them: "Failed tells the user nothing they can act on." A post
+ * LinkedIn refused is `failed` and the words need changing. A post we could not
+ * even attempt is `needs_attention`, the attempt goes back, and the fix is
+ * reconnecting an account.
+ *
+ * 401 and 403 are an account whose credentials stopped working. 428 is
+ * Unipile's checkpoint status, which means LinkedIn is asking the human for
+ * something. 5xx and a timeout are Unipile itself being unreachable, which is
+ * also not the post's fault.
+ */
+function failureKind(error: unknown): "refused" | "unreachable" {
+  if (error instanceof UnipileError) {
+    if ([401, 403, 428].includes(error.status)) return "unreachable";
+    if (error.status >= 500) return "unreachable";
+    return "refused";
+  }
+  // A network error or an abort never reached LinkedIn either.
+  return "unreachable";
 }
 
 export async function POST(request: Request) {
-  if (!authorised(request)) {
+  if (!cronAuthorised(request)) {
     return NextResponse.json({ error: "unauthorised" }, { status: 401 });
   }
   if (!hasAdminKey()) {
@@ -62,6 +70,12 @@ export async function POST(request: Request) {
   // would otherwise skip.
   const { data: swept } = await supabase.rpc("sweep_stuck_publishes");
 
+  // Before claiming, surface the posts the claim query structurally cannot
+  // see. claim_due_posts inner joins a connected account, so a due post in a
+  // workspace whose LinkedIn expired is never selected and sits in `scheduled`
+  // past its date forever, looking only like something overdue on a calendar.
+  const { data: flagged } = await supabase.rpc("flag_unpublishable_posts");
+
   const { data: claimed, error: claimError } = await supabase.rpc(
     "claim_due_posts",
     { batch: 20 },
@@ -79,15 +93,19 @@ export async function POST(request: Request) {
 
   let published = 0;
   let failed = 0;
+  let attention = 0;
 
   for (const post of due) {
     if (!post.unipile_account_id) {
+      // Never reached LinkedIn, so this is the account's problem, not the
+      // post's, and the attempt it just burned goes back.
       await supabase.rpc("finish_publish", {
         target_post: post.post_id,
         failure:
           "No connected LinkedIn account for this workspace, so the post could not go out. Connect one in Settings, Channels.",
+        failure_kind: "unreachable",
       });
-      failed += 1;
+      attention += 1;
       continue;
     }
 
@@ -111,19 +129,26 @@ export async function POST(request: Request) {
           : error instanceof Error
             ? error.message
             : "The post did not publish.";
+      const kind = failureKind(error);
       await supabase.rpc("finish_publish", {
         target_post: post.post_id,
         failure: message,
+        failure_kind: kind,
       });
-      failed += 1;
+      if (kind === "unreachable") attention += 1;
+      else failed += 1;
     }
   }
 
+  // Law 9: honest counts, and the two kinds of unhappy ending are reported
+  // separately because they are separately actionable.
   return NextResponse.json({
     ok: true,
     claimed: due.length,
     published,
     failed,
+    attention,
+    flagged: (flagged as number) ?? 0,
     swept: (swept as number) ?? 0,
   });
 }

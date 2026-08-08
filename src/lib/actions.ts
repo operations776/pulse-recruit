@@ -1449,6 +1449,12 @@ export async function setPostStatus(
   // The database refuses a scheduled row with no date and a published row with
   // no time, so the action supplies them rather than letting the constraint
   // surface as a raw Postgres error.
+  //
+  // `needs_review` deliberately touches neither. Pulling a scheduled post back
+  // for review must KEEP its date: it is still meant to go out then, it just
+  // needs a human first. Clearing it here would silently unschedule the post,
+  // and there is no constraint requiring a review row to be dateless, so
+  // nothing would catch it.
   if (status === "scheduled") {
     patch.scheduled_for = new Date(Date.now() + 86_400_000).toISOString();
   }

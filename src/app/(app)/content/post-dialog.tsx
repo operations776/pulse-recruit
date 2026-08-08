@@ -34,12 +34,23 @@ import { dayKey, formatDate, timeOfDay } from "@/lib/time";
 const MAX_BYTES = 200 * 1024 * 1024;
 
 // DESIGN.md rule: status is colour AND icon AND word, never colour alone.
+// Exhaustive over PostStatus on purpose: the Record type is what makes adding
+// an enum value a compile error here rather than an `undefined` chip at
+// runtime. PLS-134 added the last two.
+//
+// `needs_attention` is `attention`, not `danger`. Red is destruction and error
+// (DESIGN.md section 3), and this state is neither: Pulse could not reach
+// LinkedIn, the post is intact, and the fix is reconnecting an account. Red
+// here would say the post is broken, which is the exact confusion the state was
+// split out to end.
 const STATUS_CHIP: Record<PostRow["status"], { tone: Tone; word: string }> = {
   idea: { tone: "off", word: "Idea" },
   drafted: { tone: "off", word: "Drafted" },
+  needs_review: { tone: "attention", word: "Needs review" },
   scheduled: { tone: "attention", word: "Scheduled" },
   publishing: { tone: "attention", word: "Publishing" },
   published: { tone: "on", word: "Published" },
+  needs_attention: { tone: "attention", word: "Needs attention" },
   failed: { tone: "danger", word: "Failed" },
 };
 

@@ -46,14 +46,29 @@ export type StepChannel = "email" | "linkedin";
 export type PostStatus =
   | "idea"
   | "drafted"
+  | "needs_review"
   | "scheduled"
   | "publishing"
   | "published"
+  | "needs_attention"
   | "failed";
 
+/**
+ * What a human is allowed to choose. `setPostStatus` enforces it.
+ *
+ * `needs_review` joins the list in PLS-134: a person can send a draft back for
+ * review, and the Figma board makes it a column you can drag into.
+ *
+ * `needs_attention` deliberately does NOT. Like `publishing` and `failed`, it
+ * belongs to the publisher: it means Pulse tried to send this and could not
+ * reach LinkedIn. A human asserting it would be claiming an attempt that never
+ * happened. It is cleared by fixing the account and rescheduling, not by
+ * picking a different word from a dropdown.
+ */
 export const MANUAL_STATUSES = [
   "idea",
   "drafted",
+  "needs_review",
   "scheduled",
   "published",
 ] as const satisfies readonly PostStatus[];
@@ -516,6 +531,11 @@ export type PostRow = {
   // "failed" tells a recruiter nothing they can act on.
   publish_error: string | null;
   publish_attempts: number;
+  // PLS-135. Why Pulse could not send this, when the problem is the account
+  // rather than the post. Set alongside `needs_attention` and cleared by a
+  // successful publish. Distinct from `publish_error`, which is LinkedIn
+  // refusing the words: this one is actionable and that one needs a rewrite.
+  attention_reason: string | null;
 };
 
 /**
@@ -607,6 +627,31 @@ export type PostAsset = AssetRow & { url: string | null };
 // A LinkedIn profile connected through Unipile's hosted wizard. Not a
 // credential: RecruiterGTM holds one Unipile tenant and this is an account
 // under it, which is why there is no key on this row to leak.
+/**
+ * What a published post actually did, as LinkedIn reported it.
+ *
+ * PLS-136. Every counter is `number | null`, and null is not a nuisance to
+ * default away: it means LinkedIn did not report that figure. Zero means nobody
+ * engaged. Rendering a null as 0 turns "we do not know" into a measurement,
+ * which is the never-fabricate rule applied to arithmetic rather than prose.
+ *
+ * `impressions` is the field most often null. Reactions, comments and reposts
+ * come back dependably; impressions come from LinkedIn's own analytics, which a
+ * personal profile may not expose. Nothing may substitute one for the other.
+ */
+export type PostMetricsRow = {
+  id: string;
+  org_id: string;
+  post_id: string;
+  impressions: number | null;
+  likes: number | null;
+  comments: number | null;
+  reposts: number | null;
+  source: "unipile";
+  fetched_at: string;
+  created_at: string;
+};
+
 export type LinkedInAccountStatus = "connected" | "credentials" | "disconnected";
 
 export type LinkedInAccountRow = {
