@@ -813,7 +813,26 @@ production build had all passed over.
 
 | ID | Ticket | Status |
 | --- | --- | --- |
-| PLS-156 | The tasks list is capped, the header aligns with it, and your own avatar stops saying "Y" | done |
+| PLS-156 | The tasks list is capped, the header aligns with it, your own avatar stops saying "Y", and `PRODUCT.md` records the product truth Impeccable reads | done |
+
+**`PRODUCT.md` landed in the same pass**, because Impeccable's `init` blocks
+every other command until it exists and its own guidance is that the floor is
+meaningfully higher with context. It records only confirmed facts and marks the
+rest.
+
+Two things it deliberately does not settle. **Price**: AI.md's cost model is
+written against 299 USD a month and the roadmap names a 50 USD founding price,
+and those two numbers disagree in the repository today, so neither is quoted as
+settled. **Evidence**: there are no customer quotes, no verified agency count,
+no case studies and no benchmarks. The file says so in as many words, because
+the ported marketing site once carried six invented five-star testimonials
+attributed to real RecruiterGTM clients plus "40+ Agencies on Pulse", and the
+point of writing the absence down is that nothing reintroduces it.
+
+Init does **not** write DESIGN.md, contrary to how the choice was framed when it
+was offered: its playbook says so explicitly and leaves an incumbent one
+untouched. Only `document` and `new-work` replace the visual world, so Rev C
+still stands and that decision is still live for whenever one of those runs.
 
 1. **The list stretched to 1550px.** With a task open the panel takes 340px and
    the centre lands near the Figma's 816px on its own, so nothing had ever
