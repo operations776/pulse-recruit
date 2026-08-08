@@ -104,7 +104,7 @@ This is the rule that keeps four products in one shell from turning into noise:
 - **Violet is a verb.** If it is not clickable, it is not violet. One violet control per view, maximum.
 - **Teal means on.** Running sequences, active states, thrown switches. Never a button.
 - **Amber means look at this.** Stalled, paused, needs input. Never a button.
-- **Red is destructive and error only.** It is not a general warning colour.
+- **Red is destructive and error only.** It is not a general warning colour. One exception, the Priority 1 ring below, and it is a 2px border rather than a fill.
 - **Ink is structure.** Secondary and tertiary buttons are ink outlines, not colour.
 
 Modules are **not** colour-coded. Colour roles are fully spoken for. Module identity runs through the masthead and the record ID prefix instead (section 8).
@@ -129,6 +129,25 @@ Three constraints keep this from eroding the roles above:
 - **Rule 9 still holds.** These hues carry a *category*, never a state. Every state also has an icon and a word.
 
 The palette lives in `src/config/content-skills.ts` beside the icons. Colour for a skill is defined once, there.
+
+### Task priority ring
+
+A second narrow exception, added in PLS-111 for the tasks redesign. A task list is read by scanning down the left edge, and the one thing worth reading there is what to do first. The priority is therefore the **2px border of the checkbox**, and nothing else on the row is tinted.
+
+| Priority | Ring |
+|---|---|
+| Priority 1 | `--red` |
+| Priority 2 | `--amber` |
+| Priority 3 | `--ink` |
+| Priority 4 | `--ink-3` |
+
+Priority 1 is the only place in the product where `--red` is not destruction or error, so it carries three constraints of its own on top of the three above:
+
+- **Ring, never fill.** 2px of border on a 16px control. A red-filled row would read as a failure.
+- **Never alone.** Priorities 1 and 2 also print the words on the row's meta line, and every priority is spelled out in the task panel. Rule 9 is satisfied by the word, not by the hue.
+- **It stops at completion.** A finished checkbox goes neutral grey. Priority is a planning signal and it is no longer true once the work is done, so continuing to paint it would be the interface asserting something false.
+
+The map lives in `PRIORITY_RING` in `src/lib/tasks.ts`, next to the rank the same file defines. Colour for a priority is defined once, there.
 
 ---
 
@@ -348,6 +367,6 @@ Enforceable rules. If a component violates one of these, it is wrong regardless 
 6. Backdrop blur only on the scrim. Floating layers are opaque.
 7. Archivo appears on titles, section heads, metric numbers, and the masthead. Nowhere else.
 8. Uppercase appears on the display face and mono legends only.
-9. Status is colour plus icon plus word, always all three. A hue that carries a category rather than a state (content skill accents, section 3) is an accent edge, never a fill, and never the only thing saying what a state is.
+9. Status is colour plus icon plus word, always all three. A hue that carries a category or a rank rather than a state (content skill accents and the task priority ring, section 3) is an accent edge, never a fill, and never the only thing saying what a state is.
 10. No body text below 11px, no font weight below 400, no hit target below 28px.
 11. Motion is bounded: nothing over 220ms, nothing travelling more than 24px, and every animation tied to a state change.

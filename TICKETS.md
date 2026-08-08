@@ -110,7 +110,7 @@ rather than leaving two meanings for one ID.
 
 | ID | Ticket | Depends on | Status |
 | --- | --- | --- | --- |
-| PLS-60 | Mirror the already-applied migrations into `supabase/migrations/`. Law 10 says the folder is the mirror and it started out empty | PLS-37 | partly: everything from PLS-61 on is mirrored, the nine from before PLS-37 are not |
+| PLS-60 | Mirror the already-applied migrations into `supabase/migrations/`. Law 10 says the folder is the mirror and it started out empty | PLS-37 | partly: everything from PLS-61 on is mirrored except `20260807122952_bd_commitments_and_debriefs`, and the nine from before PLS-37 are not |
 | PLS-61 | Migration: `content_assets`, `content_posts` gains `published_at` and `updated_at`, org-prefixed `content-media` storage bucket with policies, `delete_post` RPC returning storage paths so DB rows die before blobs (law 4) | PLS-37 | done |
 | PLS-62 | Calendar month grid: Mon to Sun, today marked, per-day add, posts on their day. Board and Calendar are a segmented toggle so nothing moves between screens | PLS-61 | done |
 | PLS-63 | Ideas backlog under the grid, drag an idea onto a day to schedule it at 09:00, plus a visible non-drag date control because drag alone fails the audience | PLS-62 | done |
@@ -388,6 +388,94 @@ so nobody files a finding against them meanwhile:
    overruled that when it found every segmented control painting its selected
    cap teal: teal means on or running, and a selected tab is not a running
    thing. The anatomy and the lesson disagree in one document.
+
+## The tasks redesign
+
+Figma, `Pulse Recruit — BD Strategist redesign`, page `02 — Tasks`. Four
+frames: the screen itself, and three behaviour specs (completion states, the
+completed list, comments and activity). The shipped `/ops/tasks` was a single
+sortable table with five dropdowns on every row; the redesign is a three region
+workspace with one typed line as the only way to add anything.
+
+| ID | Ticket | Status |
+| --- | --- | --- |
+| PLS-111 | The tasks workspace: view rail, grouped list, task panel, natural-language quick add, the four-frame completion choreography, the paged completed list, and the comment stream with mentions, watchers, inline edit and the no-modal delete | review: schema applied and verified against the live database, but no build has run. See below |
+
+**Four things the schema could not say, so PLS-111 is a migration first.**
+`tasks` knew when something was finished and never who, so "completed by you"
+was unsayable; `candidate_id` was the only link, so "CLIENT Halden Group" was
+unsayable; there was no comment table at all; and "notifies watchers and the
+assignee, never the whole workspace" needs a watcher set to notify.
+`20260808120000_task_workspace_comments_watchers.sql` adds `tasks.done_by`,
+`tasks.company_id`, `task_watchers`, `task_comments`, and five functions.
+Completing is now an RPC because it writes the task row and the activity entry,
+which is law 1, and the old client-side `toggleTask` update is gone.
+
+**The quick add parses the same sentence twice, on purpose.** The browser parse
+draws the reads-as row under the input; the server parse is what gets written.
+A client that posts the due date, the priority and the assignee ids it decided
+on is a client the server has taken at its word. `src/lib/task-parse.ts` is
+pure and both call it.
+
+**Three deliberate departures from the Figma frames**, each one a DESIGN.md
+rule the frames did not know about:
+
+1. The frames put Reply, Edit and Delete behind hover on a comment. Section 2
+   says nothing lives behind hover and names it as the pattern that fails this
+   audience hardest. The actions are always mounted, quiet, in mono at `ink-3`.
+2. The frames draw circular checkboxes and hue-tinted avatar tiles. Section 5
+   says fully-rounded shapes do not exist in this system, and `src/lib/hue.ts`
+   says avatars are neutral because the colour roles are fully spoken for.
+   Rounded squares, neutral tiles.
+3. The frames put an "ON CALENDAR" chip beside the due date. There is no
+   calendar integration in Pulse, so the chip would be decoration asserting a
+   fact. Omitted rather than faked.
+
+Also not built, and for the same reason: the frames show a `CONTACT Patrick
+Henn` link. There is no contacts table. Candidate and company links are what
+the schema can honestly express, and those are what the chip prints.
+
+**The schema is applied and was proved against the live database**, in a rolled
+back transaction, the same way the publishing chain was in PLS-87: create with
+a company link, complete, complete again, reopen, comment, edit, reply, delete
+the answered parent, delete the unanswered reply. The tombstone/removal split
+is right, `done_by` is stamped and cleared with the status, a system entry
+refuses to be edited, the check constraint refuses `done_by` on an open task,
+and a mention of a uuid outside the org is refused. The advisor reports no new
+anon-callable surface: the list is still the five deliberate ones.
+
+**The stream had no total order, and only running it could show that.**
+`create_task` writes "Created this" and, through `replace_task_assignees`,
+"Assigned to X". Both are one transaction, `now()` is the transaction start
+time, so every entry on a new task carries an IDENTICAL `created_at` — measured
+at five entries with one distinct timestamp between them. `order by created_at`
+was a five-way tie that Postgres settles by heap order, so the assignment
+rendered above the creation and the order was not stable between reads. This is
+the third instance of the class: PLS-99's transcript rendering every answer
+above its own question, and the `jobs[0]` bug before it. **A timestamp is not an
+ordering.** `20260807130504` adds `task_comments.seq` as an identity column,
+moves the creation entry ahead of the assignment, and `data.ts` orders by `seq`.
+
+**PLS-111 has still not been built or photographed.** This environment has no
+Node and no `node_modules`, so `npm run build`, `npm run typecheck`, `npm run
+lint` and Playwright have not run against it, and the design-review screenshot
+pass needs the app running behind a session. It stays at `review` until both
+happen; calling it done from a diff is the one thing the gate exists to forbid.
+
+**Migration filenames match the recorded versions, not the wall clock.** The
+MCP stamps `schema_migrations` with the server's own timestamp, which was a day
+behind the filenames first written here, so both files were renamed to
+`20260807130215` and `20260807130504`. A mirror whose names disagree with
+`schema_migrations` is a folder that will try to re-apply itself.
+
+**The migration drops every `create_task` overload rather than one named
+signature.** `drop function if exists` with a signature that does not match
+exactly is a silent no-op, and the new nine-argument version would then sit
+beside the old eight-argument one. PostgREST resolves an RPC by argument names,
+both would match a call carrying `target_org` / `task_title` / `task_detail`,
+and it answers that with "could not choose the best candidate function". The AI
+tool in `src/lib/server/ai/tools.ts` calls it exactly that way, so the failure
+would have landed on Claude writing a task rather than on the migration.
 
 ## Later weeks (placeholders, not yet specced)
 

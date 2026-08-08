@@ -30,6 +30,8 @@ import type {
   PostAsset,
   PostRow,
   TaskAssigneeRow,
+  TaskCommentRow,
+  TaskWatcherRow,
   SequenceRow,
   SequenceStepRow,
   SignalRow,
@@ -358,32 +360,131 @@ export async function getTasks() {
  * Everything the tasks screen needs in one shot: the rows, who each one is
  * assigned to, and the member directory to resolve ids into names.
  */
-export async function getTaskBoard() {
+/**
+ * Everything the tasks workspace renders, in two round trips.
+ *
+ * Two rather than one because the comment counts and the open stream are both
+ * scoped to the tasks that came back, and asking for every comment row in the
+ * workspace to count a handful of them is the shape of query that is fine on a
+ * demo and expensive on a real agency. The first hop is one indexed read; the
+ * second is six reads in parallel.
+ *
+ * Completed tasks are capped at the last 30 days, which is what the completed
+ * list promises on screen. Older completions are a search problem, not a list
+ * problem, and loading a year of them to render ten is how a list gets slow.
+ */
+export async function getTaskWorkspace(selectedTaskId?: string) {
   const session = await requireSession();
   const supabase = await createClient();
 
-  const [tasks, assignees, members] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("*")
-      .order("due", { ascending: true, nullsFirst: false }),
-    supabase.from("task_assignees").select("*"),
-    supabase.rpc("org_members", { target_org: session.org.id }),
-  ]);
+  const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
+  const { data: taskData } = await supabase
+    .from("tasks")
+    .select("*")
+    .or(`done_at.is.null,done_at.gte.${since}`)
+    .order("due", { ascending: true, nullsFirst: false });
+
+  const tasks = (taskData ?? []) as TaskRow[];
+  const ids = tasks.map((t) => t.id);
+
+  const [assignees, watchers, members, counts, candidates, companies, stream] =
+    await Promise.all([
+      supabase.from("task_assignees").select("*"),
+      supabase.from("task_watchers").select("*"),
+      supabase.rpc("org_members", { target_org: session.org.id }),
+      ids.length
+        ? supabase
+            .from("task_comments")
+            .select("task_id, kind, deleted_at")
+            .in("task_id", ids)
+        : Promise.resolve({ data: [] as CommentCount[] }),
+      supabase.from("candidates").select("id, name").is("archived_at", null),
+      supabase.from("companies").select("id, name, type"),
+      // The panel's stream. Oldest first: this is a record, not a chat, and
+      // people read it top to bottom when they pick a task up.
+      //
+      // Ordered by `seq`, never by created_at. create_task writes the creation
+      // entry and the assignment entry in one transaction, now() is the
+      // transaction start time, so both carry an identical stamp and ordering
+      // by it is a tie Postgres settles by heap order. That is how the BD
+      // transcript ended up rendering every answer above its own question.
+      selectedTaskId
+        ? supabase
+            .from("task_comments")
+            .select("*")
+            .eq("task_id", selectedTaskId)
+            .order("seq", { ascending: true })
+        : Promise.resolve({ data: [] as TaskCommentRow[] }),
+    ]);
+
+  const assigneesByTask = groupUsers(
+    (assignees.data ?? []) as TaskAssigneeRow[],
+  );
+  const watchersByTask = groupUsers((watchers.data ?? []) as TaskWatcherRow[]);
+
+  // "2 NOTES" on a row counts what a person wrote. System entries are the
+  // audit trail and every task has at least one, so counting them would print
+  // "1 NOTE" on every row in the product and mean nothing.
+  const noteCounts: Record<string, number> = {};
+  for (const row of (counts.data ?? []) as CommentCount[]) {
+    if (row.kind !== "comment" || row.deleted_at) continue;
+    noteCounts[row.task_id] = (noteCounts[row.task_id] ?? 0) + 1;
+  }
+
+  // One directory for both jobs the quick add has: resolving "Rylee Thiel" in
+  // a typed sentence, and printing "CLIENT Halden Group" on a row.
+  const links: TaskLink[] = [
+    ...((candidates.data ?? []) as { id: string; name: string }[]).map((c) => ({
+      id: c.id,
+      name: c.name,
+      kind: "candidate" as const,
+      label: "Candidate",
+    })),
+    ...((companies.data ?? []) as { id: string; name: string; type: string }[]).map(
+      (c) => ({
+        id: c.id,
+        name: c.name,
+        kind: "company" as const,
+        label: c.type === "client" ? "Client" : "Company",
+      }),
+    ),
+  ];
+
+  return {
+    session,
+    tz: session.org.timezone,
+    tasks,
+    assigneesByTask,
+    watchersByTask,
+    members: (members.data ?? []) as OrgMember[],
+    noteCounts,
+    links,
+    activity: (stream.data ?? []) as TaskCommentRow[],
+  };
+}
+
+export type TaskLink = {
+  id: string;
+  name: string;
+  kind: "candidate" | "company";
+  /** What the chip prints: Candidate, Client, or Company. */
+  label: string;
+};
+
+/** The three columns the note count needs. Nothing else is read. */
+type CommentCount = Pick<TaskCommentRow, "task_id" | "kind" | "deleted_at">;
+
+function groupUsers(
+  rows: { task_id: string; user_id: string }[],
+): Record<string, string[]> {
   const byTask = new Map<string, string[]>();
-  for (const row of (assignees.data ?? []) as TaskAssigneeRow[]) {
+  for (const row of rows) {
     const list = byTask.get(row.task_id) ?? [];
     list.push(row.user_id);
     byTask.set(row.task_id, list);
   }
-
-  return {
-    session,
-    tasks: (tasks.data ?? []) as TaskRow[],
-    assigneesByTask: Object.fromEntries(byTask) as Record<string, string[]>,
-    members: (members.data ?? []) as OrgMember[],
-  };
+  return Object.fromEntries(byTask);
 }
 
 /** The caller's unread notifications, newest first, plus the total unread. */

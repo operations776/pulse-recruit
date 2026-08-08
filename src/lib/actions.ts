@@ -22,6 +22,8 @@ import {
   solveCheckpoint,
 } from "@/lib/server/unipile";
 import { createClient } from "@/lib/supabase/server";
+import { type ParseMember, parseTaskInput } from "@/lib/task-parse";
+import { dayKey } from "@/lib/time";
 import { BD_FEEDBACK_TITLE, MANUAL_STATUSES } from "@/lib/supabase/types";
 import type {
   BDAgentMemoryRow,
@@ -461,24 +463,28 @@ export async function saveBDFeedback(
   return { ok: true, data: data as BDAgentMemoryRow };
 }
 
-export async function toggleTask(
+/**
+ * Complete or reopen a task.
+ *
+ * An RPC, not an update: completing writes the task row AND the activity entry
+ * that records who did it, and law 1 says two tables is one function. The old
+ * version wrote status and done_at from the client and stamped nobody, which
+ * is why a finished row could never say "completed by you".
+ *
+ * No revalidatePath. The row is already right on screen through the optimistic
+ * overlay, the 4s undo window lives entirely in the client, and revalidating
+ * mid-window would yank the row out from under the Undo button.
+ */
+export async function completeTask(
   taskId: string,
   done: boolean,
 ): Promise<Result> {
   const supabase = await createClient();
-  // The check constraint holds status and done_at to one fact, so both move in
-  // the same update. Reopening lands on todo rather than guessing which
-  // in-flight state it was in before.
-  const { error } = await supabase
-    .from("tasks")
-    .update({
-      done_at: done ? new Date().toISOString() : null,
-      status: done ? "completed" : "todo",
-    })
-    .eq("id", taskId);
+  const { error } = await supabase.rpc("complete_task", {
+    target_task: taskId,
+    done,
+  });
   if (error) return fail(readable(error.message));
-
-  revalidatePath("/ops/tasks");
   return { ok: true, data: undefined };
 }
 
@@ -554,6 +560,8 @@ export async function createTask(
     due?: string | null;
     priority?: TaskPriority;
     assigneeIds?: string[];
+    candidateId?: string | null;
+    companyId?: string | null;
   },
 ): Promise<Result> {
   if (!title.trim()) return fail("Give the task a title.");
@@ -573,11 +581,181 @@ export async function createTask(
     ...(options?.assigneeIds?.length
       ? { assignee_ids: options.assigneeIds }
       : {}),
+    ...(options?.candidateId ? { linked_candidate: options.candidateId } : {}),
+    ...(options?.companyId ? { linked_company: options.companyId } : {}),
   });
   if (error) return fail(readable(error.message));
 
   revalidatePath("/ops/tasks");
   return { ok: true, data: undefined };
+}
+
+/* ---------------------------------------------------------------------------
+ * The tasks workspace (PLS-111)
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Add a task from the sentence somebody typed.
+ *
+ * The browser parses the same string to draw the reads-as row, and this parses
+ * it again. That is deliberate: a client that posts the due date, the priority
+ * and the assignee ids it decided on is a client the server has taken at its
+ * word, and the reads-as row exists precisely so nobody is surprised by what
+ * the server concluded. Same parser, same directory, one truth.
+ */
+export async function createTaskFromText(raw: string): Promise<Result> {
+  const text = raw.trim();
+  if (!text) return fail("Type what needs doing.");
+
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const [{ data: members }, { data: candidates }, { data: companies }] =
+    await Promise.all([
+      supabase.rpc("org_members", { target_org: session.org.id }),
+      supabase.from("candidates").select("id, name").is("archived_at", null),
+      supabase.from("companies").select("id, name"),
+    ]);
+
+  const parsed = parseTaskInput(text, {
+    todayKey: dayKey(new Date(), session.org.timezone),
+    tz: session.org.timezone,
+    members: (members ?? []) as ParseMember[],
+    links: [
+      ...((candidates ?? []) as { id: string; name: string }[]).map((c) => ({
+        ...c,
+        kind: "candidate" as const,
+      })),
+      ...((companies ?? []) as { id: string; name: string }[]).map((c) => ({
+        ...c,
+        kind: "company" as const,
+      })),
+    ],
+  });
+
+  // Everything the sentence carried was metadata. There is no task left.
+  if (!parsed.title) return fail("That is a date and an owner with no task on it.");
+
+  return createTask(parsed.title, "", {
+    due: parsed.due,
+    priority: parsed.priority ?? "normal",
+    assigneeIds: parsed.assignees.map((a) => a.user_id),
+    candidateId: parsed.link?.kind === "candidate" ? parsed.link.id : null,
+    companyId: parsed.link?.kind === "company" ? parsed.link.id : null,
+  });
+}
+
+/**
+ * Say something on a task.
+ *
+ * The @handles are resolved here rather than sent as ids, for the same reason
+ * the quick add re-parses: a client-supplied list of user ids to add as
+ * watchers is a client-supplied list of people to notify. The RPC then does
+ * the comment, the watchers and the notifications in one transaction.
+ */
+export async function addTaskComment(
+  taskId: string,
+  body: string,
+  replyTo?: string | null,
+): Promise<Result> {
+  const text = body.trim();
+  if (!text) return fail("Write something first.");
+
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  const { data: members } = await supabase.rpc("org_members", {
+    target_org: session.org.id,
+  });
+
+  const mentioned = mentionedUsers(text, (members ?? []) as ParseMember[]);
+
+  const { error } = await supabase.rpc("add_task_comment", {
+    target_task: taskId,
+    comment_body: text,
+    mention_users: mentioned,
+    ...(replyTo ? { parent: replyTo } : {}),
+  });
+  if (error) return fail(readable(error.message));
+  return { ok: true, data: undefined };
+}
+
+export async function editTaskComment(
+  commentId: string,
+  body: string,
+): Promise<Result> {
+  const text = body.trim();
+  if (!text) return fail("A comment needs some words.");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("edit_task_comment", {
+    target_comment: commentId,
+    new_body: text,
+  });
+  if (error) return fail(readable(error.message));
+  return { ok: true, data: undefined };
+}
+
+/**
+ * Remove a comment. Returns what actually happened, because the two outcomes
+ * look different on screen: a tombstone stays in the stream and a removal does
+ * not, and a UI that guesses will animate the wrong one.
+ */
+export async function deleteTaskComment(
+  commentId: string,
+): Promise<Result<"tombstoned" | "removed">> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("delete_task_comment", {
+    target_comment: commentId,
+  });
+  if (error) return fail(readable(error.message));
+  return { ok: true, data: (data as "tombstoned" | "removed") ?? "removed" };
+}
+
+/** Follow or stop following a task. Your own row, so it needs no RPC. */
+export async function setTaskWatching(
+  taskId: string,
+  watching: boolean,
+): Promise<Result> {
+  const session = await requireSession();
+  const supabase = await createClient();
+
+  if (!watching) {
+    const { error } = await supabase
+      .from("task_watchers")
+      .delete()
+      .eq("task_id", taskId)
+      .eq("user_id", session.userId);
+    if (error) return fail(readable(error.message));
+    return { ok: true, data: undefined };
+  }
+
+  // Law 2: the primary key is the race guard, so this is an insert that
+  // tolerates a conflict rather than a select followed by an insert.
+  const { error } = await supabase
+    .from("task_watchers")
+    .upsert(
+      { task_id: taskId, user_id: session.userId, org_id: session.org.id },
+      { onConflict: "task_id,user_id", ignoreDuplicates: true },
+    );
+  if (error) return fail(readable(error.message));
+  return { ok: true, data: undefined };
+}
+
+/** Which teammates a comment names. Same handle matching as the quick add. */
+function mentionedUsers(text: string, members: ParseMember[]): string[] {
+  const ids = new Set<string>();
+  for (const match of text.matchAll(/(?:^|\s)@([a-z0-9._-]+)/gi)) {
+    const wanted = match[1].toLowerCase();
+    const found =
+      members.find((m) => m.email.split("@")[0].toLowerCase() === wanted) ??
+      members.find((m) => m.display_name.toLowerCase() === wanted) ??
+      members.find(
+        (m) => m.display_name.split(/\s+/)[0].toLowerCase() === wanted,
+      );
+    if (found) ids.add(found.user_id);
+  }
+  return [...ids];
 }
 
 /* ---------------------------------------------------------------------------

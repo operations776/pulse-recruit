@@ -346,8 +346,41 @@ export type TaskRow = {
   done_at: string | null;
   status: TaskStatus;
   priority: TaskPriority;
+  done_by: string | null;
   origin: "claude" | "manual";
   candidate_id: string | null;
+  company_id: string | null;
+  created_at: string;
+};
+
+// One stream, two kinds of entry. A system row is the audit trail and nobody
+// may edit it; a comment belongs to its author. A null author_id is an entry
+// with no human behind it, which is how a task Claude filed says so.
+export type TaskCommentRow = {
+  id: string;
+  org_id: string;
+  task_id: string;
+  author_id: string | null;
+  kind: "comment" | "system";
+  body: string;
+  reply_to: string | null;
+  created_at: string;
+  edited_at: string | null;
+  deleted_at: string | null;
+  // What the stream is ordered by. created_at cannot be: create_task writes
+  // two entries in one transaction, now() is the transaction start time, so
+  // both carry the same stamp and ordering by it is a tie Postgres resolves by
+  // heap order. Same defect as PLS-99's transcript. A timestamp is not an
+  // ordering.
+  seq: number;
+};
+
+// Who hears about a new comment. Deliberately separate from assignees: you can
+// care about a task you are not carrying, and an @mention is how you get added.
+export type TaskWatcherRow = {
+  task_id: string;
+  user_id: string;
+  org_id: string;
   created_at: string;
 };
 
