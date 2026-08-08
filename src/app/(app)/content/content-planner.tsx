@@ -4,8 +4,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  Sparkles,
-  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -37,25 +35,25 @@ import {
 } from "@/lib/time";
 import { Backlog } from "./backlog";
 import { CalendarGrid } from "./calendar-grid";
+import { ContentRail, needsYou, type ContentFilter } from "./content-rail";
+import { WeekView } from "./week-view";
 import { GenerateDialog } from "./generate-dialog";
-import { StatStrip, type Stat } from "./stat-strip";
 import { PostDialog } from "./post-dialog";
 import { SkillsDialog } from "./skills-dialog";
 import { StatusBoard } from "./content-board";
 
 
-// The Button primitive renders a real button and this control navigates, so it
-// wears Button's classes on a Link. Same keycap edge, same radius.
-const LINK_BUTTON =
-  "cap inline-flex h-7 shrink-0 items-center justify-center gap-2 rounded-control border border-ink bg-transparent px-3 text-[12px] font-medium text-ink hover:bg-well [--edge:var(--color-ink)]";
-
 // Dropping onto a day means nine in the morning in the workspace zone. It is a
 // default, not a rule: the drawer sets any time.
 const DEFAULT_TIME = "09:00";
 
-type View = "calendar" | "board";
+// `week` is the Figma's default and now this screen's: it answers what is
+// going out this week, which is the question a planner is opened for. Month
+// and board stay for the other two questions.
+type View = "week" | "calendar" | "board";
 
 export function ContentPlanner({
+  filter,
   posts,
   assets,
   timezone,
@@ -67,10 +65,10 @@ export function ContentPlanner({
   shapes,
   hasPersona,
   generationConfigured,
-  todayInstant,
   pendingLessons,
   canPublish,
 }: {
+  filter: ContentFilter;
   posts: PostRow[];
   assets: Record<string, PostAsset[]>;
   timezone: string;
@@ -82,8 +80,6 @@ export function ContentPlanner({
   shapes: Shape[];
   hasPersona: boolean;
   generationConfigured: boolean;
-  /** Fixed on the server so the stat strip agrees across hydration. */
-  todayInstant: string;
   pendingLessons: number;
   /** A connected LinkedIn profile, so a scheduled post actually goes out. */
   canPublish: boolean;
@@ -108,10 +104,21 @@ export function ContentPlanner({
   const open = posts.find((p) => p.id === openId) ?? null;
 
   const visible = useMemo(() => {
-    if (author === "all") return posts;
-    const target = author === "mine" ? meId : author;
-    return posts.filter((p) => p.author_id === target);
-  }, [posts, author, meId]);
+    const mine =
+      author === "all"
+        ? posts
+        : posts.filter((p) => p.author_id === (author === "mine" ? meId : author));
+
+    // The rail's queues are a filter over the same list rather than separate
+    // screens, so nothing moves between them and the view toggle keeps working
+    // inside each one.
+    if (filter === "needs-you") return needsYou(mine);
+    if (filter === "ideas") return mine.filter((p) => p.status === "idea");
+    if (filter === "published") {
+      return mine.filter((p) => p.status === "published");
+    }
+    return mine;
+  }, [posts, author, meId, filter]);
 
   // One pass over the posts, keyed by the day they fall on in the workspace
   // zone. Doing this per cell would walk the list forty two times.
@@ -139,48 +146,61 @@ export function ContentPlanner({
     [visible],
   );
 
+  // The stat strip that used to sit here is gone with the Figma header. Its
+  // ideas and published counts moved into the rail, and "needs you" replaces
+  // the overdue and failed pair with the queue a person actually clears.
+  // Pending lessons lost their surface in the move and want one back: that is
+  // noted in TICKETS.md rather than left as a silently dropped number.
+
   /**
-   * The stat strip. Deliberately not the four status counts it replaced:
-   * "Drafted 01" answers a question nobody asks, while "nothing planned for
-   * the next 7 days" is the one thing a content calendar exists to tell you.
+   * The Figma's title and its one line of state.
+   *
+   * The title names the slice you are looking at, not the module: the rail two
+   * columns to the left already says CONTENT, and repeating it is the defect
+   * PLS-99 was filed for. The sentence under it is the only state worth reading
+   * before the strip, and it counts real rows rather than describing the
+   * feature.
    */
-  const stats = useMemo((): Stat[] => {
-    const now = new Date(todayInstant);
-    const weekEnd = new Date(now.getTime() + 7 * 86_400_000);
+  const headline = useMemo(() => {
+    const waiting = needsYou(visible).length;
+    const going = visible.filter(
+      (p) => p.status === "scheduled" || p.status === "publishing",
+    ).length;
 
-    const dated = visible.filter((p) => p.scheduled_for);
-    const upcoming = dated.filter((p) => {
-      const at = new Date(p.scheduled_for!);
-      return at >= now && at <= weekEnd && p.status !== "published";
-    });
-    // Past its slot and still sitting there. With publishing on, this only
-    // fills up when a post cannot go out at all: no profile connected, or the
-    // post was grandfathered off automatic publishing.
-    const overdue = dated.filter(
-      (p) => p.status === "scheduled" && new Date(p.scheduled_for!) < now,
-    );
-    const failed = visible.filter((p) => p.status === "failed");
+    const title =
+      filter === "needs-you"
+        ? "Needs you"
+        : filter === "ideas"
+          ? "Ideas"
+          : filter === "published"
+            ? "Published"
+            : "This week";
 
-    return [
-      { label: "next 7 days", value: upcoming.length, tone: "neutral" },
-      { label: "overdue", value: overdue.length, tone: "warn" },
-      // LinkedIn refused these. Nothing retries them on its own, so they stay
-      // on the strip until someone opens one and sends it again. Red, not
-      // amber: this is broken, not merely waiting.
-      { label: "failed", value: failed.length, tone: "bad" },
-      {
-        label: "ideas",
-        value: visible.filter((p) => !p.scheduled_for).length,
-        tone: "neutral",
-      },
-      {
-        label: "published",
-        value: visible.filter((p) => p.status === "published").length,
-        tone: "good",
-      },
-      { label: "lessons", value: pendingLessons, tone: "warn" },
-    ];
-  }, [visible, todayInstant, pendingLessons]);
+    if (filter !== "all") {
+      return { title, sub: `${visible.length} in this view` };
+    }
+
+    // An empty week is a sentence, not a zero. "0 going out." reads as a
+    // broken counter; saying nothing is scheduled says the same fact and also
+    // says what to do about it.
+    if (going === 0 && waiting === 0) {
+      return { title, sub: "Nothing scheduled. Add a post to any day." };
+    }
+
+    const parts: string[] = [];
+    if (going > 0) {
+      parts.push(going === 1 ? "One going out" : `${going} going out`);
+    }
+    if (waiting > 0) {
+      parts.push(
+        waiting === 1 ? "one is waiting on you" : `${waiting} are waiting on you`,
+      );
+    }
+    // Capitalised here rather than in the strings, so the second clause reads
+    // as a continuation whether or not the first one is present.
+    const sub = parts.join(". ");
+    return { title, sub: `${sub.charAt(0).toUpperCase()}${sub.slice(1)}.` };
+  }, [visible, filter]);
 
   const href = (next: { month?: string; view?: View }) =>
     `/content?month=${next.month ?? month}&view=${next.view ?? view}`;
@@ -330,36 +350,56 @@ export function ContentPlanner({
     // The shell does not scroll; the body does. Previously `main` scrolled as
     // one column, so 180px of header pushed the calendar down and the sixth
     // week sat below the fold. Same shape as /ops/tasks.
-    <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-paper">
+    <div className="flex min-w-0 flex-1 overflow-hidden bg-paper">
+      <ContentRail
+        filter={filter}
+        posts={posts}
+        skillCount={shapes.length}
+        hasPersona={hasPersona}
+        pendingLessons={pendingLessons}
+        onOpenSkills={() => setSkillsOpen(true)}
+      />
+
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
       {/*
-        The header was an eyebrow that repeated the sidebar 208px to its left,
-        a title, a two-sentence explainer nobody rereads, and four two-digit
-        numbers spread across 40px gaps in a row that was a quarter full. It is
-        now one 48px band: identity on the left, the work on the right.
+        The Figma's header. The title names what you are looking at rather than
+        the module, because the rail two columns left already says CONTENT, and
+        the sentence under it is the one line of state worth reading before the
+        strip: how much is going out, and how much is waiting on you.
       */}
       <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-rule px-6 py-3">
-        <h1 className="display shrink-0 text-[18px]">Content</h1>
-
-        <StatStrip stats={stats} />
+        <div className="min-w-0 shrink-0">
+          <h1 className="display text-[18px] leading-none">{headline.title}</h1>
+          <p className="meta mt-1.5 text-ink-2">{headline.sub}</p>
+        </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {/* An unbuilt voice is the one thing that makes every draft
-              generic, so it is stated here rather than discovered later. */}
-          <Link
-            href="/content/persona"
-            className={
-              hasPersona
-                ? LINK_BUTTON
-                : `${LINK_BUTTON} border-amber bg-amber-bg text-amber-text [--edge:var(--color-amber)]`
-            }
-          >
-            <UserRound size={16} strokeWidth={1.5} />
-            {hasPersona ? "Your voice" : "Build your voice"}
-          </Link>
-          <Button onClick={() => setSkillsOpen(true)}>
-            <Sparkles size={16} strokeWidth={1.5} />
-            Skills
-          </Button>
+          {/* DESIGN.md section 9: a toggle group is an inset well holding
+              caps. Violet rather than teal, per PLS-108: teal means on or
+              running, and a selected tab is not a running thing. */}
+          <div className="well flex gap-1 rounded-control p-1">
+            {(
+              [
+                ["week", "Week"],
+                ["calendar", "Month"],
+                ["board", "Board"],
+              ] as [View, string][]
+            ).map(([key, label]) => (
+              <Link
+                key={key}
+                href={href({ view: key })}
+                aria-current={view === key ? "true" : undefined}
+                className={`legend flex h-7 items-center rounded-control px-3 ${
+                  view === key
+                    ? "cap bg-violet text-on-violet [--edge:var(--color-violet-edge)]"
+                    : "text-ink-2 hover:text-ink"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+
           <Button variant="primary" onClick={() => setAddOpen(true)}>
             <Plus size={16} strokeWidth={2} />
             New post
@@ -376,30 +416,11 @@ export function ContentPlanner({
         */}
         <div className="overflow-hidden rounded-shell border border-rule bg-sheet">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-rule px-4 py-2">
-            {/* DESIGN.md section 9: a toggle group is an inset well holding
-                caps, and the active cap is teal because teal means on. */}
-            <div className="well flex gap-1 rounded-control p-1">
-              {(
-                [
-                  ["calendar", "Calendar"],
-                  ["board", "Board"],
-                ] as [View, string][]
-              ).map(([key, label]) => (
-                <Link
-                  key={key}
-                  href={href({ view: key })}
-                  aria-current={view === key ? "true" : undefined}
-                  className={[
-                    "legend flex h-7 items-center rounded-control px-3",
-                    view === key
-                      ? "cap bg-violet text-on-violet [--edge:var(--color-violet-edge)]"
-                      : "text-ink-2 hover:text-ink",
-                  ].join(" ")}
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
+            {/* The Calendar / Board toggle used to sit here. It moved into the
+                header as Week / Month / Board when the Figma header landed, and
+                leaving it here gave the screen two controls doing one job,
+                disagreeing about what the views are even called. Caught by the
+                first screenshot, which is the only thing that would have. */}
 
             {/* Whose posts. Chips rather than a select, because with a small
                 team every option deserves to be one click, not two. */}
@@ -451,7 +472,21 @@ export function ContentPlanner({
             ) : null}
           </div>
 
-          {view === "calendar" ? (
+          {view === "week" ? (
+            <div className="p-3">
+              <WeekView
+                posts={visible}
+                shapes={shapes}
+                todayKey={today}
+                tz={timezone}
+                onOpen={(post) => setOpenId(post.id)}
+                onAddOn={(day) => {
+                  setSeedDay(day);
+                  setAddOpen(true);
+                }}
+              />
+            </div>
+          ) : view === "calendar" ? (
             <>
               <CalendarGrid
               month={month}
@@ -554,5 +589,6 @@ export function ContentPlanner({
         />
       ) : null}
     </main>
+    </div>
   );
 }
