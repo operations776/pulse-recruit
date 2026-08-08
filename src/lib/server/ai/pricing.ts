@@ -44,8 +44,9 @@ export const SURFACE_LIMITS = {
   },
   ops: {
     // OPS touches no paid research API, so its only cost is tokens over the
-    // org's own rows. It is cheap on purpose: the morning brief should never
-    // feel like something you ration.
+    // org's own rows. It is cheap on purpose. PLS-133 removed its screen, so
+    // the only caller left is the MCP server: this rate now prices Claude
+    // working the pipeline from outside the product rather than a chat inside it.
     reserveCredits: 6,
     maxSearches: 0,
     maxPageReads: 0,
